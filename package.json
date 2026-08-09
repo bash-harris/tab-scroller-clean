@@ -1,9 +1,14 @@
 {
   "scripts": {
-    "test:e2e": "jest",
-    "test:ai": "node tests/run-ai-test.js",
-    "research": "node research/simulator.js && node research/eval.js",
-    "sync-research": "node research/sync.js"
+    "test": "node tests/run-phase0.js",
+    "test:extract": "node tests/extract-core.test.js",
+    "test:intent": "node tests/intent.test.js",
+    "test:group": "node tests/group-name.test.js",
+    "test:db": "node tests/db-rekey.test.js",
+    "test:math": "node tests/enrich-math.test.js",
+    "test:priors": "node tests/domain-priors.test.js",
+    "bench:extraction": "node bench/report-extraction.js",
+    "test:e2e": "jest --testPathIgnorePatterns tests/e2e"
   },
   "devDependencies": {
     "fake-indexeddb": "^6.2.5",

@@ -26,7 +26,8 @@
       "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\({d:p.dependencies,dd:p.devDependencies},null,2\\)\\)\")",
       "Bash(timeout 120 node tests/db-rekey.test.js)",
       "Bash(git rm *)",
-      "Bash(git -c user.email=dev@local -c user.name=dev commit -q -m 'A5: re-key tabCards from tabId to urlHash \\(DB_VERSION 4\\) *)"
+      "Bash(git -c user.email=dev@local -c user.name=dev commit -q -m 'A5: re-key tabCards from tabId to urlHash \\(DB_VERSION 4\\) *)",
+      "Bash(git -c user.email=dev@local -c user.name=dev commit -q -m 'Add npm test runner for the Phase 0 suites *)"
     ]
   }
 }
