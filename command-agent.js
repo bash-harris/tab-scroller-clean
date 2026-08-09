@@ -18,6 +18,80 @@ function hasDomainPattern(text) {
   return DOMAIN_PATTERN.test(String(text || '').toLowerCase());
 }
 
+// Intent -> (tool, args) mapping.
+//
+// There is no unpin_tabs / unmute_tabs handler: handlePinTabs and handleMuteTabs
+// branch on args.action ('pin'/'unpin', 'mute'/'unmute'). Before the intent-ladder
+// fix those inverted intents were unreachable, so the missing mapping never
+// surfaced. Now that they resolve, they must be routed explicitly or they
+// dead-end at the tool dispatcher.
+const INTENT_TO_TOOL = {
+  close_tabs:       { tool: 'close_tabs' },
+  group_tabs:       { tool: 'group_tabs' },
+  bookmark_tabs:    { tool: 'bookmark_tabs' },
+  pin_tabs:         { tool: 'pin_tabs',  args: { action: 'pin' } },
+  unpin_tabs:       { tool: 'pin_tabs',  args: { action: 'unpin' } },
+  mute_tabs:        { tool: 'mute_tabs', args: { action: 'mute' } },
+  unmute_tabs:      { tool: 'mute_tabs', args: { action: 'unmute' } },
+  reload_tabs:      { tool: 'reload_tabs' },
+  sort_tabs:        { tool: 'sort_tabs' },
+  search_and_switch: { tool: 'search_and_switch' }
+};
+
+function toolForIntent(intent) {
+  const entry = INTENT_TO_TOOL[intent] || INTENT_TO_TOOL.group_tabs;
+  return { tool: entry.tool, args: { ...(entry.args || {}) } };
+}
+
+// Group title fallback chain: dominant enrichment tag -> title-cased command
+// words -> 'Tabs'. background.js previously built args as { tabIds } only, so
+// handleGroupTabs destructured groupName === undefined and every group was
+// literally titled "undefined".
+const GROUP_NAME_STOPWORDS = new Set([
+  'group', 'groups', 'grouping', 'organize', 'organise', 'collect', 'gather',
+  'bundle', 'tidy', 'cluster', 'my', 'all', 'the', 'a', 'an', 'these', 'those',
+  'them', 'tabs', 'tab', 'open', 'into', 'together', 'please', 'up', 'and',
+  'about', 'related', 'with', 'for', 'from', 'that', 'this', 'some', 'any'
+]);
+
+function titleCase(s) {
+  return String(s || '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+function deriveGroupName(command, cards, llmSuppliedName) {
+  const supplied = String(llmSuppliedName || '').trim();
+  if (supplied) return supplied.slice(0, 40);
+
+  // 1. Dominant tag across the acting cards.
+  const counts = new Map();
+  for (const c of cards || []) {
+    for (const t of (c?.enrichment?.tags || [])) {
+      if (!t || !t.tag || t.tag === 'other') continue;
+      counts.set(t.tag, (counts.get(t.tag) || 0) + 1);
+    }
+  }
+  if (counts.size) {
+    const [topTag, n] = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0];
+    // Only trust the tag when it covers a real share of the set.
+    if (n >= Math.max(2, Math.ceil((cards || []).length * 0.5))) return titleCase(topTag);
+  }
+
+  // 2. Content words from the command.
+  const words = String(command || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s'-]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !GROUP_NAME_STOPWORDS.has(w));
+  if (words.length) return titleCase(words.slice(0, 3).join(' ')).slice(0, 40);
+
+  // 3. Last resort.
+  return 'Tabs';
+}
+
 async function safeLlmCall(fn, label) {
   try {
     return await fn();
@@ -592,6 +666,9 @@ self.isAmbiguousIntent = isAmbiguousIntent;
 self.hasDomainPattern = hasDomainPattern;
 self.DOMAIN_PATTERN = DOMAIN_PATTERN;
 self.DESTRUCTIVE_INTENTS = DESTRUCTIVE_INTENTS;
+self.toolForIntent = toolForIntent;
+self.deriveGroupName = deriveGroupName;
+self.INTENT_TO_TOOL = INTENT_TO_TOOL;
 self.retrieveCandidates = retrieveCandidates;
 self.reasonOverCandidates = reasonOverCandidates;
 self.runCommandPipeline = runCommandPipeline;
@@ -600,6 +677,7 @@ self.runCommandPipeline = runCommandPipeline;
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     detectIntent, isAmbiguousIntent, hasDomainPattern,
-    DOMAIN_PATTERN, INTENT_RULES, DESTRUCTIVE_INTENTS
+    DOMAIN_PATTERN, INTENT_RULES, DESTRUCTIVE_INTENTS,
+    toolForIntent, deriveGroupName, INTENT_TO_TOOL, titleCase
   };
 }

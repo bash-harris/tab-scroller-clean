@@ -489,6 +489,19 @@ async function getBookmarksBarFolderId() {
   return '1';
 }
 
+// Reads the enrichment cards for a set of tab ids, skipping any tab that has no
+// card yet. Used to derive a group title from the dominant tag of the acting set.
+async function collectCardsForTabs(tabIds) {
+  const out = [];
+  for (const id of tabIds || []) {
+    try {
+      const card = await self.TabDB.getTabCard(id);
+      if (card) out.push(card);
+    } catch (e) { /* card store unavailable — fall back to command words */ }
+  }
+  return out;
+}
+
 function sanitizeQuery(raw) {
   if (typeof raw !== 'string') return '';
   const capped = raw.slice(0, 500); // Prevent ReDoS by capping to 500 chars
@@ -2546,7 +2559,13 @@ async function handleAnalyzeTabs({ analysisType }, windowId) {
 }
 
 // ===== MAIN EXECUTOR (§7, §8, §9) =====
-async function executeToolCall(functionCall, windowId, rawCommand = '') {
+// preResolvedTabIds: when the caller already has an exact, user-confirmed set of
+// tab ids (e.g. from a preview dialog), pass it so we do NOT re-run
+// resolveTabsForAction. Three call sites were already passing a 4th argument to
+// this 3-parameter function, so it was silently dropped and confirmed selections
+// were re-resolved from the raw args — which can widen or narrow what the user
+// actually approved.
+async function executeToolCall(functionCall, windowId, rawCommand = '', preResolvedTabIds = null) {
   const { name, args } = functionCall;
   const startTime = Date.now();
 
@@ -2557,9 +2576,20 @@ async function executeToolCall(functionCall, windowId, rawCommand = '') {
     // Resolve tabs once to avoid race conditions and active tab mismatch
     let resolvedTabs = null;
     if (['close_tabs', 'group_tabs', 'bookmark_tabs', 'pin_tabs', 'mute_tabs', 'reload_tabs'].includes(name)) {
-      const hasExplicitThisTab = /this tab|current tab|active tab/i.test(rawCommand) && !/except/i.test(rawCommand);
-      const excludeActive = name === 'close_tabs' ? !hasExplicitThisTab : false;
-      resolvedTabs = await resolveTabsForAction(args, windowId, excludeActive);
+      if (Array.isArray(preResolvedTabIds) && preResolvedTabIds.length > 0) {
+        // Honour the confirmed set verbatim; drop only ids that died since.
+        resolvedTabs = [];
+        for (const id of preResolvedTabIds) {
+          try {
+            const t = await chrome.tabs.get(id);
+            if (t) resolvedTabs.push(t);
+          } catch (e) { /* tab closed between confirm and execute */ }
+        }
+      } else {
+        const hasExplicitThisTab = /this tab|current tab|active tab/i.test(rawCommand) && !/except/i.test(rawCommand);
+        const excludeActive = name === 'close_tabs' ? !hasExplicitThisTab : false;
+        resolvedTabs = await resolveTabsForAction(args, windowId, excludeActive);
+      }
     }
 
     // §7: Capture before-state for undoable actions
@@ -2657,16 +2687,10 @@ async function callGeminiWithFunctionCalling(userCommand) {
       console.log(`[Gemini] ⚡ Rule-based shortcut: ${ruleResult.method}`);
 
       const cmdLower = cleanCommand.toLowerCase();
-      const toolName = cmdLower.includes('close') ? 'close_tabs' :
-        cmdLower.includes('bookmark') ? 'bookmark_tabs' :
-          cmdLower.includes('pin') ? 'pin_tabs' :
-            cmdLower.includes('mute') ? 'mute_tabs' :
-              cmdLower.includes('reload') ? 'reload_tabs' :
-                  'group_tabs';
+      const routed = toolForIntent(detectIntent(cmdLower));
+      const toolName = routed.tool;
 
-      const groupName = (ruleResult.keywords || extractKeywords(cleanCommand))
-        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ') || 'Grouped';
+      const groupName = deriveGroupName(cleanCommand, ruleResult.matched, null);
 
       await ensureTabsReady(ruleResult.matched);
 
@@ -2675,6 +2699,7 @@ async function callGeminiWithFunctionCalling(userCommand) {
         functionCall: {
           name: toolName,
           args: {
+            ...routed.args,
             groupName,
             tabIds: ruleResult.matched.map(t => t.id)
           }
@@ -2792,22 +2817,15 @@ async function parseAiCommand(userCommand, windowId) {
 
       // Determine tool name from the command
       const cmdLower = cleanCommand.toLowerCase();
-      const toolName = cmdLower.includes('close') ? 'close_tabs' :
-        cmdLower.includes('bookmark') ? 'bookmark_tabs' :
-          cmdLower.includes('pin') ? 'pin_tabs' :
-            cmdLower.includes('mute') ? 'mute_tabs' :
-              cmdLower.includes('reload') ? 'reload_tabs' :
-                  'group_tabs';
+      const routed = toolForIntent(detectIntent(cmdLower));
+      const toolName = routed.tool;
 
       // For grouping actions, require at least 2 matches — otherwise fall through to LLM
       // for semantic understanding (e.g. "geography" should include Earth, Mountain, etc.)
       if (toolName === 'group_tabs' && ruleResult.matched.length < 2) {
         console.log(`[AI Command] Rule-based found only ${ruleResult.matched.length} tab(s) for grouping, falling through to LLM`);
       } else {
-        // Extract a sensible group name from keywords
-        const groupName = (ruleResult.keywords || extractKeywords(cleanCommand))
-          .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-          .join(' ') || 'Grouped';
+        const groupName = deriveGroupName(cleanCommand, ruleResult.matched, null);
 
         // Ensure tabs are ready before returning
         await ensureTabsReady(ruleResult.matched);
@@ -2817,6 +2835,7 @@ async function parseAiCommand(userCommand, windowId) {
           functionCall: {
             name: toolName,
             args: {
+              ...routed.args,
               groupName,
               tabIds: ruleResult.matched.map(t => t.id)
             }
@@ -2841,19 +2860,15 @@ async function parseAiCommand(userCommand, windowId) {
       if (allMatch && filteredTabs.length <= 30) {
         console.log(`[AI Command] ⚡ Pre-filter confident match (${filteredTabs.length} tabs), skipping LLM`);
         const cmdLower = cleanCommand.toLowerCase();
-        const toolName = cmdLower.includes('close') ? 'close_tabs' :
-          cmdLower.includes('bookmark') ? 'bookmark_tabs' :
-            cmdLower.includes('pin') ? 'pin_tabs' :
-              cmdLower.includes('mute') ? 'mute_tabs' :
-                cmdLower.includes('reload') ? 'reload_tabs' :
-                    'group_tabs';
-        const groupName = keywords.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'Grouped';
+        const routed = toolForIntent(detectIntent(cmdLower));
+        const toolName = routed.tool;
+        const groupName = deriveGroupName(cleanCommand, filteredTabs, null);
         await ensureTabsReady(filteredTabs);
         return {
           type: 'function',
           functionCall: {
             name: toolName,
-            args: { groupName, tabIds: filteredTabs.map(t => t.id) }
+            args: { ...routed.args, groupName, tabIds: filteredTabs.map(t => t.id) }
           }
         };
       }
@@ -3032,6 +3047,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             return;
           }
 
+          // Grouping needs 2+ tabs. Check BEFORE previewing, so the user is never
+          // asked to confirm a group that handleGroupTabs will then refuse at :2250.
+          if (plan.intent === 'group_tabs' &&
+              (plan.tabIds.length + plan.uncertain.length) < 2) {
+            sendResponse({
+              success: false,
+              message: 'Need at least 2 matching tabs to make a group.'
+            });
+            return;
+          }
+
           // Destructive semantic actions must always be previewed
           // (if only low-confidence matches exist, preview those too)
           const candidateIds = plan.tabIds.length > 0 ? plan.tabIds : plan.uncertain;
@@ -3042,6 +3068,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             pendingPlans.set(planId, {
               tabIds: [...plan.tabIds, ...plan.uncertain],
               intent: plan.intent,
+              command: msg.command,
+              groupName: plan.groupName || null,
               expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes TTL
             });
 
@@ -3070,10 +3098,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             return;
           }
 
-          // Execute immediately for high-confidence non-destructive cases
+          // Execute immediately for high-confidence non-destructive cases.
+          // plan.intent is an INTENT, not a tool name: unpin_tabs/unmute_tabs have
+          // no handler of their own and must route to pin_tabs/mute_tabs with an
+          // action arg. groupName must be derived here or handleGroupTabs
+          // destructures undefined and titles every group "undefined".
+          const routed = toolForIntent(plan.intent);
+          const planCards = await collectCardsForTabs(plan.tabIds);
           const functionCall = {
-            name: plan.intent,
-            args: { tabIds: plan.tabIds }
+            name: routed.tool,
+            args: {
+              ...routed.args,
+              groupName: deriveGroupName(msg.command, planCards, plan.groupName),
+              tabIds: plan.tabIds
+            }
           };
           const result = await executeToolCall(functionCall, windowId, msg.command, plan.tabIds);
 
@@ -3142,11 +3180,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
 
         try {
+          const routed = toolForIntent(pending.intent);
+          const confirmedCards = await collectCardsForTabs(validatedIds);
           const functionCall = {
-            name: pending.intent,
-            args: { tabIds: validatedIds }
+            name: routed.tool,
+            args: {
+              ...routed.args,
+              groupName: deriveGroupName(pending.command || '', confirmedCards, pending.groupName),
+              tabIds: validatedIds
+            }
           };
-          const result = await executeToolCall(functionCall, windowId, '', validatedIds);
+          const result = await executeToolCall(functionCall, windowId, pending.command || '', validatedIds);
           
           if (result.success && sender.tab.id) {
             chrome.tabs.sendMessage(sender.tab.id, {

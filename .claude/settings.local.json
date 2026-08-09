@@ -11,7 +11,11 @@
       "Bash(timeout 60 node tests/intent.test.js)",
       "Bash(timeout 120 node tests/enrich-math.test.js)",
       "Bash(timeout 120 node tests/domain-priors.test.js)",
-      "Bash(git -c user.email=dev@local -c user.name=dev commit -q -m 'A2+A3: fix domain sanitization and intent ladder *)"
+      "Bash(git -c user.email=dev@local -c user.name=dev commit -q -m 'A2+A3: fix domain sanitization and intent ladder *)",
+      "Bash(node --check background.js)",
+      "Bash(node --check command-agent.js)",
+      "Bash(timeout 60 node tests/group-name.test.js)",
+      "Bash(git -c user.email=dev@local -c user.name=dev commit -q -m 'A4+A4b: real group titles, unpin/unmute routing, honour confirmed tab sets *)"
     ]
   }
 }
