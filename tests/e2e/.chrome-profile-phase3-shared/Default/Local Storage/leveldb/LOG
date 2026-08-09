@@ -1,11 +1,11 @@
-2026/08/01-19:07:25.799 1c9c Creating DB C:\Users\bkh\Desktop\tab-scroller-clean\tests\e2e\.chrome-profile-phase3-shared\Default\Local Storage\leveldb since it was missing.
-2026/08/01-19:07:25.841 1c9c Reusing MANIFEST C:\Users\bkh\Desktop\tab-scroller-clean\tests\e2e\.chrome-profile-phase3-shared\Default\Local Storage\leveldb/MANIFEST-000001
-2026/08/01-19:09:26.665 528 Level-0 table #5: started
-2026/08/01-19:09:26.724 528 Level-0 table #5: 540241 bytes OK
-2026/08/01-19:09:26.733 528 Delete type=0 #3
-2026/08/01-19:09:37.884 528 Level-0 table #7: started
-2026/08/01-19:09:37.928 528 Level-0 table #7: 543328 bytes OK
-2026/08/01-19:09:37.934 528 Delete type=0 #4
-2026/08/01-19:10:05.883 528 Level-0 table #9: started
-2026/08/01-19:10:05.920 528 Level-0 table #9: 562468 bytes OK
-2026/08/01-19:10:05.926 528 Delete type=0 #6
+2026/08/09-19:09:14.357 52b0 Creating DB C:\Users\bkh\Desktop\tab-scroller-clean\tests\e2e\.chrome-profile-phase3-shared\Default\Local Storage\leveldb since it was missing.
+2026/08/09-19:09:14.396 52b0 Reusing MANIFEST C:\Users\bkh\Desktop\tab-scroller-clean\tests\e2e\.chrome-profile-phase3-shared\Default\Local Storage\leveldb/MANIFEST-000001
+2026/08/09-19:10:38.053 41bc Level-0 table #5: started
+2026/08/09-19:10:38.081 41bc Level-0 table #5: 553323 bytes OK
+2026/08/09-19:10:38.090 41bc Delete type=0 #3
+2026/08/09-19:10:47.095 41bc Level-0 table #7: started
+2026/08/09-19:10:47.114 41bc Level-0 table #7: 542439 bytes OK
+2026/08/09-19:10:47.121 41bc Delete type=0 #4
+2026/08/09-19:11:36.083 41bc Level-0 table #9: started
+2026/08/09-19:11:36.097 41bc Level-0 table #9: 562879 bytes OK
+2026/08/09-19:11:36.104 41bc Delete type=0 #6

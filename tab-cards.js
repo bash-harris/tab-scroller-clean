@@ -111,24 +111,28 @@ async function buildTabCard(tab, cachedCards) {
     return card;
   }
 
-  // Reuse pre-fetched card list when available (batch callers); fetch once otherwise.
-  let savedCards;
-  if (Array.isArray(cachedCards)) {
-    savedCards = cachedCards;
-  } else {
-    savedCards = [];
-    try {
-      savedCards = await self.TabDB.getAllTabCards();
-    } catch (e) {}
-  }
+  // Batch callers pre-fetch the whole card list once and pass it in; scanning that
+  // array is free. Single-tab callers used to trigger a full getAllTabCards() scan
+  // per tab just to find one row -- they now do an indexed get on the primary key.
+  const savedCards = Array.isArray(cachedCards) ? cachedCards : null;
+
+  const isFresh = (c) =>
+    !!c &&
+    c.enrichment?.vecVersion === 2 &&
+    c.enrichment?.enrichedAt > 0 &&
+    (Date.now() - c.enrichment.enrichedAt) < 7 * 24 * 60 * 60 * 1000;
 
   // Cache hit: same URL + valid vec2 enrichment + fresh TTL.
   // No re-extraction, no script injection, no re-embedding — ~2ms.
-  const cachedCard = savedCards.find(c =>
-    c.urlHash === urlHash &&
-    c.enrichment?.vecVersion === 2 &&
-    c.enrichment?.enrichedAt > 0 &&
-    (Date.now() - c.enrichment.enrichedAt) < 7 * 24 * 60 * 60 * 1000);
+  let cachedCard = null;
+  if (savedCards) {
+    cachedCard = savedCards.find(c => c.urlHash === urlHash && isFresh(c)) || null;
+  } else {
+    try {
+      const hit = await self.TabDB.getCardByUrlHash(urlHash);
+      if (isFresh(hit)) cachedCard = hit;
+    } catch (e) { /* fall through to a full rebuild */ }
+  }
 
   if (cachedCard) {
     const newCard = {
@@ -211,14 +215,23 @@ async function buildTabCard(tab, cachedCards) {
 
   await self.TabDB.storeTabCard(card);
 
-  // Eviction uses the already-loaded card list — no extra DB scan.
-  if (savedCards.length > 2000) {
-    const allCards = savedCards;
-    allCards.sort((a, b) => a.extractedAt - b.extractedAt);
-    const toDeleteCount = allCards.length - 2000;
-    for (let i = 0; i < toDeleteCount; i++) {
-      await self.TabDB.deleteTabCard(allCards[i].tabId);
+  // Eviction. Batch callers already hold the full list, so trim it in memory;
+  // single-tab callers delegate to the store's cursor-based evictOldest.
+  // Delete by urlHash: that is the store's key since v4. Deleting by tabId here
+  // silently matched nothing and let the store grow without bound.
+  const MAX_CARDS = 2000;
+  if (savedCards) {
+    if (savedCards.length > MAX_CARDS) {
+      const ordered = savedCards
+        .filter(c => c && c.urlHash)
+        .sort((a, b) => (a.extractedAt || 0) - (b.extractedAt || 0));
+      const toDeleteCount = ordered.length - MAX_CARDS;
+      for (let i = 0; i < toDeleteCount; i++) {
+        await self.TabDB.deleteTabCard(ordered[i].urlHash);
+      }
     }
+  } else {
+    try { await self.TabDB.evictOldest(MAX_CARDS); } catch (e) {}
   }
 
   return card;

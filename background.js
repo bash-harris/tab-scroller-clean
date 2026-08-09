@@ -491,11 +491,23 @@ async function getBookmarksBarFolderId() {
 
 // Reads the enrichment cards for a set of tab ids, skipping any tab that has no
 // card yet. Used to derive a group title from the dominant tag of the acting set.
+//
+// Resolves each tab's live URL to a urlHash and reads the card by primary key.
+// Going through the tabId index instead would return "whichever card last
+// happened to sit on this id", which is not the same page after a tab recycle.
 async function collectCardsForTabs(tabIds) {
   const out = [];
   for (const id of tabIds || []) {
     try {
-      const card = await self.TabDB.getTabCard(id);
+      let card = null;
+      try {
+        const tab = await chrome.tabs.get(id);
+        if (tab && tab.url) {
+          const hash = await self.sha256(self.normalizeUrl(tab.url));
+          card = await self.TabDB.getCardByUrlHash(hash);
+        }
+      } catch (e) { /* tab gone or unhashable — fall back to the tabId index */ }
+      if (!card) card = await self.TabDB.getTabCard(id);
       if (card) out.push(card);
     } catch (e) { /* card store unavailable — fall back to command words */ }
   }
@@ -4651,13 +4663,28 @@ async function sweepMissingCards() {
     const tabs = await chrome.tabs.query({});
     let allCards = [];
     try { allCards = await self.TabDB.getAllTabCards(); } catch (e) {}
-    const cardTabIds = new Set(allCards.map(c => c.tabId));
-    const missing = tabs.filter(t =>
+
+    // Decide "does this tab already have a card?" by URL, not by tabId.
+    // Every tabId changes on browser restart, so a tabId join matched nothing on
+    // exactly the run this sweep exists for -- it rebuilt every card from scratch
+    // at each startup. Hashing by URL makes restored tabs hit their existing cards.
+    const cardHashes = new Set();
+    for (const c of allCards) {
+      if (c && c.urlHash) cardHashes.add(c.urlHash);
+    }
+    const eligible = tabs.filter(t =>
       t.url &&
       !t.url.startsWith('chrome://') &&
       !t.url.startsWith('edge://') &&
-      !t.url.startsWith('about:') &&
-      !cardTabIds.has(t.id));
+      !t.url.startsWith('about:'));
+    const missing = [];
+    for (const t of eligible) {
+      let hash = null;
+      try {
+        hash = await self.sha256(self.normalizeUrl(t.url));
+      } catch (e) { /* unhashable — rebuild it */ }
+      if (!hash || !cardHashes.has(hash)) missing.push(t);
+    }
     if (missing.length === 0) return;
     console.log(`[Indexer] Startup sweep: building cards for ${missing.length} tabs (cap 5)`);
     const CONCURRENCY = 5;

@@ -15,7 +15,18 @@
       "Bash(node --check background.js)",
       "Bash(node --check command-agent.js)",
       "Bash(timeout 60 node tests/group-name.test.js)",
-      "Bash(git -c user.email=dev@local -c user.name=dev commit -q -m 'A4+A4b: real group titles, unpin/unmute routing, honour confirmed tab sets *)"
+      "Bash(git -c user.email=dev@local -c user.name=dev commit -q -m 'A4+A4b: real group titles, unpin/unmute routing, honour confirmed tab sets *)",
+      "Bash(node -e ' *)",
+      "Bash(node --check db.js)",
+      "Bash(npx jest *)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.scripts,null,2\\)\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.jest||'none',null,2\\)\\)\")",
+      "Bash(timeout 60 node tests/executetool.test.js)",
+      "Bash(git stash *)",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\({d:p.dependencies,dd:p.devDependencies},null,2\\)\\)\")",
+      "Bash(timeout 120 node tests/db-rekey.test.js)",
+      "Bash(git rm *)",
+      "Bash(git -c user.email=dev@local -c user.name=dev commit -q -m 'A5: re-key tabCards from tabId to urlHash \\(DB_VERSION 4\\) *)"
     ]
   }
 }

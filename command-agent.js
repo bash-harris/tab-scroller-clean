@@ -202,18 +202,36 @@ async function retrieveCandidates(cmd, windowId) {
   const queryEmbedding = await self.Embed.embed(cmd);
   const allCards = await self.TabDB.getAllTabCards();
   const openTabs = await chrome.tabs.query({ windowId });
-  const openTabIds = new Set(openTabs.map(t => t.id));
 
-  // Dynamically index open tabs that don't have cards yet.
-  // Parallel with a concurrency cap — sequential builds block the command path.
-  const candidates = allCards.filter(c => openTabIds.has(c.tabId));
+  // Match cards to open tabs by URL, not by the card's stored tabId.
+  //
+  // Since the v4 re-key, a card's tabId is only "the last tab that displayed this
+  // URL" -- it is metadata, not identity. Filtering on it dropped cards whose tab
+  // had been recycled and, worse, could attach one tab's card to a different tab
+  // that happened to inherit the id. Keying on urlHash makes the join exact and
+  // turns the old O(n*m) candidates.some() scan into a Map lookup.
+  const cardsByHash = new Map();
+  for (const c of allCards) {
+    if (c && c.urlHash) cardsByHash.set(c.urlHash, c);
+  }
+
+  const candidates = [];
   const missingTabs = [];
   for (const tab of openTabs) {
-    if (tab.url && !tab.url.startsWith('chrome://') && !tab.url.startsWith('edge://')) {
-      const hasCard = candidates.some(c => c.tabId === tab.id);
-      if (!hasCard) missingTabs.push(tab);
+    if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('edge://')) continue;
+    let hash = null;
+    try {
+      hash = await self.sha256(self.normalizeUrl(tab.url));
+    } catch (e) { /* unhashable url — treat as missing */ }
+    const card = hash ? cardsByHash.get(hash) : null;
+    if (card) {
+      // Bind the card to the tab that is actually showing it right now.
+      candidates.push({ ...card, tabId: tab.id });
+    } else {
+      missingTabs.push(tab);
     }
   }
+
   if (missingTabs.length > 0) {
     console.log(`[CommandAgent] Dynamically indexing ${missingTabs.length} missing cards (parallel, cap 5)`);
     const CONCURRENCY = 5;
@@ -222,7 +240,7 @@ async function retrieveCandidates(cmd, windowId) {
       await Promise.all(batch.map(async (tab) => {
         try {
           const newCard = await self.buildTabCard(tab, allCards);
-          candidates.push(newCard);
+          candidates.push({ ...newCard, tabId: tab.id });
         } catch (e) {
           console.warn('[CommandAgent] Dynamic card build failed:', e.message);
         }

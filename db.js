@@ -1,6 +1,6 @@
 (() => {
   const DB_NAME = 'TabScrollerRAG';
-  const DB_VERSION = 3;
+  const DB_VERSION = 4;
   const STORE_NAME = 'pages';
 
   const TabDB = {
@@ -25,9 +25,38 @@
               store.createIndex('category', 'category', { unique: false });
             }
           }
+          // tabCards is keyed by urlHash, NOT tabId. A tabId is invalidated by every
+          // browser restart, so a tabId-keyed store threw away all enrichment on
+          // restart and leaked a row per closed tab. urlHash is stable across
+          // restarts and identical across duplicate tabs of the same page.
           if (!db.objectStoreNames.contains('tabCards')) {
-            const cardStore = db.createObjectStore('tabCards', { keyPath: 'tabId' });
-            cardStore.createIndex('urlHash', 'urlHash', { unique: false });
+            const cardStore = db.createObjectStore('tabCards', { keyPath: 'urlHash' });
+            cardStore.createIndex('tabId', 'tabId', { unique: false });
+            cardStore.createIndex('extractedAt', 'extractedAt', { unique: false });
+          } else if (event.oldVersion < 4) {
+            // v3 -> v4 re-key. keyPath is immutable, so copy the rows out, drop the
+            // store, recreate it, and write them back in the same upgrade tx.
+            const oldStore = event.target.transaction.objectStore('tabCards');
+            const getAll = oldStore.getAll();
+            getAll.onsuccess = () => {
+              const rows = getAll.result || [];
+              db.deleteObjectStore('tabCards');
+              const cardStore = db.createObjectStore('tabCards', { keyPath: 'urlHash' });
+              cardStore.createIndex('tabId', 'tabId', { unique: false });
+              cardStore.createIndex('extractedAt', 'extractedAt', { unique: false });
+              // Rows predating the urlHash field cannot be re-keyed; drop them
+              // rather than invent a key. They are a cache and will be rebuilt.
+              const byHash = new Map();
+              for (const row of rows) {
+                if (!row || typeof row.urlHash !== 'string' || !row.urlHash) continue;
+                // Duplicate tabs of one page collapse to a single row: keep newest.
+                const prev = byHash.get(row.urlHash);
+                if (!prev || (row.extractedAt || 0) >= (prev.extractedAt || 0)) {
+                  byHash.set(row.urlHash, row);
+                }
+              }
+              for (const row of byHash.values()) cardStore.put(row);
+            };
           }
         };
       });
@@ -110,22 +139,60 @@
       });
     },
 
-    async getTabCard(tabId) {
+    // Primary lookup. Stable across browser restarts.
+    async getCardByUrlHash(urlHash) {
       const tx = this._db.transaction('tabCards', 'readonly');
       const store = tx.objectStore('tabCards');
-      const request = store.get(tabId);
+      const request = store.get(urlHash);
       return new Promise((resolve, reject) => {
         request.onsuccess = () => resolve(request.result || null);
         request.onerror = () => reject(request.error);
       });
     },
 
-    async deleteTabCard(tabId) {
+    // Secondary lookup via the tabId index, for callers that only hold a live tab
+    // id. tabId is not unique in this store (two tabs can show the same page, and
+    // stale ids linger until eviction), so this returns the most recently seen row.
+    async getTabCard(tabId) {
+      const tx = this._db.transaction('tabCards', 'readonly');
+      const store = tx.objectStore('tabCards');
+      const index = store.index('tabId');
+      const request = index.getAll(tabId);
+      return new Promise((resolve, reject) => {
+        request.onsuccess = () => {
+          const rows = request.result || [];
+          if (rows.length === 0) return resolve(null);
+          rows.sort((a, b) => (b.extractedAt || 0) - (a.extractedAt || 0));
+          resolve(rows[0]);
+        };
+        request.onerror = () => reject(request.error);
+      });
+    },
+
+    async deleteTabCard(urlHash) {
       const tx = this._db.transaction('tabCards', 'readwrite');
       const store = tx.objectStore('tabCards');
-      store.delete(tabId);
+      store.delete(urlHash);
       return new Promise((resolve, reject) => {
         tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    },
+
+    // Cursor-based eviction over the extractedAt index. Deletes oldest-first without
+    // reading the whole store into memory.
+    async evictOldest(max) {
+      const all = await this.getAllTabCards();
+      if (all.length <= max) return 0;
+      const toDelete = all
+        .slice()
+        .sort((a, b) => (a.extractedAt || 0) - (b.extractedAt || 0))
+        .slice(0, all.length - max);
+      const tx = this._db.transaction('tabCards', 'readwrite');
+      const store = tx.objectStore('tabCards');
+      for (const row of toDelete) store.delete(row.urlHash);
+      return new Promise((resolve, reject) => {
+        tx.oncomplete = () => resolve(toDelete.length);
         tx.onerror = () => reject(tx.error);
       });
     },
