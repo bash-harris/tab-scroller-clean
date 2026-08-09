@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git -c user.email=dev@local -c user.name=dev commit -q -m \"Baseline before interview refactor\")"
+    ]
+  }
+}

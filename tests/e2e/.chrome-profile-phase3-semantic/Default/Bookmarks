@@ -1,0 +1,166 @@
+{
+   "checksum": "dafae429291601da8624cefda1bb68c8",
+   "roots": {
+      "bookmark_bar": {
+         "children": [ {
+            "children": [ {
+               "date_added": "13427110968087096",
+               "date_last_used": "0",
+               "guid": "c003bf4e-4ae1-4cea-931d-7971eb353c81",
+               "id": "6",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "Distributed computing - Wikipedia",
+               "type": "url",
+               "url": "https://en.wikipedia.org/wiki/Distributed_computing"
+            }, {
+               "date_added": "13427110968101593",
+               "date_last_used": "0",
+               "guid": "19ddb736-3655-4416-a908-a1d770102f63",
+               "id": "7",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "Distributed computing - Wikipedia",
+               "type": "url",
+               "url": "https://en.wikipedia.org/wiki/Distributed_computing"
+            }, {
+               "date_added": "13427110968102527",
+               "date_last_used": "0",
+               "guid": "e766f784-793c-49a9-9543-21f680b2aaca",
+               "id": "8",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "Sorting algorithm - Wikipedia",
+               "type": "url",
+               "url": "https://en.wikipedia.org/wiki/Sorting_algorithm"
+            }, {
+               "date_added": "13427110968107027",
+               "date_last_used": "0",
+               "guid": "77206aa3-68c2-47f2-a900-76a49c272c66",
+               "id": "9",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "Sorting algorithm - Wikipedia",
+               "type": "url",
+               "url": "https://en.wikipedia.org/wiki/Sorting_algorithm"
+            }, {
+               "date_added": "13427110968108069",
+               "date_last_used": "0",
+               "guid": "0e855af1-e44a-4ed9-9d63-5c03717d5c2c",
+               "id": "10",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "Machine learning - Wikipedia",
+               "type": "url",
+               "url": "https://en.wikipedia.org/wiki/Machine_learning"
+            }, {
+               "date_added": "13427110968110486",
+               "date_last_used": "0",
+               "guid": "7ce1fbfb-1c14-4997-a84e-4d044afdc2af",
+               "id": "11",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "Machine learning - Wikipedia",
+               "type": "url",
+               "url": "https://en.wikipedia.org/wiki/Machine_learning"
+            }, {
+               "date_added": "13427110968111319",
+               "date_last_used": "0",
+               "guid": "16e7987d-3a68-4380-8823-250408b1a5a4",
+               "id": "12",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "Binary search tree - Wikipedia",
+               "type": "url",
+               "url": "https://en.wikipedia.org/wiki/Binary_search_tree"
+            }, {
+               "date_added": "13427110968115323",
+               "date_last_used": "0",
+               "guid": "66cc4131-4213-4957-b363-5008bc879d8f",
+               "id": "13",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "Binary search tree - Wikipedia",
+               "type": "url",
+               "url": "https://en.wikipedia.org/wiki/Binary_search_tree"
+            }, {
+               "date_added": "13427110968143655",
+               "date_last_used": "0",
+               "guid": "f445a1df-65f6-4d42-acbf-af31be360db1",
+               "id": "14",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "Neural network - Wikipedia",
+               "type": "url",
+               "url": "https://en.wikipedia.org/wiki/Neural_network"
+            }, {
+               "date_added": "13427110968144739",
+               "date_last_used": "0",
+               "guid": "23b441fb-8271-4df2-86f4-1bee867d0703",
+               "id": "15",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "Neural network - Wikipedia",
+               "type": "url",
+               "url": "https://en.wikipedia.org/wiki/Neural_network"
+            }, {
+               "date_added": "13427110968147211",
+               "date_last_used": "0",
+               "guid": "f591bb98-c12f-4dc3-b61b-04a8539c69ce",
+               "id": "16",
+               "meta_info": {
+                  "power_bookmark_meta": ""
+               },
+               "name": "about:blank",
+               "type": "url",
+               "url": "about:blank"
+            } ],
+            "date_added": "13427110968080540",
+            "date_last_used": "0",
+            "date_modified": "13427110968147211",
+            "guid": "6772fae9-0fef-4681-a530-4559469b7bfa",
+            "id": "5",
+            "name": "Distributed Systems Notes",
+            "type": "folder"
+         } ],
+         "date_added": "13427110853822252",
+         "date_last_used": "0",
+         "date_modified": "13427110968081298",
+         "guid": "0bc5d13f-2cba-5d74-951f-3f233fe6c908",
+         "id": "1",
+         "name": "Bookmarks bar",
+         "type": "folder"
+      },
+      "other": {
+         "children": [  ],
+         "date_added": "13427110853822252",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "82b081ec-3dd3-529c-8475-ab6c344590dd",
+         "id": "2",
+         "name": "Other bookmarks",
+         "type": "folder"
+      },
+      "synced": {
+         "children": [  ],
+         "date_added": "13427110853822252",
+         "date_last_used": "0",
+         "date_modified": "0",
+         "guid": "4cf2e351-0e85-532b-bb37-df045d8f8d0f",
+         "id": "3",
+         "name": "Mobile bookmarks",
+         "type": "folder"
+      }
+   },
+   "version": 1
+}

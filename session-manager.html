@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session Manager — Tab Scroller</title>
+  <link rel="stylesheet" href="session-manager.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="sm-header">
+    <div class="sm-header-left">
+      <h1 class="sm-title">
+        <span class="sm-title-icon">🧠</span>
+        Session Memory
+      </h1>
+      <span class="sm-subtitle">Your browsing history, organized</span>
+    </div>
+    <div class="sm-header-right">
+      <div class="sm-search-wrapper">
+        <span class="sm-search-icon">🔍</span>
+        <input type="text" id="sessionSearch" class="sm-search-input" placeholder="Search sessions, tabs, topics..." spellcheck="false">
+      </div>
+    </div>
+  </header>
+
+  <!-- Active Session Banner -->
+  <section class="sm-active-banner" id="activeBanner" style="display:none;">
+    <div class="sm-active-info">
+      <div class="sm-active-indicator">
+        <span class="sm-pulse-dot"></span>
+        <span class="sm-active-label">Recording</span>
+      </div>
+      <div class="sm-active-name" id="activeSessionName">—</div>
+      <div class="sm-active-meta">
+        <span id="activeTabCount">0 tabs</span>
+        <span class="sm-meta-sep">•</span>
+        <span id="activeDuration">0m</span>
+        <span class="sm-meta-sep">•</span>
+        <span id="activeActions">0 actions</span>
+      </div>
+    </div>
+    <div class="sm-active-controls">
+      <button class="sm-btn sm-btn-outline" id="renameActiveBtn" title="Rename session">✏️ Rename</button>
+      <button class="sm-btn sm-btn-danger" id="endSessionBtn" title="End current session">⏹ End Session</button>
+    </div>
+  </section>
+
+  <!-- No Active Session -->
+  <section class="sm-no-active" id="noActiveBanner" style="display:none;">
+    <div class="sm-no-active-content">
+      <span class="sm-no-active-icon">💤</span>
+      <span>No active session</span>
+    </div>
+    <button class="sm-btn sm-btn-primary" id="startSessionBtn">▶ Start New Session</button>
+  </section>
+
+  <!-- Session History -->
+  <section class="sm-history">
+    <div class="sm-history-header">
+      <h2 class="sm-section-title">Past Sessions</h2>
+      <span class="sm-session-count" id="sessionCount">0 sessions</span>
+    </div>
+    <div class="sm-session-list" id="sessionList">
+      <!-- Session cards rendered by JS -->
+    </div>
+    <div class="sm-empty" id="emptyState" style="display:none;">
+      <div class="sm-empty-icon">📂</div>
+      <div class="sm-empty-text">No saved sessions yet</div>
+      <div class="sm-empty-hint">Start a session to begin tracking your browsing activity</div>
+    </div>
+  </section>
+
+  <!-- Session Detail Modal -->
+  <div class="sm-modal-overlay" id="detailModal" style="display:none;">
+    <div class="sm-modal">
+      <div class="sm-modal-header">
+        <h2 class="sm-modal-title" id="modalTitle">Session Details</h2>
+        <button class="sm-modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="sm-modal-meta" id="modalMeta"></div>
+      <div class="sm-modal-summary" id="modalSummary" style="display:none;">
+        <div class="sm-summary-label">AI Summary</div>
+        <div class="sm-summary-text" id="modalSummaryText"></div>
+      </div>
+      <div class="sm-modal-actions">
+        <button class="sm-btn sm-btn-primary" id="modalRestore">🔄 Restore All Tabs</button>
+        <button class="sm-btn sm-btn-outline" id="modalSummarize">🤖 Generate AI Summary</button>
+      </div>
+      <div class="sm-modal-tabs">
+        <h3 class="sm-tabs-title">Tabs</h3>
+        <div class="sm-tab-list" id="modalTabList"></div>
+      </div>
+      <div class="sm-modal-timeline">
+        <h3 class="sm-tabs-title">Activity Timeline</h3>
+        <div class="sm-timeline" id="modalTimeline"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rename Dialog -->
+  <div class="sm-modal-overlay" id="renameModal" style="display:none;">
+    <div class="sm-modal sm-modal-small">
+      <div class="sm-modal-header">
+        <h2 class="sm-modal-title">Rename Session</h2>
+        <button class="sm-modal-close" id="renameClose">&times;</button>
+      </div>
+      <div class="sm-rename-form">
+        <label class="sm-form-label">Session Name</label>
+        <input type="text" class="sm-form-input" id="renameName" placeholder="e.g. RAG Pipeline Research">
+        <label class="sm-form-label">Topic (optional)</label>
+        <input type="text" class="sm-form-input" id="renameTopic" placeholder="e.g. AI / ML">
+        <input type="hidden" id="renameSessionId">
+        <div class="sm-rename-actions">
+          <button class="sm-btn sm-btn-outline" id="renameCancelBtn">Cancel</button>
+          <button class="sm-btn sm-btn-primary" id="renameSaveBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="sm-toast" id="toast"></div>
+
+  <script src="session-manager.js"></script>
+</body>
+</html>
