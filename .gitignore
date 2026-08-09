@@ -6,3 +6,6 @@ backend/db.sqlite3
 
 .puppeteer_user_data/
 tests/e2e/.chrome-profile*/
+
+# Model cache for the offline bench (downloaded on demand, not committed)
+bench/.model-cache/
