@@ -7,7 +7,11 @@
       "Bash(timeout 60 node -e \"const m=require\\('@xenova/transformers'\\); console.log\\('pipeline' in m ? 'OK transformers' : 'NO'\\)\")",
       "Bash(node -e \"require\\('@xenova/transformers'\\)\")",
       "Bash(timeout 180 node tests/extract-core.test.js)",
-      "Bash(timeout 240 node bench/report-extraction.js)"
+      "Bash(timeout 240 node bench/report-extraction.js)",
+      "Bash(timeout 60 node tests/intent.test.js)",
+      "Bash(timeout 120 node tests/enrich-math.test.js)",
+      "Bash(timeout 120 node tests/domain-priors.test.js)",
+      "Bash(git -c user.email=dev@local -c user.name=dev commit -q -m 'A2+A3: fix domain sanitization and intent ladder *)"
     ]
   }
 }

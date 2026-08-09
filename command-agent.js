@@ -7,6 +7,17 @@ const STOPWORDS = new Set([
   'their', 'these', 'those', 'into', 'from', 'which', 'what', 'please', 'now',
 ]);
 
+// Single source of truth for domain detection in commands. Previously two
+// divergent copies of this regex existed (classifyCommand treated html/htm as
+// TLDs, the routing check at ~:399 did not), so the same command could be
+// classified syntactic here and then fail the domain check downstream.
+// Requires a 2+ char alphabetic TLD so version strings like "v1.2" don't match.
+const DOMAIN_PATTERN = /\b[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.(?:com|org|net|edu|gov|co|io|uk|in|de|jp|us|xyz|dev|app|ai)\b/i;
+
+function hasDomainPattern(text) {
+  return DOMAIN_PATTERN.test(String(text || '').toLowerCase());
+}
+
 async function safeLlmCall(fn, label) {
   try {
     return await fn();
@@ -16,12 +27,75 @@ async function safeLlmCall(fn, label) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Intent detection
+//
+// The previous implementation was a chain of cmdLower.includes() tests in an
+// order that made two intents unreachable and one dangerous:
+//   - 'pin' was tested before 'unpin', so "unpin all tabs" -> pin_tabs
+//   - 'mute' before 'unmute', so "unmute youtube" -> mute_tabs
+//   - 'close' was tested FIRST of all, so any command containing the substring
+//     "close" resolved to the single destructive intent. "group my closed
+//     caption tabs" -> close_tabs.
+//
+// Fixes: match on word boundaries (not substrings), test negated forms before
+// their positive counterparts, and require an explicit verb. Order matters and
+// is asserted by tests/intent.test.js.
+// ---------------------------------------------------------------------------
+
+const DESTRUCTIVE_INTENTS = new Set(['close_tabs']);
+
+const INTENT_RULES = [
+  // Negated / "un-" forms first: their positive counterpart is a substring.
+  { intent: 'unpin_tabs',       re: /\bun-?pin(s|ned|ning)?\b/ },
+  { intent: 'unmute_tabs',      re: /\b(un-?mute(s|d|ing)?|turn\s+(the\s+)?sound\s+(back\s+)?on|unsilence)\b/ },
+  // "closed caption" / "closed captions" must NOT read as the close verb, so the
+  // close rule requires close/quit/kill as a verb not followed by 'caption'.
+  { intent: 'close_tabs',       re: /\b(close|closing|shut)\b(?!\s+caption)|\b(kill|quit|dismiss|get\s+rid\s+of)\b/ },
+  { intent: 'bookmark_tabs',    re: /\b(bookmark(s|ed|ing)?|save\s+(for\s+later|these|them|all))\b/ },
+  { intent: 'pin_tabs',         re: /\bpin(s|ned|ning)?\b/ },
+  { intent: 'mute_tabs',        re: /\b(mute(s|d|ing)?|silence|turn\s+(the\s+)?sound\s+off)\b/ },
+  { intent: 'reload_tabs',      re: /\b(reload|refresh)(s|ed|ing)?\b/ },
+  { intent: 'search_and_switch', re: /\b(search|find|go\s+to|switch\s+to|jump\s+to|take\s+me\s+to)\b/ },
+  { intent: 'sort_tabs',        re: /\b(sort|order|arrange|reorder)(s|ed|ing)?\b/ },
+  { intent: 'group_tabs',       re: /\b(group|cluster|organi[sz]e|collect|gather|bundle|tidy)(s|ed|ing)?\b/ }
+];
+
+// Commands that negate the destructive verb: "don't close my docs, just group
+// them". Without this, the close rule fires on the word it is told to avoid.
+const NEGATED_CLOSE = /\b(do\s?n[o']?t|dont|never|avoid|without|except|rather\s+than|instead\s+of)\b[^.;]{0,30}\b(clos|kill|quit|shut)/;
+
+function detectIntent(cmdLower) {
+  const text = String(cmdLower || '').toLowerCase();
+
+  const closeNegated = NEGATED_CLOSE.test(text);
+
+  for (const rule of INTENT_RULES) {
+    if (rule.intent === 'close_tabs' && closeNegated) continue;
+    if (rule.re.test(text)) return rule.intent;
+  }
+  // No explicit verb. Default to the least destructive useful action.
+  return 'group_tabs';
+}
+
+// Ambiguity: the command names more than one distinct action verb, so a preview
+// must be forced regardless of model confidence.
+function isAmbiguousIntent(cmdLower) {
+  const text = String(cmdLower || '').toLowerCase();
+  const hits = new Set();
+  for (const rule of INTENT_RULES) {
+    if (rule.intent === 'close_tabs' && NEGATED_CLOSE.test(text)) continue;
+    if (rule.re.test(text)) hits.add(rule.intent);
+  }
+  return hits.size > 1;
+}
+
 function classifyCommand(cmd) {
   if (typeof cmd !== 'string') return 'semantic';
   const cmdLower = cmd.slice(0, 500).toLowerCase().trim();
   
-  // Domain patterns (e.g. youtube.com, github.com)
-  const hasDomainPattern = /\b[a-zA-Z0-9-]+\.(com|org|net|edu|gov|co|io|uk|in|de|jp|us|xyz|html|htm)\b/i.test(cmdLower);
+  // Domain patterns (e.g. youtube.com, github.com) — shared constant
+  const domainMatch = hasDomainPattern(cmdLower);
 
   // Structural/syntactic keywords
   const syntacticKeywords = [
@@ -33,7 +107,7 @@ function classifyCommand(cmd) {
 
   const hasSyntacticKeyword = syntacticKeywords.some(kw => cmdLower.includes(kw));
   
-  if (hasDomainPattern || hasSyntacticKeyword) {
+  if (domainMatch || hasSyntacticKeyword) {
     // If it has strong topical indicators, classify as semantic
     const semanticIndicators = [
       'about', 'related to', 'referring to', 'contains info on', 'topic', 'subject', 'discussing',
@@ -372,18 +446,9 @@ async function runCommandPipeline(userCommand, windowId) {
   console.log(`[CommandAgent] Classification: ${classification}`);
 
   const cmdLower = cleanCommand.toLowerCase();
-  const intent = cmdLower.includes('close') ? 'close_tabs' :
-                 cmdLower.includes('bookmark') ? 'bookmark_tabs' :
-                 cmdLower.includes('pin') ? 'pin_tabs' :
-                 cmdLower.includes('unpin') ? 'unpin_tabs' :
-                 cmdLower.includes('mute') ? 'mute_tabs' :
-                 cmdLower.includes('unmute') ? 'unmute_tabs' :
-                 cmdLower.includes('reload') ? 'reload_tabs' :
-                 cmdLower.includes('search') ? 'search_and_switch' :
-                 cmdLower.includes('sort') ? 'sort_tabs' :
-                 'group_tabs';
+  const intent = detectIntent(cmdLower);
 
-  const isDestructive = ['close_tabs'].includes(intent);
+  const isDestructive = DESTRUCTIVE_INTENTS.has(intent);
 
   // smartPreFilter is only trustworthy for STRUCTURAL commands (domains,
   // duplicates, pinning, muting, sorting...). Generic topic queries like
@@ -396,7 +461,7 @@ async function runCommandPipeline(userCommand, windowId) {
     'last active', 'open tabs'
   ];
   const hasStructuralSignal = STRUCTURAL_SIGNALS.some(kw => cmdLower.includes(kw));
-  const hasDomainPattern = /\b[a-z0-9-]+\.(com|org|net|edu|gov|co|io|uk|in|de|jp|us|xyz)\b/i.test(cmdLower);
+  const domainMatch = hasDomainPattern(cmdLower);
 
   if (classification === 'syntactic') {
     console.log('[CommandAgent] Syntactic fast path matched');
@@ -423,7 +488,7 @@ async function runCommandPipeline(userCommand, windowId) {
       };
     }
 
-    if (!hasStructuralSignal && !hasDomainPattern) {
+    if (!hasStructuralSignal && !domainMatch) {
       console.log('[CommandAgent] No structural/domain signal — falling through to semantic search');
       return await runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive, windowId);
     }
@@ -522,6 +587,19 @@ async function runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive
 }
 
 self.classifyCommand = classifyCommand;
+self.detectIntent = detectIntent;
+self.isAmbiguousIntent = isAmbiguousIntent;
+self.hasDomainPattern = hasDomainPattern;
+self.DOMAIN_PATTERN = DOMAIN_PATTERN;
+self.DESTRUCTIVE_INTENTS = DESTRUCTIVE_INTENTS;
 self.retrieveCandidates = retrieveCandidates;
 self.reasonOverCandidates = reasonOverCandidates;
 self.runCommandPipeline = runCommandPipeline;
+
+// Node-side export so the pure routing logic can be unit-tested without chrome.
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    detectIntent, isAmbiguousIntent, hasDomainPattern,
+    DOMAIN_PATTERN, INTENT_RULES, DESTRUCTIVE_INTENTS
+  };
+}

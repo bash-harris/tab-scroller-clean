@@ -494,7 +494,11 @@ function sanitizeQuery(raw) {
   const capped = raw.slice(0, 500); // Prevent ReDoS by capping to 500 chars
   return capped
     .replace(/^[>\s]+/, '')       // Remove leading > and whitespace (UI prompt artifact)
-    .replace(/[^a-zA-Z0-9\s'-]/g, ' ')  // Strip special characters
+    // Strip special characters, but PRESERVE '.' and '/' so domain and path
+    // patterns survive to the routing layer. Previously this class stripped '.',
+    // so "close youtube.com tabs" became "close youtube com tabs" and every
+    // hasDomainPattern test was permanently false — domain routing never ran.
+    .replace(/[^a-zA-Z0-9\s'./-]/g, ' ')
     .replace(/\s+/g, ' ')         // Collapse whitespace
     .trim();
 }
