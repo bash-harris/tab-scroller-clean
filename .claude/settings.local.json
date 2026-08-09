@@ -3,7 +3,11 @@
     "allow": [
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git -c user.email=dev@local -c user.name=dev commit -q -m \"Baseline before interview refactor\")"
+      "Bash(git -c user.email=dev@local -c user.name=dev commit -q -m \"Baseline before interview refactor\")",
+      "Bash(timeout 60 node -e \"const m=require\\('@xenova/transformers'\\); console.log\\('pipeline' in m ? 'OK transformers' : 'NO'\\)\")",
+      "Bash(node -e \"require\\('@xenova/transformers'\\)\")",
+      "Bash(timeout 180 node tests/extract-core.test.js)",
+      "Bash(timeout 240 node bench/report-extraction.js)"
     ]
   }
 }
