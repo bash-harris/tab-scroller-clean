@@ -67,9 +67,26 @@
 
   function buildPushCSS(enabled) {
     if (!enabled) return '/* tab-scroller push disabled */';
+    // ANIMATE THE PUSH, DO NOT SNAP IT.
+    //
+    // The padding is applied ~500ms after load, so with no transition the whole
+    // page jumped 36px in one frame -- reading as a glitch rather than as a bar
+    // appearing. A short ease on padding-top alone makes it a deliberate reveal.
+    //
+    // Only padding-top is transitioned. A bare `transition: all` on <html> would
+    // animate every inherited property change on the page for the rest of the
+    // session, which is both a performance problem and a source of bizarre
+    // side-effects on SPAs.
+    //
+    // prefers-reduced-motion is honoured: users who ask for no animation get the
+    // instant jump, which is the correct trade for them.
     return `
       html {
         padding-top: ${PUSH_HEIGHT}px !important;
+        transition: padding-top 220ms cubic-bezier(0.22, 0.61, 0.36, 1) !important;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html { transition: none !important; }
       }
     `;
   }
@@ -115,6 +132,14 @@
         const savedTop = el.style.getPropertyValue('top');
         const savedPri = el.style.getPropertyPriority('top');
         el.setAttribute(FIXED_ATTR, JSON.stringify({ t: savedTop, p: savedPri }));
+        // Match the <html> padding transition so headers glide with the page
+        // instead of teleporting while the body animates around them. Without
+        // this the two move on different schedules, which looks worse than
+        // either moving alone.
+        const savedTrans = el.style.getPropertyValue('transition');
+        if (!savedTrans) {
+          el.style.setProperty('transition', 'top 220ms cubic-bezier(0.22, 0.61, 0.36, 1)');
+        }
         el.style.setProperty('top', `${topVal + PUSH_HEIGHT}px`, 'important');
       }
     } else {
@@ -209,7 +234,11 @@
   const cssPromise = fetch(chrome.runtime.getURL("content.css"))
     .then((r) => r.text())
     .then((css) => {
-      style.textContent = css;
+      // Rewrite the __TS_EXT__ placeholder in @font-face url()s to the extension
+      // origin. The shadow root has no <base>, so relative urls would resolve
+      // against the host page and 404. getURL("") ends in "/", so the CSS keeps
+      // the "fonts/..." path directly after the token.
+      style.textContent = css.replace(/__TS_EXT__/g, chrome.runtime.getURL(""));
     });
   shadow.appendChild(style);
 
@@ -248,6 +277,76 @@
     }
   });
   trigger.insertBefore(centerBtn, track);
+
+  // --- Live Indexing Progress Bar (Overlays / Sits in the Tab Strip) ---
+  const indexingBar = document.createElement("div");
+  indexingBar.className = "ts-indexing-bar";
+  indexingBar.innerHTML = `
+    <div class="ts-indexing-inner">
+      <div class="ts-indexing-icon">⚡</div>
+      <div class="ts-indexing-info">
+        <span class="ts-indexing-label">Indexing tabs...</span>
+        <span class="ts-indexing-counter">0 / 0</span>
+      </div>
+      <div class="ts-indexing-track">
+        <div class="ts-indexing-fill"></div>
+      </div>
+      <div class="ts-indexing-pct">0%</div>
+    </div>
+  `;
+  trigger.appendChild(indexingBar);
+
+  let indexingHideTimeout = null;
+  let _isIndexingActive = false;
+
+  function updateIndexingUI(data) {
+    if (!data) return;
+    const { isIndexing, done, total, pct, currentTitle } = data;
+    
+    if (isIndexing && total > 0) {
+      _isIndexingActive = true;
+      if (typeof expandBar === 'function') expandBar();
+      clearTimeout(indexingHideTimeout);
+      indexingBar.classList.add("visible");
+      
+      const fill = indexingBar.querySelector(".ts-indexing-fill");
+      const label = indexingBar.querySelector(".ts-indexing-label");
+      const counter = indexingBar.querySelector(".ts-indexing-counter");
+      const pctEl = indexingBar.querySelector(".ts-indexing-pct");
+
+      const percentage = Math.min(100, Math.max(0, pct || Math.round((done / total) * 100)));
+      if (fill) fill.style.width = `${percentage}%`;
+      if (pctEl) pctEl.textContent = `${percentage}%`;
+      if (counter) counter.textContent = `${done} / ${total}`;
+
+      if (label) {
+        if (currentTitle) {
+          label.textContent = `Indexing: ${currentTitle.slice(0, 28)}${currentTitle.length > 28 ? '...' : ''}`;
+        } else {
+          label.textContent = "Indexing tabs for search...";
+        }
+      }
+    } else if (pct === 100 || !isIndexing) {
+      _isIndexingActive = false;
+      if (indexingBar.classList.contains("visible")) {
+        const fill = indexingBar.querySelector(".ts-indexing-fill");
+        const label = indexingBar.querySelector(".ts-indexing-label");
+        const pctEl = indexingBar.querySelector(".ts-indexing-pct");
+        
+        if (fill) fill.style.width = "100%";
+        if (pctEl) pctEl.textContent = "100%";
+        if (label) label.textContent = `✨ All ${total || 'tabs'} indexed`;
+
+        clearTimeout(indexingHideTimeout);
+        indexingHideTimeout = setTimeout(() => {
+          indexingBar.classList.remove("visible");
+          if (userSettings && userSettings.displayMode === 'auto_hide' && typeof startHideTimer === 'function') {
+            startHideTimer();
+          }
+        }, 1600);
+      }
+    }
+  }
 
   // --- Pin/Unpin Button ---
   const pinBtn = document.createElement("div");
@@ -439,7 +538,23 @@
   });
   trigger.insertBefore(undoBtn, searchContainer);
 
+  // --- Invisible Hover Trigger Zone at viewport top ---
+  const hoverZone = document.createElement("div");
+  hoverZone.className = "ts-hover-zone";
+  shadow.appendChild(hoverZone);
+
   shadow.appendChild(trigger);
+  
+  // Attach Shadow DOM host to page document immediately so tab strip is always mounted
+  try {
+    if (document.documentElement) {
+      document.documentElement.appendChild(host);
+    } else {
+      window.addEventListener('DOMContentLoaded', () => {
+        document.documentElement.appendChild(host);
+      });
+    }
+  } catch (e) {}
   
   let tabs = [];
   let contextValid = true;
@@ -454,7 +569,7 @@
   let scrollInterval = null;
 
   // Release Phase 1 Settings
-  let userSettings = { autoScroll: true, theme: 'system', displayMode: 'always_show', collapseDelay: 1500, dockPosition: 'bottom' };
+  let userSettings = { autoScroll: true, theme: 'system', bgMode: 'ivory', displayMode: 'always_show', collapseDelay: 1500, dockPosition: 'bottom' };
   let isCollapsed = false;
   let hideTimeout = null;
   let aiPanelOpen = false;
@@ -478,25 +593,29 @@
 
   function startHideTimer() {
     clearTimeout(hideTimeout);
-    // Don't hide if search is active
-    if (userSettings.displayMode !== 'auto_hide' || isCollapsed || isSearchActive) return;
+    // Never hide while searching, AI popup open, or while actively indexing tabs
+    if (userSettings.displayMode !== 'auto_hide' || isCollapsed || isSearchActive || aiPanelOpen || _isIndexingActive) return;
     hideTimeout = setTimeout(() => {
       collapseBar();
     }, userSettings.collapseDelay || 1500);
   }
 
   function expandBar() {
-    if (!isCollapsed) return;
-    isCollapsed = false;
-    trigger.classList.remove("collapsed");
-    // Re-enable page push (padding + fixed-element offset)
-    if (pageReady) {
-      applyFullPush();
+    clearTimeout(hideTimeout);
+    if (isCollapsed) {
+      isCollapsed = false;
+      trigger.classList.remove("collapsed");
+      if (pageReady) {
+        applyFullPush();
+      }
     }
-    startHideTimer();
   }
 
   function collapseBar() {
+    // Never collapse if always_show, actively indexing tabs, searching, or panel is open
+    if (userSettings.displayMode === 'always_show') return;
+    if (_isIndexingActive) return;
+    if (aiPanelOpen || isSearchActive || (typeof searchHasFocus !== 'undefined' && searchHasFocus)) return;
     if (isCollapsed) return;
     isCollapsed = true;
     trigger.classList.add("collapsed");
@@ -512,24 +631,27 @@
     }
   }
 
-  // Show bar on mouse approach (only in auto_hide mode)
+  // Hover zone at the top of the viewport brings bar into view
+  hoverZone.addEventListener("mouseenter", () => {
+    expandBar();
+  });
+
+  // Show bar on mouse approach near top of page (within 14px)
   document.addEventListener("mousemove", (e) => {
     if (userSettings.displayMode !== 'auto_hide') return;
-    if (e.clientY <= 2) { // Only trigger when mouse reaches the very top line (within 2px)
+    if (e.clientY <= 14) {
       expandBar();
     }
   });
 
-  // --- Always show trigger (mouse over bar keeps it open) ---
+  // Mouse over bar keeps it open
   trigger.addEventListener("mouseenter", () => {
-    if (userSettings.displayMode === 'auto_hide') {
-      clearTimeout(hideTimeout);
-    }
+    clearTimeout(hideTimeout);
+    expandBar();
   });
 
   trigger.addEventListener("mouseleave", () => {
-    // Don't collapse if search is active
-    if (userSettings.displayMode === 'auto_hide' && !isSearchActive) {
+    if (userSettings.displayMode === 'auto_hide' && !isSearchActive && !aiPanelOpen && !_isIndexingActive) {
       startHideTimer();
     }
   });
@@ -567,16 +689,11 @@
     stopSearch();
   });
 
-  // Close search when clicking outside strip and popup
+  // Close search when clicking outside extension
   document.addEventListener("click", (e) => {
     if (!isSearchActive) return;
-    
-    const isClickOnStrip = trigger.contains(e.target);
-    const isClickOnPopup = searchPopup.contains(e.target);
-    
-    if (!isClickOnStrip && !isClickOnPopup) {
-      stopSearch();
-    }
+    if (e.target === host || (host.contains && host.contains(e.target))) return;
+    stopSearch();
   });
 
   // Prevent clicks inside popup from closing it
@@ -1400,6 +1517,13 @@
   });
 
   function handleKeyDown(e) {
+    // The AI command popup owns the keyboard while it is open. This global
+    // handler runs in the capture phase on window, so without this bail it would
+    // preventDefault() Enter (see the filteredTabs branch below) before the
+    // popup's own input listener ever sees it — the "Enter is intercepted" bug.
+    // Escape still reaches the popup's own handler because we don't stop it here.
+    if (aiPanelOpen) return;
+
     // Ctrl+K to search
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
@@ -1602,11 +1726,24 @@
     }
   }
 
+  function applyBackground(bgMode) {
+    host.classList.remove("ts-bg-ivory", "ts-bg-black");
+    if (bgMode === "black") {
+      host.classList.add("ts-bg-black");
+    } else {
+      host.classList.add("ts-bg-ivory");
+    }
+  }
+
   // --- Settings Sync ---
   function updateSettings(changes) {
     if (changes.theme) {
       userSettings.theme = changes.theme.newValue;
       applyTheme(userSettings.theme);
+    }
+    if (changes.bgMode) {
+      userSettings.bgMode = changes.bgMode.newValue;
+      applyBackground(userSettings.bgMode);
     }
     if (changes.stripColor) {
       userSettings.stripColor = changes.stripColor.newValue;
@@ -1626,7 +1763,7 @@
   }
 
   function applyStripColor(color) {
-    if (color) {
+    if (color && color !== '#0c0c0f' && color !== '') {
       host.style.setProperty('--ts-bg', color);
       host.style.setProperty('--ts-bg-solid', color);
     } else {
@@ -1840,6 +1977,10 @@
   trigger.addEventListener(
     "wheel",
     (e) => {
+      // The AI popup is a child of `trigger`, so wheeling over it used to bubble
+      // here and scroll the tab strip instead of the popup's own content. If the
+      // wheel is over the popup, leave it alone and let the popup scroll natively.
+      if (e.target && e.target.closest && e.target.closest('.ts-ai-popup')) return;
       e.preventDefault();
       scrollVelocity += e.deltaY > 0 ? 15 : -15;
       // Clamp velocity
@@ -1887,19 +2028,60 @@
   }
 
   // --- Initialization: wait for CSS, initial tabs AND settings before showing ---
+  //
+  // MV3 service worker cold-start: Chrome may not have finished loading the
+  // service worker (878KB transformers.min.js + 14 other scripts) by the time
+  // the content script fires GET_TABS. When that happens the message silently
+  // fails and the callback is never invoked, so tabsPromise hangs forever and
+  // the bar never renders.  Fix: retry with exponential backoff.
   const tabsPromise = new Promise((resolve) => {
-    safeSendMessage({ type: "GET_TABS" }, (response) => {
-      if (response && response.tabs) {
-        tabs = response.tabs;
+    const MAX_RETRIES = 8;     // ~25s total worst case (300+600+1200+2400+4800+4800+4800+4800)
+    const BASE_DELAY = 300;    // ms
+    let attempt = 0;
+
+    function tryGetTabs() {
+      attempt++;
+      try {
+        if (!chrome.runtime?.id) {
+          // Extension context gone — resolve with empty tabs so bar at least renders
+          resolve();
+          return;
+        }
+        chrome.runtime.sendMessage({ type: "GET_TABS" }, (response) => {
+          if (chrome.runtime.lastError) {
+            // Service worker not ready yet — retry
+            if (attempt < MAX_RETRIES) {
+              const delay = Math.min(BASE_DELAY * Math.pow(2, attempt - 1), 4800);
+              console.log(`[TabScroller] GET_TABS retry ${attempt}/${MAX_RETRIES} in ${delay}ms (${chrome.runtime.lastError.message})`);
+              setTimeout(tryGetTabs, delay);
+            } else {
+              console.warn('[TabScroller] GET_TABS failed after max retries, rendering empty bar');
+              resolve();
+            }
+            return;
+          }
+          if (response && response.tabs) {
+            tabs = response.tabs;
+          }
+          resolve();
+        });
+      } catch (e) {
+        // Extension invalidated mid-flight
+        if (attempt < MAX_RETRIES) {
+          setTimeout(tryGetTabs, Math.min(BASE_DELAY * Math.pow(2, attempt - 1), 4800));
+        } else {
+          resolve();
+        }
       }
-      resolve();
-    });
+    }
+    tryGetTabs();
   });
 
   const settingsPromise = new Promise((resolve) => {
-    safeStorageGet({ autoScroll: true, theme: 'system', displayMode: 'always_show', collapseDelay: 1500, enableShield: false, dockPosition: 'bottom', stripColor: '' }, (items) => {
+    safeStorageGet({ autoScroll: true, theme: 'system', bgMode: 'ivory', displayMode: 'always_show', collapseDelay: 1500, enableShield: false, dockPosition: 'bottom', stripColor: '' }, (items) => {
       userSettings = items;
       applyTheme(userSettings.theme);
+      applyBackground(userSettings.bgMode || 'ivory');
       applyStripColor(userSettings.stripColor);
       applyDockPosition(userSettings.dockPosition || 'bottom');
       shieldBtn.style.display = items.enableShield ? '' : 'none';
@@ -1919,14 +2101,16 @@
   });
 
   Promise.all([cssPromise, tabsPromise, settingsPromise]).then(() => {
-    document.documentElement.appendChild(host);
+    if (!host.parentNode && document.documentElement) {
+      document.documentElement.appendChild(host);
+    }
     render();
     
     // Initialize AI Command interface
     initializeCommandInterface();
     
     // Apply correct bar collapse and body push states immediately
-    if (userSettings.displayMode === 'always_show') {
+    if (userSettings.displayMode === 'always_show' || _isIndexingActive) {
       isCollapsed = false;
       trigger.classList.remove("collapsed");
       if (pageReady) {
@@ -1937,6 +2121,18 @@
       trigger.classList.add("collapsed");
       removeFullPush();
     }
+
+    // Query initial tab indexing status from service worker
+    try {
+      if (chrome.runtime?.id) {
+        chrome.runtime.sendMessage({ type: "GET_INDEX_STATUS" }, (status) => {
+          if (chrome.runtime.lastError) return;
+          if (status && status.isIndexing) {
+            updateIndexingUI(status);
+          }
+        });
+      }
+    } catch (e) {}
   });
 
   // --- Listen for live updates ---
@@ -1947,7 +2143,9 @@
     }
     
     try {
-      if (msg.type === 'FALLBACK_NOTIFICATION') {
+      if (msg.type === 'AI_PROGRESS') {
+        updateAiProgress(msg);
+      } else if (msg.type === 'FALLBACK_NOTIFICATION') {
         if (typeof showToast !== 'undefined') {
           showToast(
             `⚠️ ${msg.fromModel} rate-limited. Using ${msg.toModel}`,
@@ -2017,6 +2215,8 @@
           });
         }
       })();
+    } else if (msg.type === "INDEX_PROGRESS" || msg.type === "INDEX_COMPLETE") {
+      updateIndexingUI(msg);
     } else if (msg.type === "UNDO_AVAILABLE") {
       undoBtn.style.display = "";
       undoBtn.title = `Undo: ${msg.action} (${msg.count} tabs)`;
@@ -2195,8 +2395,15 @@
         <input type="text" class="ts-command-input" placeholder="Ask AI anything..." spellcheck="false" autocomplete="off">
         <span class="ts-ai-popup-close">✕</span>
       </div>
+      <div class="ts-ai-progress" role="status" aria-live="polite">
+        <div class="ts-ai-progress-row">
+          <span class="ts-ai-progress-label">Working…</span>
+          <span class="ts-ai-progress-pct"></span>
+        </div>
+        <div class="ts-ai-progress-track"><div class="ts-ai-progress-fill"></div></div>
+      </div>
       <div class="ts-ai-popup-body">
-        <div class="ts-suggestions-title">💡 Try these commands:</div>
+        <div class="ts-suggestions-title">Try these commands</div>
         <div class="ts-ai-suggestions"></div>
       </div>
       <div class="ts-ai-popup-footer">Enter to run · ↑↓ for history · Esc to close</div>
@@ -2210,6 +2417,9 @@
     const input = panel.querySelector(".ts-command-input");
     const closeBtn = panel.querySelector(".ts-ai-popup-close");
     const suggestionsEl = panel.querySelector(".ts-ai-suggestions");
+    const progressLabel = panel.querySelector(".ts-ai-progress-label");
+    const progressPct = panel.querySelector(".ts-ai-progress-pct");
+    const progressFill = panel.querySelector(".ts-ai-progress-fill");
 
     COMMAND_EXAMPLES.forEach(example => {
       const item = document.createElement("div");
@@ -2274,7 +2484,7 @@
 
     document.addEventListener("click", (e) => {
       if (!panel.classList.contains("open")) return;
-      if (panel.contains(e.target) || button.contains(e.target)) return;
+      if (e.target === host || (host.contains && host.contains(e.target))) return;
       closePanel();
     });
 
@@ -2321,26 +2531,90 @@
       }
     });
 
-    return { container: button, panel, input, openPanel, closePanel };
+    return { container: button, panel, input, openPanel, closePanel, progressLabel, progressPct, progressFill };
   }
 
   // ===== COMMAND EXECUTION =====
+  // Smoothly animates the fill toward a target so distinct progress messages
+  // read as one continuous motion rather than discrete jumps.
+  let progressRAF = null;
+  let progressShown = 0;   // width currently painted (0-100)
+  let progressTarget = 0;  // width we're easing toward (0-100)
+
+  function paintProgress() {
+    progressRAF = null;
+    if (!commandInputComponents) return;
+    const { progressFill } = commandInputComponents;
+    if (!progressFill) return;
+    const diff = progressTarget - progressShown;
+    if (Math.abs(diff) < 0.5) {
+      progressShown = progressTarget;
+    } else {
+      progressShown += diff * 0.25; // ease toward target
+      progressRAF = requestAnimationFrame(paintProgress);
+    }
+    progressFill.style.width = progressShown.toFixed(1) + "%";
+  }
+
+  function setProgressTarget(pct) {
+    progressTarget = Math.max(progressShown, Math.min(100, pct)); // never regress
+    if (progressRAF == null) progressRAF = requestAnimationFrame(paintProgress);
+  }
+
+  function beginAiProgress() {
+    if (!commandInputComponents) return;
+    const { panel, progressLabel, progressPct, progressFill } = commandInputComponents;
+    progressShown = 0;
+    progressTarget = 0;
+    if (progressRAF != null) { cancelAnimationFrame(progressRAF); progressRAF = null; }
+    if (progressFill) progressFill.style.width = "0%";
+    if (progressLabel) progressLabel.textContent = "Reading your command…";
+    if (progressPct) progressPct.textContent = "";
+    if (panel) panel.classList.add("processing");
+    setProgressTarget(4);
+  }
+
+  function updateAiProgress(msg) {
+    if (!commandInputComponents) return;
+    if (!aiCommandInProgressInUI) return; // ignore stray late messages
+    const { panel, progressLabel, progressPct } = commandInputComponents;
+    if (panel && !panel.classList.contains("processing")) panel.classList.add("processing");
+    if (progressLabel && msg.detail) progressLabel.textContent = msg.detail;
+    if (typeof msg.pct === "number") {
+      setProgressTarget(msg.pct);
+      if (progressPct) progressPct.textContent = Math.round(msg.pct) + "%";
+    }
+  }
+
+  function endAiProgress(ok) {
+    if (!commandInputComponents) return;
+    const { panel, progressLabel, progressPct } = commandInputComponents;
+    // Snap to 100 so the bar visibly completes, then fade the region out.
+    setProgressTarget(100);
+    if (progressPct) progressPct.textContent = "100%";
+    if (progressLabel) progressLabel.textContent = ok ? "Done" : "Stopped";
+    setTimeout(() => {
+      if (panel) panel.classList.remove("processing");
+    }, 420);
+  }
+
   async function executeAICommand(command) {
     if (!commandInputComponents) return;
     const { input } = commandInputComponents;
-    
+
     if (aiCommandInProgressInUI) {
       console.log('[AI UI] Command already in progress, ignoring');
       return;
     }
-    
+
     aiCommandInProgressInUI = true;
 
     // Show loading state
     input.value = "";
-    input.placeholder = "⏳ Processing...";
+    input.placeholder = "Working…";
     input.disabled = true;
-    
+    beginAiProgress();
+
     try {
       const response = await new Promise((resolve, reject) => {
         safeSendMessage({ 
@@ -2356,24 +2630,28 @@
       });
       
       console.log('[AI Command] Response:', response);
-      
+
       if (response.awaitingConfirmation) {
         // Confirmation will be handled by CONFIRM_TOOL_CALL message
+        endAiProgress(true);
         return;
       }
-      
+
       if (response.success) {
+        endAiProgress(true);
         showToast(response.message, "success");
-        
+
         // Show analysis results if present
         if (response.analysis) {
           showAnalysisModal(response.analysis);
         }
       } else {
+        endAiProgress(false);
         showToast(response.message || "Command failed", "error");
       }
     } catch (error) {
       console.error('[AI Command] Error:', error);
+      endAiProgress(false);
       showToast("Error: " + error.message, "error");
     } finally {
       aiCommandInProgressInUI = false;
@@ -2441,105 +2719,6 @@
   function showPlanPreviewModal(data) {
     const modal = document.createElement("div");
     modal.className = "ts-preview-modal";
-    
-    const styleEl = document.createElement("style");
-    styleEl.textContent = `
-      .ts-preview-modal {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        display: flex; align-items: center; justify-content: center;
-        z-index: 10002; opacity: 0; transition: opacity 0.2s ease;
-        pointer-events: none;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      }
-      .ts-preview-modal.visible {
-        opacity: 1;
-        pointer-events: auto;
-      }
-      .ts-modal-overlay {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(4px);
-      }
-      .ts-preview-content {
-        position: relative; background: #1e1e1e; padding: 24px;
-        border-radius: 16px; max-width: 500px; width: 90%; max-height: 85vh;
-        display: flex; flex-direction: column;
-        box-shadow: 0 12px 48px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
-        color: #ffffff;
-      }
-      .ts-preview-header {
-        margin-bottom: 16px;
-      }
-      .ts-preview-title {
-        margin: 0; font-size: 20px; font-weight: 600; color: #ffffff;
-        display: flex; align-items: center; gap: 8px;
-      }
-      .ts-preview-subtitle {
-        margin: 4px 0 0 0; font-size: 13px; color: #aaaaaa;
-        display: flex; justify-content: space-between;
-      }
-      .ts-preview-confidence {
-        font-weight: 600;
-        color: #0078d7;
-      }
-      .ts-preview-list-header {
-        display: flex; align-items: center; padding: 8px 12px;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-        font-size: 12px; color: #aaaaaa;
-        gap: 8px;
-      }
-      .ts-preview-list {
-        overflow-y: auto; max-height: 40vh; margin-bottom: 20px;
-        border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
-        background: rgba(0, 0, 0, 0.2);
-      }
-      .ts-preview-item {
-        display: flex; align-items: center; padding: 10px 12px;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
-        gap: 12px; transition: background 0.15s ease;
-      }
-      .ts-preview-item:last-child {
-        border-bottom: none;
-      }
-      .ts-preview-item:hover {
-        background: rgba(255, 255, 255, 0.04);
-      }
-      .ts-preview-checkbox {
-        cursor: pointer; width: 16px; height: 16px; accent-color: #0078d7;
-      }
-      .ts-preview-favicon {
-        width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
-        background: rgba(255,255,255,0.1); font-size: 10px; font-weight: bold; flex-shrink: 0;
-      }
-      .ts-preview-item-info {
-        flex: 1; min-w: 0; display: flex; flex-direction: column; gap: 2px;
-      }
-      .ts-preview-item-title {
-        font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        color: #eeeeee;
-      }
-      .ts-preview-item-reason {
-        font-size: 11px; color: #888888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      }
-      .ts-preview-buttons {
-        display: flex; gap: 12px; justify-content: flex-end; margin-top: auto;
-      }
-      .ts-preview-btn {
-        padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s ease;
-      }
-      .ts-preview-btn-cancel {
-        background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #ffffff;
-      }
-      .ts-preview-btn-cancel:hover {
-        background: rgba(255,255,255,0.05);
-      }
-      .ts-preview-btn-confirm {
-        background: #0078d7; border: none; color: #ffffff;
-      }
-      .ts-preview-btn-confirm:hover {
-        background: #0063b1;
-      }
-    `;
-    modal.appendChild(styleEl);
 
     const overlay = document.createElement("div");
     overlay.className = "ts-modal-overlay";
@@ -2615,10 +2794,7 @@
       const isUncertain = uncertainTabIds.includes(id);
 
       const item = document.createElement("div");
-      item.className = "ts-preview-item";
-      if (isUncertain) {
-        item.style.borderLeft = "3px solid #f59e0b"; // Warning accent for low confidence
-      }
+      item.className = "ts-preview-item" + (isUncertain ? " uncertain" : "");
 
       const cb = document.createElement("input");
       cb.type = "checkbox";
@@ -2652,7 +2828,15 @@
 
       const itemReason = document.createElement("span");
       itemReason.className = "ts-preview-item-reason";
-      itemReason.textContent = (isUncertain ? "[Uncertain] " : "") + (details.reason || "Matched");
+      if (isUncertain) {
+        const badge = document.createElement("span");
+        badge.className = "ts-preview-badge-uncertain";
+        badge.textContent = "Uncertain";
+        itemReason.appendChild(badge);
+        itemReason.appendChild(document.createTextNode(details.reason || "Matched with lower confidence"));
+      } else {
+        itemReason.textContent = details.reason || "Matched";
+      }
       info.appendChild(itemReason);
 
       item.appendChild(info);
@@ -2660,6 +2844,22 @@
     });
 
     content.appendChild(list);
+
+    const buttons = document.createElement("div");
+    buttons.className = "ts-preview-buttons";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.className = "ts-preview-btn ts-preview-btn-cancel";
+    cancelBtn.textContent = "Cancel";
+    buttons.appendChild(cancelBtn);
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.className = "ts-preview-btn ts-preview-btn-confirm";
+    buttons.appendChild(confirmBtn);
+
+    content.appendChild(buttons);
+    modal.appendChild(content);
+    shadow.appendChild(modal);
 
     // Update Confirm Button Label based on checked count
     const updateConfirmLabel = () => {
@@ -2684,22 +2884,6 @@
         updateConfirmLabel();
       };
     });
-
-    const buttons = document.createElement("div");
-    buttons.className = "ts-preview-buttons";
-
-    const cancelBtn = document.createElement("button");
-    cancelBtn.className = "ts-preview-btn ts-preview-btn-cancel";
-    cancelBtn.textContent = "Cancel";
-    buttons.appendChild(cancelBtn);
-
-    const confirmBtn = document.createElement("button");
-    confirmBtn.className = "ts-preview-btn ts-preview-btn-confirm";
-    buttons.appendChild(confirmBtn);
-
-    content.appendChild(buttons);
-    modal.appendChild(content);
-    shadow.appendChild(modal);
 
     updateConfirmLabel();
 

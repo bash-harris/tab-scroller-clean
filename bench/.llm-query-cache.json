@@ -1,0 +1,1955 @@
+{
+ "close my cricket tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "odi"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "group my cricket tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "odi"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "bookmark the cricket pages": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "odi"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "pin cricket tabs": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "football"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "mute my cricket tabs": {
+  "intent": "mute_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "odi"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "reload the cricket tabs": {
+  "intent": "reload_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "batting"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "sort my cricket tabs": {
+  "intent": "sort_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "odi"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "cricket tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "batting"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "show me the cricket tabs": {
+  "intent": "search_and_switch",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "football"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "find my cricket pages": {
+  "intent": "search_and_switch",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "batting"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "close all youtube.com tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "youtube.com"
+  ],
+  "confidence": 1,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "group the youtube tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "youtube.com",
+    "music video",
+    "live stream"
+   ]
+  },
+  "domains": [
+   "youtube.com"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "bookmark every tab on youtube.com": {
+  "intent": "bookmark_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "youtube.com"
+  ],
+  "confidence": 1,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "pin the youtube tabs": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "video sharing",
+    "music videos"
+   ]
+  },
+  "domains": [
+   "youtube.com"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "mute tabs from youtube.com": {
+  "intent": "mute_tabs",
+  "concepts": [
+   "youtube.com"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "youtube.com"
+  ],
+  "confidence": 1,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "reload all youtube.com pages": {
+  "intent": "reload_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "youtube.com"
+  ],
+  "confidence": 1,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "sort my youtube tabs": {
+  "intent": "sort_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "video sharing site",
+    "music videos"
+   ]
+  },
+  "domains": [
+   "youtube.com"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "close the crypto tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "crypto"
+  ],
+  "combine": "union",
+  "expansions": {
+   "crypto": [
+    "cryptocurrencies",
+    "bitcoin",
+    "altcoins"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "group tabs about cryptocurrencies": {
+  "intent": "group_tabs",
+  "concepts": [
+   "cryptocurrencies"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cryptocurrencies": [
+    "bitcoin",
+    "ethereum",
+    "crypto"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "bookmark my crypto pages": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "crypto"
+  ],
+  "combine": "union",
+  "expansions": {
+   "crypto": [
+    "cryptocurrency",
+    "bitcoin",
+    "altcoins"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "find tabs about bitcoin": {
+  "intent": "search_and_switch",
+  "concepts": [
+   "bitcoin"
+  ],
+  "combine": "union",
+  "expansions": {
+   "bitcoin": [
+    "crypto",
+    "cryptocurrency",
+    "blockchain"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "pin my ethereum tabs": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "ethereum"
+  ],
+  "combine": "union",
+  "expansions": {
+   "ethereum": [
+    "crypto",
+    "cryptocurrency",
+    "ether"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "mute the cryptocurrency pages": {
+  "intent": "mute_tabs",
+  "concepts": [
+   "cryptocurrency"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cryptocurrency": [
+    "crypto",
+    "bitcoin",
+    "altcoins"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "reload my crypto tabs": {
+  "intent": "reload_tabs",
+  "concepts": [
+   "crypto"
+  ],
+  "combine": "union",
+  "expansions": {
+   "crypto": [
+    "cryptocurrencies",
+    "bitcoin",
+    "altcoins"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "show me bitcoin tabs": {
+  "intent": "search_and_switch",
+  "concepts": [
+   "bitcoin"
+  ],
+  "combine": "union",
+  "expansions": {
+   "bitcoin": [
+    "crypto",
+    "cryptocurrency",
+    "bitcoin price"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "close the ashes tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "the ashes"
+  ],
+  "combine": "union",
+  "expansions": {
+   "the ashes": [
+    "cricket",
+    "test match",
+    "england australia"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "group the ashes page": {
+  "intent": "group_tabs",
+  "concepts": [
+   "the ashes"
+  ],
+  "combine": "union",
+  "expansions": {
+   "the ashes": [
+    "cricket",
+    "test match",
+    "england australia"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "bookmark the clean power story": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "clean power"
+  ],
+  "combine": "union",
+  "expansions": {
+   "clean power": [
+    "solar",
+    "renewable energy",
+    "wind power"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "pin the renewable energy tab": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "renewable energy"
+  ],
+  "combine": "union",
+  "expansions": {
+   "renewable energy": [
+    "clean power",
+    "solar",
+    "wind power"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "reload the central bank story": {
+  "intent": "reload_tabs",
+  "concepts": [
+   "central bank"
+  ],
+  "combine": "union",
+  "expansions": {
+   "central bank": [
+    "monetary policy",
+    "finance",
+    "banking"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "find the page about rate hikes": {
+  "intent": "search_and_switch",
+  "concepts": [
+   "rate hikes"
+  ],
+  "combine": "union",
+  "expansions": {
+   "rate hikes": [
+    "interest rates",
+    "monetary policy",
+    "inflation"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "bookmark the solar farm article": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "solar farm"
+  ],
+  "combine": "union",
+  "expansions": {
+   "solar farm": [
+    "renewable energy",
+    "solar power",
+    "green energy"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "clsoe my crickt tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "batting"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "grup my criket pages": {
+  "intent": "group_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "odi"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "bookmrk the criket tabs": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "batting"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "pin the criket tabs": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "batting"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "mut the criket tabs": {
+  "intent": "mute_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "odi"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "relod the criket tabs": {
+  "intent": "reload_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "batting"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "srot my cricket tabs": {
+  "intent": "sort_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "odi"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "crickt tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "batting"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "don t close my docs just group them": {
+  "intent": "group_tabs",
+  "concepts": [
+   "docs",
+   "documents"
+  ],
+  "combine": "union",
+  "expansions": {
+   "docs": [
+    "google docs",
+    "documents",
+    "notes"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.85,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "don t bookmark the docs pin them instead": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "docs"
+  ],
+  "combine": "union",
+  "expansions": {
+   "docs": [
+    "google docs",
+    "documents"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "don t mute the work tabs unmute them": {
+  "intent": "unmute_tabs",
+  "concepts": [
+   "work"
+  ],
+  "combine": "union",
+  "expansions": {
+   "work": [
+    "office",
+    "professional"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "don t close youtube reload it": {
+  "intent": "reload_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "youtube.com"
+   ]
+  },
+  "domains": [
+   "youtube.com"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "don t pin the cricket tabs unpin them": {
+  "intent": "unpin_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "batting"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "don t group football bookmark it": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "football"
+  ],
+  "combine": "union",
+  "expansions": {
+   "football": [
+    "soccer",
+    "sports"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "don t reload the finance page just mute it": {
+  "intent": "mute_tabs",
+  "concepts": [
+   "finance"
+  ],
+  "combine": "union",
+  "expansions": {
+   "finance": [
+    "financial news",
+    "stock market"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "don t close the solar story pin it": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "solar energy"
+  ],
+  "combine": "union",
+  "expansions": {
+   "solar energy": [
+    "clean power",
+    "renewable energy"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "close the stock market close page": {
+  "intent": "close_tabs",
+  "concepts": [
+   "stock market"
+  ],
+  "combine": "union",
+  "expansions": {
+   "stock market": [
+    "finance",
+    "equities",
+    "markets"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "find the closed captions page": {
+  "intent": "search_and_switch",
+  "concepts": [
+   "closed captions"
+  ],
+  "combine": "union",
+  "expansions": {
+   "closed captions": [
+    "subtitles",
+    "cc page"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "bookmark the page about closed captions": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "closed captions"
+  ],
+  "combine": "union",
+  "expansions": {
+   "closed captions": [
+    "subtitles",
+    "captioning",
+    "accessibility"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "group the stock market page": {
+  "intent": "group_tabs",
+  "concepts": [
+   "stock market"
+  ],
+  "combine": "union",
+  "expansions": {
+   "stock market": [
+    "finance",
+    "equities",
+    "markets"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "reload the closed caption tutorial": {
+  "intent": "reload_tabs",
+  "concepts": [
+   "closed caption tutorial"
+  ],
+  "combine": "union",
+  "expansions": {
+   "closed caption tutorial": [
+    "subtitles tutorial",
+    "tutorial on subtitles"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "mute the page about closed captions": {
+  "intent": "mute_tabs",
+  "concepts": [
+   "closed captions"
+  ],
+  "combine": "union",
+  "expansions": {
+   "closed captions": [
+    "subtitles",
+    "caption settings"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "unpin my cricket tabs": {
+  "intent": "unpin_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "football"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "unmute the football tabs": {
+  "intent": "unmute_tabs",
+  "concepts": [
+   "football"
+  ],
+  "combine": "union",
+  "expansions": {
+   "football": [
+    "soccer",
+    "league"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "unpin the youtube tabs": {
+  "intent": "unpin_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "youtube.com"
+   ]
+  },
+  "domains": [
+   "youtube.com"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "unmute my finance tab": {
+  "intent": "unmute_tabs",
+  "concepts": [
+   "finance"
+  ],
+  "combine": "union",
+  "expansions": {
+   "finance": [
+    "investment",
+    "stock market",
+    "economy"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "pin everything": {
+  "intent": "pin_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": true
+ },
+ "reload everything": {
+  "intent": "reload_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": true
+ },
+ "bookmark all tabs": {
+  "intent": "bookmark_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "confidence": 1,
+  "source": "llm",
+  "isSelectAll": true
+ },
+ "mute everything": {
+  "intent": "mute_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "confidence": 1,
+  "source": "llm",
+  "isSelectAll": true
+ },
+ "group all open tabs": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": true
+ },
+ "sort every tab": {
+  "intent": "sort_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "confidence": 1,
+  "source": "llm",
+  "isSelectAll": true
+ },
+ "unmute all tabs": {
+  "intent": "unmute_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "confidence": 1,
+  "source": "llm",
+  "isSelectAll": true
+ },
+ "close the cricket tabs and group them": {
+  "intent": "close_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "batting"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "bookmark the cricket tabs and pin them": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "odi"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "mute the football tabs or unmute them": {
+  "intent": "mute_tabs",
+  "concepts": [
+   "football"
+  ],
+  "combine": "union",
+  "expansions": {
+   "football": [
+    "soccer",
+    "league"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "close and reload the youtube tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "youtube.com"
+   ]
+  },
+  "domains": [
+   "youtube.com"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "pin or unpin my docs tabs": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "docs"
+  ],
+  "combine": "union",
+  "expansions": {
+   "docs": [
+    "google docs",
+    "documents"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "group or bookmark the travel page": {
+  "intent": "group_tabs",
+  "concepts": [
+   "travel"
+  ],
+  "combine": "union",
+  "expansions": {
+   "travel": [
+    "flight",
+    "hotel",
+    "vacation"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "unmute or reload the captions tutorial": {
+  "intent": "reload_tabs",
+  "concepts": [
+   "captions tutorial"
+  ],
+  "combine": "union",
+  "expansions": {
+   "captions tutorial": [
+    "subtitles tutorial",
+    "closed captions"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "close my cricket and youtube tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "cricket",
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "batting"
+   ],
+   "youtube": [
+    "video",
+    "music"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "group sports and entertainment tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "sports",
+   "entertainment"
+  ],
+  "combine": "union",
+  "expansions": {
+   "sports": [
+    "cricket",
+    "football",
+    "hockey"
+   ],
+   "entertainment": [
+    "movies",
+    "tv shows",
+    "music"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "bookmark pages that are both video and cricket": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "cricket",
+   "video"
+  ],
+  "combine": "intersection",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl"
+   ],
+   "video": [
+    "sports highlights",
+    "match"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.85,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "pin the work planning documents": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "work planning documents"
+  ],
+  "combine": "union",
+  "expansions": {
+   "work planning documents": [
+    "project plans",
+    "business strategy",
+    "company docs"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "search for my google tabs": {
+  "intent": "search_and_switch",
+  "concepts": [
+   "google"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google": [
+    "gmail",
+    "drive",
+    "docs"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "reload every google page": {
+  "intent": "reload_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "google.com"
+  ],
+  "confidence": 1,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "close my sports tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "sports"
+  ],
+  "combine": "union",
+  "expansions": {
+   "sports": [
+    "football",
+    "basketball",
+    "cricket"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "find my video tabs": {
+  "intent": "search_and_switch",
+  "concepts": [
+   "video"
+  ],
+  "combine": "union",
+  "expansions": {
+   "video": [
+    "youtube",
+    "streaming",
+    "movie"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "close the tabs about recipes": {
+  "intent": "close_tabs",
+  "concepts": [
+   "recipes"
+  ],
+  "combine": "union",
+  "expansions": {
+   "recipes": [
+    "cooking",
+    "meal ideas",
+    "baking"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "group the travel pages": {
+  "intent": "group_tabs",
+  "concepts": [
+   "travel"
+  ],
+  "combine": "union",
+  "expansions": {
+   "travel": [
+    "flight",
+    "hotel",
+    "vacation"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "bookmark my work docs": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "work docs"
+  ],
+  "combine": "union",
+  "expansions": {
+   "work docs": [
+    "office documents",
+    "work files",
+    "company docs"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "pin the football pages": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "football"
+  ],
+  "combine": "union",
+  "expansions": {
+   "football": [
+    "soccer",
+    "league",
+    "premier league"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "unmute the cricket videos": {
+  "intent": "unmute_tabs",
+  "concepts": [
+   "cricket",
+   "videos"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "odi"
+   ],
+   "videos": [
+    "matches",
+    "live stream"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "close the solar and renewable tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "solar",
+   "renewable energy"
+  ],
+  "combine": "union",
+  "expansions": {
+   "solar": [
+    "clean power",
+    "photovoltaic"
+   ],
+   "renewable energy": [
+    "green energy",
+    "environmental"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "sort my finance tabs": {
+  "intent": "sort_tabs",
+  "concepts": [
+   "finance"
+  ],
+  "combine": "union",
+  "expansions": {
+   "finance": [
+    "investment",
+    "stock market",
+    "banking"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "switch to my pasta recipe": {
+  "intent": "search_and_switch",
+  "concepts": [
+   "pasta recipe"
+  ],
+  "combine": "union",
+  "expansions": {
+   "pasta recipe": [
+    "recipe",
+    "pasta dish",
+    "pasta cooking"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "close my docs.google.com tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "docs"
+  ],
+  "combine": "union",
+  "expansions": {
+   "docs": [
+    "google docs",
+    "documents"
+   ]
+  },
+  "domains": [
+   "google.com"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "group the hardware tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "hardware"
+  ],
+  "combine": "union",
+  "expansions": {
+   "hardware": [
+    "computer components",
+    "tech gadgets",
+    "electronics"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "bookmark the keyboard page": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "keyboard"
+  ],
+  "combine": "union",
+  "expansions": {
+   "keyboard": [
+    "keyboards",
+    "gaming keyboards",
+    "computer accessories"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "reload the thailand travel page": {
+  "intent": "reload_tabs",
+  "concepts": [
+   "thailand travel"
+  ],
+  "combine": "union",
+  "expansions": {
+   "thailand travel": [
+    "travel guide",
+    "thai holidays",
+    "visiting thailand"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "mute the funny cat video": {
+  "intent": "mute_tabs",
+  "concepts": [
+   "funny cat video"
+  ],
+  "combine": "union",
+  "expansions": {
+   "funny cat video": [
+    "cat videos",
+    "animal videos",
+    "viral videos"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "close the premier league table": {
+  "intent": "close_tabs",
+  "concepts": [
+   "premier league"
+  ],
+  "combine": "union",
+  "expansions": {
+   "premier league": [
+    "football table",
+    "league table",
+    "/epl"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "search and switch to the sprint notes": {
+  "intent": "search_and_switch",
+  "concepts": [
+   "sprint notes"
+  ],
+  "combine": "union",
+  "expansions": {
+   "sprint notes": [
+    "meeting minutes",
+    "team notes"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "pin the q3 roadmap": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "q3 roadmap"
+  ],
+  "combine": "union",
+  "expansions": {
+   "q3 roadmap": [
+    "quarterly plan",
+    "product roadmap",
+    "third quarter"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "close the central bank rate story": {
+  "intent": "close_tabs",
+  "concepts": [
+   "central bank rate"
+  ],
+  "combine": "union",
+  "expansions": {
+   "central bank rate": [
+    "interest rates",
+    "monetary policy",
+    "banking"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "find the mechanical keyboard guide": {
+  "intent": "search_and_switch",
+  "concepts": [
+   "mechanical keyboard guide"
+  ],
+  "combine": "union",
+  "expansions": {
+   "mechanical keyboard guide": [
+    "keyboard buying guide",
+    "mech keyboard guide",
+    "gaming keyboard"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "unpin the football tabs": {
+  "intent": "unpin_tabs",
+  "concepts": [
+   "football"
+  ],
+  "combine": "union",
+  "expansions": {
+   "football": [
+    "soccer",
+    "league"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "close all my work tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "confidence": 1,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "group the entertainment tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "entertainment"
+  ],
+  "combine": "union",
+  "expansions": {
+   "entertainment": [
+    "movies",
+    "tv shows",
+    "music"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "bookmark both planning documents": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "planning documents"
+  ],
+  "combine": "union",
+  "expansions": {
+   "planning documents": [
+    "project plans",
+    "strategy documents"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "reload the football and soccer pages": {
+  "intent": "reload_tabs",
+  "concepts": [
+   "football",
+   "soccer"
+  ],
+  "combine": "union",
+  "expansions": {
+   "football": [
+    "premier league",
+    "la liga",
+    "soccer"
+   ],
+   "soccer": [
+    "world cup",
+    "nfl"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.8,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "search for the clean energy page": {
+  "intent": "search_and_switch",
+  "concepts": [
+   "clean energy"
+  ],
+  "combine": "union",
+  "expansions": {
+   "clean energy": [
+    "renewable energy",
+    "solar",
+    "wind power"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "close the tab about closed captions": {
+  "intent": "close_tabs",
+  "concepts": [
+   "closed captions"
+  ],
+  "combine": "union",
+  "expansions": {
+   "closed captions": [
+    "subtitles",
+    "video settings"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "group my cricket videos": {
+  "intent": "group_tabs",
+  "concepts": [
+   "cricket",
+   "videos"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl"
+   ],
+   "videos": [
+    "video clips",
+    "matches"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "bookmark the ashes report": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "the ashes"
+  ],
+  "combine": "union",
+  "expansions": {
+   "the ashes": [
+    "cricket",
+    "test match",
+    "england australia"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "pin all renewable energy pages": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "renewable energy"
+  ],
+  "combine": "union",
+  "expansions": {
+   "renewable energy": [
+    "clean power",
+    "solar",
+    "wind power"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "mute every sports tab": {
+  "intent": "mute_tabs",
+  "concepts": [
+   "sports"
+  ],
+  "combine": "union",
+  "expansions": {
+   "sports": [
+    "football",
+    "cricket",
+    "basketball"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "unmute the youtube cricket video": {
+  "intent": "unmute_tabs",
+  "concepts": [
+   "cricket",
+   "video"
+  ],
+  "combine": "intersection",
+  "expansions": {
+   "cricket": [
+    "test match",
+    "ipl",
+    "odi"
+   ],
+   "video": [
+    "live stream",
+    "match"
+   ]
+  },
+  "domains": [
+   "youtube.com"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "sort the two google docs tabs": {
+  "intent": "sort_tabs",
+  "concepts": [
+   "google docs"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google docs": [
+    "docs.google.com",
+    "document"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ },
+ "find the football standings": {
+  "intent": "search_and_switch",
+  "concepts": [
+   "football standings"
+  ],
+  "combine": "union",
+  "expansions": {
+   "football standings": [
+    "league table",
+    "soccer standings",
+    "team rankings"
+   ]
+  },
+  "domains": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "isSelectAll": false
+ }
+}

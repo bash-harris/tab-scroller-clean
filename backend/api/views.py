@@ -338,3 +338,317 @@ def embeddings(request):
         return JsonResponse({'embedding': emb})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# ============================================================================
+# PERSISTENT TAB STORAGE & HIGH-THROUGHPUT SEARCH ENDPOINTS
+# ============================================================================
+from .models import TabCard, TabEntity, EntityResolutionCache, setup_fts_tables
+from django.db import connection, transaction
+from django.utils import timezone
+
+
+@csrf_exempt
+def sync_tabs(request):
+    """Bulk upsert tab cards + embeddings into persistent SQLite storage."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    try:
+        body = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    tabs = body.get('tabs', [])
+    if not isinstance(tabs, list):
+        return JsonResponse({'error': 'tabs must be a list'}, status=400)
+
+    if not tabs:
+        return JsonResponse({'success': True, 'synced': 0, 'total': TabCard.objects.count()})
+
+    synced_count = 0
+    t0 = time.time()
+    setup_fts_tables()
+
+    with transaction.atomic():
+        for t in tabs:
+            url_hash = t.get('urlHash') or t.get('url_hash')
+            if not url_hash:
+                continue
+
+            card, created = TabCard.objects.update_or_create(
+                url_hash=url_hash,
+                defaults={
+                    'url': t.get('url', ''),
+                    'title': t.get('title', ''),
+                    'domain': t.get('domain', ''),
+                    'category': t.get('category', ''),
+                    'tags': t.get('tags', []),
+                    'keywords': t.get('keywords', []),
+                    'pseudo_doc': t.get('pseudoDoc', t.get('pseudo_doc', '')),
+                    'main_text': t.get('mainText', t.get('main_text', '')),
+                    'embedding': t.get('embedding'),
+                    'extraction_tier': t.get('extractionTier', t.get('extraction_tier', 'local_ner')),
+                    'last_seen_open_at': timezone.now(),
+                }
+            )
+
+            # Process optional entities linked to this tab
+            entities = t.get('entities', [])
+            if isinstance(entities, list) and entities:
+                TabEntity.objects.filter(url_hash=card).delete()
+                entity_objs = [
+                    TabEntity(
+                        url_hash=card,
+                        entity_name=e.get('name', '').strip().lower(),
+                        entity_type=e.get('type', 'general').strip().lower(),
+                        confidence=float(e.get('confidence', 1.0))
+                    )
+                    for e in entities
+                    if e.get('name')
+                ]
+                if entity_objs:
+                    TabEntity.objects.bulk_create(entity_objs, ignore_conflicts=True)
+
+            synced_count += 1
+
+    t1 = time.time()
+    total_cards = TabCard.objects.count()
+    print(f"[Timing] sync_tabs: {(t1-t0)*1000:.1f}ms | synced {synced_count} tabs | total in DB: {total_cards}")
+
+    return JsonResponse({
+        'success': True,
+        'synced': synced_count,
+        'total': total_cards
+    })
+
+
+@csrf_exempt
+def get_cards(request):
+    """Retrieve all stored cards or a subset by url_hash."""
+    hashes_param = request.GET.get('hashes')
+    if hashes_param:
+        hash_list = [h.strip() for h in hashes_param.split(',') if h.strip()]
+        cards = TabCard.objects.filter(url_hash__in=hash_list)
+    else:
+        limit = min(int(request.GET.get('limit', 2000)), 5000)
+        cards = TabCard.objects.all()[:limit]
+
+    return JsonResponse({
+        'cards': [c.to_dict() for c in cards],
+        'total': TabCard.objects.count()
+    })
+
+
+@csrf_exempt
+def fts_search(request):
+    """Sub-10ms Full-Text Search on SQLite FTS5 table."""
+    query = request.GET.get('q', '').strip()
+    if not query:
+        return JsonResponse({'results': [], 'total': 0})
+
+    limit = min(int(request.GET.get('limit', 50)), 200)
+    t0 = time.time()
+
+    # Sanitize FTS5 query terms (remove syntax characters that break FTS parser)
+    safe_terms = []
+    for t in query.split():
+        clean_t = t.replace('"', '').replace("'", '').replace('*', '')
+        if clean_t.isalnum() or len(clean_t) > 1:
+            safe_terms.append(f'"{clean_t}"')
+
+    if not safe_terms:
+        return JsonResponse({'results': [], 'total': 0})
+
+    fts_query = ' OR '.join(safe_terms)
+
+    setup_fts_tables()
+
+    results = []
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT c.url_hash, c.url, c.title, c.domain, c.category, c.tags, c.keywords, c.pseudo_doc, fts.rank
+            FROM tab_fts fts
+            JOIN tab_cards c ON fts.url_hash = c.url_hash
+            WHERE tab_fts MATCH %s
+            ORDER BY fts.rank
+            LIMIT %s
+        """, [fts_query, limit])
+
+        rows = cursor.fetchall()
+        for row in rows:
+            results.append({
+                'urlHash': row[0],
+                'url': row[1],
+                'title': row[2],
+                'domain': row[3],
+                'category': row[4],
+                'tags': json.loads(row[5]) if isinstance(row[5], str) else row[5],
+                'keywords': json.loads(row[6]) if isinstance(row[6], str) else row[6],
+                'pseudoDoc': row[7],
+                'score': round(abs(float(row[8])), 4)
+            })
+
+    t1 = time.time()
+    print(f"[Timing] fts_search: {(t1-t0)*1000:.1f}ms | query='{query}' | matches={len(results)}")
+
+    return JsonResponse({
+        'query': query,
+        'results': results,
+        'count': len(results)
+    })
+
+
+@csrf_exempt
+def entity_query(request):
+    """Find tabs matching a list of named entities in SQLite."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    try:
+        body = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    entity_names = [str(e).strip().lower() for e in body.get('entities', []) if str(e).strip()]
+    if not entity_names:
+        return JsonResponse({'matches': []})
+
+    t0 = time.time()
+    matches = []
+    with connection.cursor() as cursor:
+        placeholders = ', '.join(['%s'] * len(entity_names))
+        cursor.execute(f"""
+            SELECT c.url_hash, c.url, c.title, c.domain, c.category, e.entity_name, e.entity_type, e.confidence
+            FROM tab_entities e
+            JOIN tab_cards c ON e.url_hash = c.url_hash
+            WHERE e.entity_name IN ({placeholders})
+            ORDER BY e.confidence DESC
+            LIMIT 100
+        """, entity_names)
+
+        rows = cursor.fetchall()
+        for row in rows:
+            matches.append({
+                'urlHash': row[0],
+                'url': row[1],
+                'title': row[2],
+                'domain': row[3],
+                'category': row[4],
+                'matchedEntity': row[5],
+                'entityType': row[6],
+                'confidence': float(row[7])
+            })
+
+    t1 = time.time()
+    print(f"[Timing] entity_query: {(t1-t0)*1000:.1f}ms | entities={entity_names} | matches={len(matches)}")
+    return JsonResponse({'matches': matches, 'count': len(matches)})
+
+
+@csrf_exempt
+def resolve_multi_hop(request):
+    """Decompose complex queries into canonical entities with 30-day SQLite caching."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    try:
+        body = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    query = body.get('query', '').strip()
+    if not query:
+        return JsonResponse({'entities': [], 'cached': False})
+
+    # Canonicalize key
+    canonical_key = query.lower().replace(' ', '_')[:250]
+
+    # Check cache
+    try:
+        cache_entry = EntityResolutionCache.objects.get(query_key=canonical_key)
+        if not cache_entry.is_expired():
+            return JsonResponse({
+                'queryKey': canonical_key,
+                'resolvedEntities': cache_entry.resolved_entities,
+                'cached': True
+            })
+    except EntityResolutionCache.DoesNotExist:
+        pass
+
+    # Cache miss: Decompose with local LLM
+    prompt = f"""Extract and expand all implicit real-world named entities (people, actors, titles, awards, technologies) needed to answer this query:
+User Query: "{query}"
+
+Return ONLY a JSON list of entity strings. Example: ["Philip Seymour Hoffman", "Reese Witherspoon", "George Clooney"]"""
+
+    resolved_entities = []
+    try:
+        llm_out = call_ollama_generate(
+            model=DEFAULT_MODEL,
+            prompt=prompt,
+            system_instruction="You are a knowledge graph entity resolver. Return ONLY valid JSON array of strings.",
+            json_format=True
+        )
+        parsed = json.loads(llm_out)
+        if isinstance(parsed, list):
+            resolved_entities = [str(x).strip() for x in parsed if str(x).strip()]
+        elif isinstance(parsed, dict) and 'entities' in parsed:
+            resolved_entities = [str(x).strip() for x in parsed['entities'] if str(x).strip()]
+    except Exception as e:
+        print(f"[MultiHop] LLM entity resolution fallback: {e}")
+        # Fallback: extract basic capitalized/quoted entities from the query itself
+        import re
+        resolved_entities = re.findall(r'\b[A-Z][a-z0-9_]+\b', query)
+
+    # Save to SQLite resolution cache
+    EntityResolutionCache.objects.update_or_create(
+        query_key=canonical_key,
+        defaults={
+            'resolved_entities': resolved_entities,
+            'resolved_at': timezone.now(),
+        }
+    )
+
+    return JsonResponse({
+        'queryKey': canonical_key,
+        'resolvedEntities': resolved_entities,
+        'cached': False
+    })
+
+
+@csrf_exempt
+def get_stats(request):
+    """Retrieve database telemetry and coverage statistics."""
+    total_cards = TabCard.objects.count()
+    total_entities = TabEntity.objects.count()
+    cached_queries = EntityResolutionCache.objects.count()
+
+    return JsonResponse({
+        'totalCards': total_cards,
+        'totalEntities': total_entities,
+        'cachedResolutions': cached_queries,
+        'ftsReady': True,
+        'timestamp': timezone.now().isoformat()
+    })
+
+
+@csrf_exempt
+def delete_tabs(request):
+    """Prune tabs by url_hash from SQLite database."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    try:
+        body = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    hashes = body.get('hashes', [])
+    if isinstance(hashes, list) and hashes:
+        matching_cards = TabCard.objects.filter(url_hash__in=hashes)
+        deleted_count = matching_cards.count()
+        matching_cards.delete()
+        return JsonResponse({'success': True, 'deleted': deleted_count})
+
+    return JsonResponse({'success': True, 'deleted': 0})
+

@@ -2,7 +2,7 @@
 // Responds to messages from content scripts with current-window tab data.
 // Uses a per-window cache to avoid chrome.tabs.query on every page load.
 
-importScripts('tab-cards.js', 'command-agent.js');
+importScripts('tab-cards.js', 'concept-core.js', 'llm-query.js', 'command-agent.js');
 importScripts('domain-priors.js', 'enrich-math.js');
 
 // Load Session Memory Engine (MV3 importScripts)
@@ -13,7 +13,12 @@ try {
 } catch (e) {
   console.error('[background] Failed to load transformers.min.js:', e);
 }
-importScripts('db.js', 'embed.js', 'indexer.js', 'recall-tabs.js');
+// nli-select.js must come after transformers.min.js: it resolves the library at
+// call time, but keeping the order explicit avoids a first-command stall.
+// ort-config.js must come before embed.js and nli-select.js -- both call it to
+// point onnxruntime at the bundled SIMD wasm before instantiating a session.
+importScripts('ort-config.js');
+importScripts('db.js', 'embed.js', 'indexer.js', 'recall-tabs.js', 'nli-select.js');
 
 // --- Tunable Heuristics (Optimized via Autoresearch) ---
 let MAX_SNIPPET_LENGTH = 300;
@@ -845,10 +850,22 @@ const transactionLog = {
 
 /**
  * Capture tab state before a destructive action so it can be undone.
+ *
+ * preResolvedTabs is the set executeToolCall is about to act on, and must be
+ * honoured verbatim. This parameter was previously missing while the sole call
+ * site already passed it, so it was silently dropped and the undo snapshot was
+ * re-resolved from raw args instead. That is not merely wasteful -- it captures
+ * a DIFFERENT set than the one being modified:
+ *   - close_tabs resolves with excludeActive=true, but this function passed
+ *     false, so the active tab was recorded as "closed" and a later undo would
+ *     reopen a tab that was never closed;
+ *   - a user-confirmed selection (preResolvedTabIds) is narrower than args, so
+ *     undo would revert tabs the user explicitly deselected;
+ *   - tabs opened or closed between the two resolutions land in one set only.
  */
-async function captureBeforeState(intent, args, windowId) {
+async function captureBeforeState(intent, args, windowId, preResolvedTabs = null) {
   try {
-    const tabs = await resolveTabsForAction(args, windowId, false);
+    const tabs = preResolvedTabs || await resolveTabsForAction(args, windowId, false);
     const tabIds = tabs.map(t => t.id);
 
     switch (intent) {
@@ -1127,29 +1144,18 @@ function tryRuleBasedGrouping(query, tabs) {
 
   console.log('[RuleBased] Checking query:', JSON.stringify(clean), 'expanded keywords:', expandedKeywords);
 
-  // RULE 1: Keyword-based matching (flexible)
+  // RULE 1: Universal all-tabs action (e.g. "close all tabs", "reload all tabs")
   const actionWords = ['close', 'group', 'bookmark', 'pin', 'mute', 'reload'];
   const hasAction = actionWords.some(a => queryLower.includes(a));
 
-  if (hasAction && (expandedKeywords.length > 0 || queryLower.includes(' all '))) {
-    let matched = tabs.filter(tab => {
-      const titleLower = (tab.title || '').toLowerCase();
-      const urlLower = (tab.url || '').toLowerCase();
-      const domain = safeHost(tab.url);
-      return expandedKeywords.some(kw =>
-        domain.includes(kw) || titleLower.includes(kw) || urlLower.includes(kw)
-      );
-    });
-
-    // FALLBACK: If no keyword match but "all" is specified, match everything
-    if (matched.length === 0 && queryLower.includes(' all ')) {
-      matched = tabs;
+  if (hasAction) {
+    if (expandedKeywords.length === 0 && (queryLower.includes(' all ') || queryLower.includes(' everything '))) {
+      // ONLY match all tabs if NO specific keywords/topics were requested
+      console.log(`[RuleBased] Universal action on all tabs: ${tabs.length} tabs`);
+      return { matched: tabs, method: 'all-tabs', keywords: [] };
     }
-
-    if (matched.length > 0) {
-      console.log(`[RuleBased] Keyword match: ${matched.length} tabs for keywords [${keywords.join(', ')}]`);
-      return { matched, method: 'keyword-match', keywords };
-    }
+    // If topic keywords exist (e.g. "programming", "cricket"), do NOT hijack with substring search
+    // Return null to delegate to the Semantic RAG & NLI pipeline
   }
 
   // RULE 2: Duplicate detection
@@ -1471,6 +1477,22 @@ function readAiSettings() {
       ollamaTimeout: 60000,
       fallbackToOllama: true,
       allowCloudContent: false,
+      // Tab-selection engine: 'nli' = local zero-shot entailment (default),
+      // 'llm' = the original generative path. Measured on bench/commands.jsonl,
+      // NLI scored 21/25 set-exact vs 1/25 for the LLM path, at ~190ms/command
+      // vs ~20s, using ~70MB of weights on CPU instead of ~2GB on the GPU.
+      // Switchable because it changes behaviour for every command.
+      selectionEngine: 'nli',
+      // Compile the command into a structured query with a small LLM before
+      // selection. One cached call per distinct command, O(1) in tab count, and
+      // it never sees tab content. Supplies the three things the deterministic
+      // parser cannot: typo tolerance, world knowledge, and filler stripping.
+      // Disabling it falls back to concept-core.js, which still works offline.
+      useQueryParser: true,
+      // Deliberately NOT ollamaModel: a code-completion model is the wrong tool
+      // for reading natural language, and qwen2.5-coder is what produced
+      // "LeetCode entertainment tab" in the original selection path.
+      queryParserModel: 'qwen2.5:latest',
       // AI Backend (Django gateway) Settings
       useBackend: false,
       backendUrl: 'http://localhost:8000',
@@ -2199,11 +2221,21 @@ async function resolveTabsForAction(args, windowId, excludeActive = false) {
   // STRATEGY 1: Direct tab IDs from Ollama tab-aware parsing
   if (args.tabIds && Array.isArray(args.tabIds) && args.tabIds.length > 0) {
     console.log(`[Resolve] Using ${args.tabIds.length} AI-identified tab IDs:`, args.tabIds);
+    let droppedForeign = 0;
     for (const id of args.tabIds) {
       try {
         const t = await chrome.tabs.get(id);
-        if (t && t.windowId === windowId) tabs.push(t);
+        if (!t) continue;
+        // Retrieval now considers every window, so a matched tab legitimately
+        // lives outside windowId. Dropping those here would silently discard
+        // most of the result set. Only grouping is window-bound, and
+        // handleGroupTabs enforces that itself by grouping per window.
+        if (args.windowScoped && t.windowId !== windowId) { droppedForeign++; continue; }
+        tabs.push(t);
       } catch { /* tab may have closed */ }
+    }
+    if (droppedForeign) {
+      console.log(`[Resolve] ${droppedForeign} tab(s) outside window ${windowId} excluded (window-scoped action)`);
     }
   } else {
     // STRATEGY 2: Filter-based resolution (Gemini function calling path)
@@ -2253,7 +2285,9 @@ async function handleCloseTabs(args, windowId, rawCommand = '', preResolvedTabs 
 
 async function handleGroupTabs(args, windowId, preResolvedTabs = null) {
   const { groupName, color = 'blue' } = args;
-  const tabs = preResolvedTabs || await resolveTabsForAction(args, windowId, false);
+  // Explicit here too: this handler is reachable directly, not only via
+  // executeToolCall, and grouping is always window-bound.
+  const tabs = preResolvedTabs || await resolveTabsForAction({ ...args, windowScoped: true }, windowId, false);
 
   if (tabs.length === 0) {
     return { success: false, message: "No tabs to group. Try a different domain or keyword." };
@@ -2263,21 +2297,58 @@ async function handleGroupTabs(args, windowId, preResolvedTabs = null) {
     return { success: false, message: `Only found 1 matching tab ("${tabs[0]?.title}"). Need at least 2 to group.` };
   }
 
-  const tabIds = tabs.map(t => t.id);
-
-  try {
-    const groupId = await chrome.tabs.group({ tabIds });
-    await chrome.tabGroups.update(groupId, { title: groupName, color });
-
-    return {
-      success: true,
-      message: `✅ Grouped ${tabs.length} tabs into "${groupName}"`,
-      groupId,
-      count: tabs.length
-    };
-  } catch (error) {
-    return { success: false, message: `Failed to group tabs: ${error.message}` };
+  // A tab group cannot span windows: chrome.tabs.group rejects a tabIds list
+  // drawn from more than one window. Retrieval is now all-windows, so bucket by
+  // window and create one identically-named group in each, rather than yanking
+  // the user's tabs between windows behind their back.
+  const byWindow = new Map();
+  for (const t of tabs) {
+    if (!byWindow.has(t.windowId)) byWindow.set(t.windowId, []);
+    byWindow.get(t.windowId).push(t.id);
   }
+
+  // Windows contributing a single tab cannot form a group of their own.
+  const groupable = [...byWindow.entries()].filter(([, ids]) => ids.length >= 2);
+  const strays = [...byWindow.entries()]
+    .filter(([, ids]) => ids.length < 2)
+    .reduce((n, [, ids]) => n + ids.length, 0);
+
+  if (groupable.length === 0) {
+    return {
+      success: false,
+      message: `Found ${tabs.length} matching tabs, but they are spread one-per-window. Need at least 2 in the same window to group.`
+    };
+  }
+
+  const groupIds = [];
+  let grouped = 0;
+  const errors = [];
+  for (const [wid, tabIds] of groupable) {
+    try {
+      const groupId = await chrome.tabs.group({ tabIds, createProperties: { windowId: wid } });
+      await chrome.tabGroups.update(groupId, { title: groupName, color });
+      groupIds.push(groupId);
+      grouped += tabIds.length;
+    } catch (error) {
+      errors.push(error.message);
+    }
+  }
+
+  if (grouped === 0) {
+    return { success: false, message: `Failed to group tabs: ${errors.join('; ')}` };
+  }
+
+  const parts = [`✅ Grouped ${grouped} tabs into "${groupName}"`];
+  if (groupIds.length > 1) parts.push(`across ${groupIds.length} windows`);
+  if (strays) parts.push(`(${strays} skipped: alone in their window)`);
+
+  return {
+    success: true,
+    message: parts.join(' '),
+    groupId: groupIds[0],
+    groupIds,
+    count: grouped
+  };
 }
 
 async function handleBookmarkTabs(args, windowId, preResolvedTabs = null) {
@@ -2577,9 +2648,22 @@ async function handleAnalyzeTabs({ analysisType }, windowId) {
 // this 3-parameter function, so it was silently dropped and confirmed selections
 // were re-resolved from the raw args — which can widen or narrow what the user
 // actually approved.
+// Tools whose tab set must be confined to the focused window. Retrieval is now
+// all-windows, so anything NOT listed here may legitimately act on tabs outside
+// it and resolveTabsForAction must not filter them out.
+//
+// sort_tabs only: reordering is defined relative to one window's tab strip.
+// group_tabs is absent on purpose -- it accepts cross-window matches and splits
+// them into one group per window, so filtering here would just lose tabs.
+const WINDOW_SCOPED_TOOLS = new Set(['sort_tabs']);
+
 async function executeToolCall(functionCall, windowId, rawCommand = '', preResolvedTabIds = null) {
   const { name, args } = functionCall;
   const startTime = Date.now();
+
+  // Derived from the tool rather than required from each caller, so a new call
+  // site cannot forget it and silently re-acquire the old single-window scope.
+  args.windowScoped = WINDOW_SCOPED_TOOLS.has(name);
 
   console.log(`[ToolCall] Executing: ${name}`, args);
   telemetry.log('INFO', 'tool_call_start', { intent: name, args: Object.keys(args) });
@@ -3004,6 +3088,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       return true;
     }
 
+    case "GET_INDEX_STATUS": {
+      sendResponse(_indexingProgress);
+      return false;
+    }
+
+    case "START_INDEX_SWEEP": {
+      sweepMissingCards();
+      sendResponse({ started: true });
+      return false;
+    }
+
     case "AI_COMMAND": {
       const windowId = sender.tab.windowId;
       const commandKey = `${windowId}-${msg.command}`;
@@ -3013,6 +3108,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         return false;
       }
       activeAiCommands.add(commandKey);
+
+      // Route pipeline progress back to the tab that asked. Registered here
+      // because this is the only place the sender is known; the pipeline itself
+      // has no idea which tab is waiting on it.
+      if (typeof self.setProgressTarget === 'function') {
+        self.setProgressTarget(sender.tab.id);
+      }
 
       (async () => {
         const pipelineStart = Date.now();
@@ -4600,8 +4702,36 @@ var _ragInitialized = false;
 async function ensureRagReady() {
   if (_ragInitialized) return;
   await TabDB.init();
+  
+  // If local IndexedDB was wiped (e.g. extension reimported), restore from SQLite on computer disk
+  try {
+    const localCards = await TabDB.getAllTabCards();
+    if (localCards.length === 0 && typeof TabDB.restoreFromPermanentStorage === 'function') {
+      await TabDB.restoreFromPermanentStorage();
+    }
+  } catch (e) {
+    // Ignore restore error
+  }
+
   await Embed.init();
   _ragInitialized = true;
+
+  // Warm the NLI model OUT of band.
+  //
+  // Loading it costs ~9.4s (measured: a 27,351ms command whose scoring loop was
+  // only 17,942ms -- the difference is this load, because the timer in
+  // nli-select.js starts after await load()). Paying that inside the user's
+  // first command is the difference between "slow" and "broken", and MV3 tears
+  // down idle service workers, so it recurs rather than happening once.
+  //
+  // Deliberately NOT awaited: indexing must not block on it, and select() awaits
+  // the same promise anyway, so a command arriving mid-load waits exactly as
+  // long as it would have -- never longer.
+  if (typeof self.NliSelect !== 'undefined') {
+    self.NliSelect.load()
+      .then(() => console.log('[background] NLI model warm'))
+      .catch(e => console.warn('[background] NLI preload failed (falls back at query time):', e.message));
+  }
 }
 
 async function indexTabById(tabId) {
@@ -4657,17 +4787,60 @@ setInterval(async () => {
 // loaded. Session-restored / already-open tabs never fire it, so they were
 // built lazily on first AI command (blocking the command path). Sweep fixes
 // that: build cards eagerly at startup, batched with a concurrency cap.
+// Programmatically inject content scripts and styles into all open active tabs on startup/install
+async function injectContentScriptIntoAllTabs() {
+  try {
+    const tabs = await chrome.tabs.query({});
+    for (const tab of tabs) {
+      if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('edge://') || tab.url.startsWith('chrome-extension://') || tab.url.startsWith('about:') || tab.discarded) continue;
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content.js']
+        });
+      } catch (_) {
+        // Skip uninjectable or protected pages
+      }
+    }
+  } catch (e) {
+    console.warn('[background] Content script auto-injection failed:', e.message);
+  }
+}
+
+// Live indexing progress state
+let _indexingProgress = {
+  isIndexing: false,
+  done: 0,
+  total: 0,
+  pct: 0,
+  currentTitle: ''
+};
+
+function broadcastIndexProgress() {
+  chrome.tabs.query({}, (tabs) => {
+    if (!tabs || !tabs.length) return;
+    for (const tab of tabs) {
+      if (tab.id && !tab.url?.startsWith('chrome://') && !tab.url?.startsWith('edge://')) {
+        chrome.tabs.sendMessage(tab.id, {
+          type: _indexingProgress.isIndexing ? 'INDEX_PROGRESS' : 'INDEX_COMPLETE',
+          ..._indexingProgress
+        }).catch(() => {});
+      }
+    }
+  });
+}
+
+// ---- Startup sweep: pre-build cards for all open tabs ----
+// Systematically indexes all open tabs in concurrent non-blocking batches
+// with live progress reporting to the tab strip.
 async function sweepMissingCards() {
+  if (_indexingProgress.isIndexing) return;
   try {
     await ensureRagReady();
     const tabs = await chrome.tabs.query({});
     let allCards = [];
     try { allCards = await self.TabDB.getAllTabCards(); } catch (e) {}
 
-    // Decide "does this tab already have a card?" by URL, not by tabId.
-    // Every tabId changes on browser restart, so a tabId join matched nothing on
-    // exactly the run this sweep exists for -- it rebuilt every card from scratch
-    // at each startup. Hashing by URL makes restored tabs hit their existing cards.
     const cardHashes = new Set();
     for (const c of allCards) {
       if (c && c.urlHash) cardHashes.add(c.urlHash);
@@ -4676,20 +4849,38 @@ async function sweepMissingCards() {
       t.url &&
       !t.url.startsWith('chrome://') &&
       !t.url.startsWith('edge://') &&
-      !t.url.startsWith('about:'));
+      !t.url.startsWith('about:') &&
+      !t.url.startsWith('chrome-extension://'));
+    
     const missing = [];
     for (const t of eligible) {
       let hash = null;
       try {
         hash = await self.sha256(self.normalizeUrl(t.url));
-      } catch (e) { /* unhashable — rebuild it */ }
+      } catch (e) { /* unhashable */ }
       if (!hash || !cardHashes.has(hash)) missing.push(t);
     }
-    if (missing.length === 0) return;
-    console.log(`[Indexer] Startup sweep: building cards for ${missing.length} tabs (cap 5)`);
+
+    if (missing.length === 0) {
+      _indexingProgress = { isIndexing: false, done: 0, total: 0, pct: 100, currentTitle: '' };
+      broadcastIndexProgress();
+      return;
+    }
+    
+    _indexingProgress = {
+      isIndexing: true,
+      done: 0,
+      total: missing.length,
+      pct: 0,
+      currentTitle: missing[0]?.title || 'Tab'
+    };
+    broadcastIndexProgress();
+
+    console.log(`[Indexer] Full sweep: systematically indexing ${missing.length} unindexed tabs`);
     const CONCURRENCY = 5;
     for (let i = 0; i < missing.length; i += CONCURRENCY) {
       const batch = missing.slice(i, i + CONCURRENCY);
+      _indexingProgress.currentTitle = batch[0]?.title || 'Tab';
       await Promise.all(batch.map(async (tab) => {
         try {
           const card = await buildTabCard(tab, allCards);
@@ -4697,17 +4888,30 @@ async function sweepMissingCards() {
           const text = card.mainText || '';
           await Indexer.indexTab(tab, text);
         } catch (e) {
-          console.warn('[Indexer] Sweep card build failed:', e.message);
+          // skip
         }
       }));
+      _indexingProgress.done = Math.min(missing.length, i + batch.length);
+      _indexingProgress.pct = Math.round((_indexingProgress.done / missing.length) * 100);
+      broadcastIndexProgress();
     }
-    console.log(`[Indexer] Startup sweep complete (${missing.length} tabs)`);
+
+    _indexingProgress.isIndexing = false;
+    _indexingProgress.pct = 100;
+    broadcastIndexProgress();
+    console.log(`[Indexer] Full sweep complete: ${missing.length} tabs indexed`);
   } catch (e) {
-    console.warn('[Indexer] Startup sweep failed:', e.message);
+    _indexingProgress.isIndexing = false;
+    broadcastIndexProgress();
+    console.warn('[Indexer] Full sweep failed:', e.message);
   }
 }
 
-chrome.runtime.onStartup.addListener(() => { sweepMissingCards(); });
+chrome.runtime.onStartup.addListener(() => {
+  injectContentScriptIntoAllTabs();
+  setTimeout(() => sweepMissingCards(), 1000);
+});
+
 chrome.runtime.onInstalled.addListener(() => {
   // Migrate stale model defaults from older builds
   chrome.storage.sync.get({ ollamaModel: 'qwen2.5-coder:3b' }, (items) => {
@@ -4717,7 +4921,8 @@ chrome.runtime.onInstalled.addListener(() => {
       });
     }
   });
-  sweepMissingCards();
+  injectContentScriptIntoAllTabs();
+  setTimeout(() => sweepMissingCards(), 1000);
 });
 
 // On-demand indexing from popup

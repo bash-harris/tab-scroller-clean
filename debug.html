@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TabScroller — Pipeline & DB Storage Debugger</title>
+  <link rel="stylesheet" href="debug.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="dbg-body">
+  <!-- Top App Navigation & Global Bar -->
+  <header class="dbg-header">
+    <div class="dbg-brand">
+      <span class="dbg-brand-icon">⚡</span>
+      <div class="dbg-brand-text">
+        <span class="dbg-brand-title">TabScroller</span>
+        <span class="dbg-brand-subtitle">Semantic Pipeline & DB Storage Debugger</span>
+      </div>
+    </div>
+
+    <!-- Quick Presets -->
+    <div class="dbg-presets">
+      <span class="dbg-label">Fixtures / Presets:</span>
+      <select id="presetSelect" class="dbg-select">
+        <option value="">-- Choose Sample Page --</option>
+        <option value="youtube-rag-video">YouTube Video - RAG AI Marathon (Coding / AI - Fixed Ingestion)</option>
+        <option value="huggingface-model">Hugging Face AI Model (Cohere Vision Instruct)</option>
+        <option value="repo-page">GitHub Repository (Linux Kernel - Dev / C)</option>
+        <option value="recipe-sourdough">Sourdough Recipe (Cooking / Food)</option>
+        <option value="news-cricket-jsonld">Cricket News & Scores (Sports / IPL)</option>
+        <option value="youtube-noncoding">YouTube Video - Non-Coding (Entertainment / Comedy)</option>
+        <option value="oscar-movie-2005">Capote Movie - Oscar Winner 2005 (Film / Entity)</option>
+        <option value="video-watch-page">Twitch Gaming Stream (Gaming / Shroud)</option>
+        <option value="api-docs">MDN IndexedDB API (Docs / Web)</option>
+        <option value="academic-abstract">ArXiv Research Paper (Science / Transformers)</option>
+        <option value="product-listing">Amazon Headphones (Shopping / Sony)</option>
+        <option value="discussion-thread">Reddit Microservices (Social / Rust vs Go)</option>
+        <option value="custom-url">Custom Live URL...</option>
+      </select>
+    </div>
+
+    <div class="dbg-header-actions">
+      <button id="btnRunPipeline" class="dbg-btn dbg-btn-primary">
+        <span>⚡ Run Pipeline Trace</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main 2-Pane Container -->
+  <main class="dbg-main-container" id="splitLayout">
+    
+    <!-- LEFT PANE: Website Viewer & Command Controller -->
+    <section class="dbg-pane dbg-pane-left" id="leftPane">
+      <div class="dbg-pane-header">
+        <div class="dbg-pane-title">
+          <span class="dbg-pane-icon">🌐</span>
+          <span>Website & Input Controller</span>
+        </div>
+        <div class="dbg-mode-tabs">
+          <button class="dbg-tab-btn active" data-left-tab="browser">Preview</button>
+          <button class="dbg-tab-btn" data-left-tab="dom">Raw DOM / HTML</button>
+          <button class="dbg-tab-btn" data-left-tab="sandbox">Tag Ingestion Sandbox</button>
+        </div>
+      </div>
+
+      <!-- URL Input Bar -->
+      <div class="dbg-url-bar">
+        <div class="dbg-url-input-wrap">
+          <span class="dbg-url-icon">🔗</span>
+          <input type="text" id="urlInput" class="dbg-input" placeholder="Enter webpage URL (e.g. https://github.com/torvalds/linux)" value="https://github.com/torvalds/linux">
+        </div>
+        <button id="btnFetchUrl" class="dbg-btn dbg-btn-secondary" title="Fetch and ingest webpage">
+          <span>Load Page</span>
+        </button>
+      </div>
+
+      <!-- Natural Language Command Bar -->
+      <div class="dbg-command-bar">
+        <div class="dbg-command-header">
+          <span class="dbg-command-badge">AI Natural Language Command</span>
+          <span class="dbg-command-hint">Press Enter or click Run</span>
+        </div>
+        <div class="dbg-command-input-wrap">
+          <span class="dbg-command-icon">🤖</span>
+          <input type="text" id="cmdInput" class="dbg-input dbg-input-command" placeholder="Try: 'group all programming tabs' or 'close youtube tabs' or 'mute sports'" value="group all programming tabs">
+          <button id="btnExecCmd" class="dbg-btn dbg-btn-gold">Test Match</button>
+        </div>
+        <div class="dbg-quick-chips">
+          <span class="dbg-chip-label">Quick Commands:</span>
+          <button class="dbg-chip" data-cmd="group all programming tabs">group programming</button>
+          <button class="dbg-chip" data-cmd="group all gaming tabs">group gaming</button>
+          <button class="dbg-chip" data-cmd="close all recipe and cooking tabs">close recipes</button>
+          <button class="dbg-chip" data-cmd="bookmark my documentation pages">bookmark docs</button>
+          <button class="dbg-chip" data-cmd="close all cricket tabs">close cricket</button>
+          <button class="dbg-chip" data-cmd="mute all noisy video tabs">mute video</button>
+          <button class="dbg-chip" data-cmd="group tabs about academy award winners">academy awards</button>
+        </div>
+      </div>
+
+      <!-- Left Content Area (Browser Preview / HTML Editor / Sandbox) -->
+      <div class="dbg-left-content">
+        <!-- Rendered Page Frame -->
+        <div id="browserView" class="dbg-view-layer active">
+          <div class="dbg-browser-frame-header">
+            <div class="dbg-frame-dots">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="dbg-frame-url" id="frameUrlBar">https://github.com/torvalds/linux</div>
+            <div class="dbg-frame-badge" id="frameStatusBadge">Rendered DOM</div>
+          </div>
+          <iframe id="pagePreviewFrame" class="dbg-iframe" sandbox="allow-same-origin allow-scripts"></iframe>
+        </div>
+
+        <!-- Editable DOM / HTML Source View -->
+        <div id="domView" class="dbg-view-layer">
+          <div class="dbg-editor-toolbar">
+            <span class="dbg-editor-label">Raw HTML Source (Editable for instant manual testing):</span>
+            <button id="btnReExtractDom" class="dbg-btn dbg-btn-sm">Apply & Re-Extract</button>
+          </div>
+          <textarea id="rawHtmlTextarea" class="dbg-textarea" spellcheck="false"></textarea>
+        </div>
+
+        <!-- Tag Ingestion Sandbox Playground -->
+        <div id="sandboxView" class="dbg-view-layer">
+          <div class="dbg-sandbox-wrap">
+            <div class="dbg-sandbox-header">
+              <h3>🏷️ Live Tag & Entity Ingestion Sandbox</h3>
+              <span class="dbg-hint">Test canonical tag matching, NER dictionary parsing, & alias resolution in real time</span>
+            </div>
+            
+            <div class="dbg-sandbox-form">
+              <div class="dbg-sandbox-field">
+                <label>Test Input Text / Title / Subreddit / URL:</label>
+                <input type="text" id="sandboxTextInput" class="dbg-input" placeholder="Type words like 'test cricket', 'PyTorch and Transformers', 'reddit.com/r/recipes', 'Oscar winner 2005'..." value="PyTorch, Transformers, and Python tutorial">
+              </div>
+            </div>
+
+            <div class="dbg-sandbox-results">
+              <div class="dbg-sandbox-card">
+                <span class="dbg-sandbox-card-title">Canonical Tag Mapping (TAG_ALIASES)</span>
+                <div class="dbg-sandbox-val" id="sandboxCanonicalTag">—</div>
+              </div>
+              <div class="dbg-sandbox-card">
+                <span class="dbg-sandbox-card-title">Substring Word-Boundary Match (matchTag)</span>
+                <div class="dbg-sandbox-val" id="sandboxMatchTag">—</div>
+              </div>
+              <div class="dbg-sandbox-card">
+                <span class="dbg-sandbox-card-title">Domain / Subreddit Prior Category</span>
+                <div class="dbg-sandbox-val" id="sandboxDomainPrior">—</div>
+              </div>
+              <div class="dbg-sandbox-card">
+                <span class="dbg-sandbox-card-title">Extracted NER Entities (Local Zero-Network)</span>
+                <div class="dbg-chips-wrap" id="sandboxNerEntities">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Resizable Splitter Bar -->
+    <div class="dbg-splitter" id="dragSplitter">
+      <div class="dbg-splitter-handle"></div>
+    </div>
+
+    <!-- RIGHT PANE: Live Debugging Engine & DB Inspector -->
+    <section class="dbg-pane dbg-pane-right" id="rightPane">
+      <div class="dbg-pane-header">
+        <div class="dbg-pane-title">
+          <span class="dbg-pane-icon">🔍</span>
+          <span>Pipeline Trace & Database Store Inspector</span>
+        </div>
+        <div class="dbg-status-pill" id="pipelineStatusPill">Ready</div>
+      </div>
+
+      <!-- Navigation Tabs for Right Pane -->
+      <div class="dbg-nav-tabs">
+        <button class="dbg-nav-tab active" data-stage="stage-db">
+          <span class="dbg-tab-num">1</span>
+          <span>Tag Ingestion & DB Card</span>
+        </button>
+        <button class="dbg-nav-tab" data-stage="stage-extract">
+          <span class="dbg-tab-num">2</span>
+          <span>DOM & NER Extraction</span>
+        </button>
+        <button class="dbg-nav-tab" data-stage="stage-llm">
+          <span class="dbg-tab-num">3</span>
+          <span>LLM Query Compiler</span>
+        </button>
+        <button class="dbg-nav-tab" data-stage="stage-nli">
+          <span class="dbg-tab-num">4</span>
+          <span>NLI Inference & 2-Tier Match</span>
+        </button>
+        <button class="dbg-nav-tab" data-stage="stage-storage">
+          <span class="dbg-tab-num">5</span>
+          <span>Storage & SQLite Disk</span>
+        </button>
+      </div>
+
+      <!-- Inspector Panels Container -->
+      <div class="dbg-inspector-body">
+
+        <!-- ================= STAGE 1: TAG INGESTION & DB CARD ================= -->
+        <div id="panel-stage-db" class="dbg-stage-panel active">
+          <div class="dbg-card-header">
+            <h3>IndexedDB Stored Document & Tag Ingestion Card</h3>
+            <span class="dbg-badge-gold" id="dbKeyBadge">Key: urlHash</span>
+          </div>
+
+          <div class="dbg-meta-grid">
+            <div class="dbg-meta-box">
+              <span class="dbg-meta-label">Primary Key (urlHash):</span>
+              <span class="dbg-meta-val dbg-mono" id="valUrlHash">—</span>
+            </div>
+            <div class="dbg-meta-box">
+              <span class="dbg-meta-label">Normalized URL:</span>
+              <span class="dbg-meta-val dbg-mono" id="valNormUrl">—</span>
+            </div>
+            <div class="dbg-meta-box">
+              <span class="dbg-meta-label">Classified Primary Category:</span>
+              <span class="dbg-meta-val dbg-badge-cat" id="valCategory">—</span>
+            </div>
+            <div class="dbg-meta-box">
+              <span class="dbg-meta-label">Domain Priors (DomainPriors.js):</span>
+              <span class="dbg-meta-val" id="valDomainPriors">—</span>
+            </div>
+          </div>
+
+          <!-- Multi-label Tag Ingestion & Centroid Breakdown -->
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>Topological Multi-Label Tag Centroids (Z-Score &ge; 1.2 Emission)</span>
+              <span class="dbg-hint">enrich-math.js (Centroid Matvecs)</span>
+            </div>
+            <div id="tagsListContainer" class="dbg-tags-container">
+              <span class="dbg-empty-hint">No tags calculated yet.</span>
+            </div>
+
+            <!-- Mathematical Centroid Scoring Table -->
+            <div class="dbg-table-wrap" style="margin-top: 12px;">
+              <table class="dbg-table" id="centroidTable">
+                <thead>
+                  <tr>
+                    <th>Tag Prototype</th>
+                    <th>Raw Cosine</th>
+                    <th>Harvest Boost (+0.2)</th>
+                    <th>Prior Boost (+0.15)</th>
+                    <th>Final Boosted Score</th>
+                    <th>Z-Score (&ge; 1.2)</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="centroidTableBody">
+                  <tr><td colspan="7" class="dbg-empty-table">Run pipeline to inspect centroid matvec scores.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Zero-Network Local Named Entities (NER) -->
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>Local Zero-Network Named Entities (NER &lt; 5ms)</span>
+              <span class="dbg-hint">extract-core.js (People, Tech, Awards, Works)</span>
+            </div>
+            <div class="dbg-entities-grid">
+              <div class="dbg-entity-card">
+                <span class="dbg-entity-card-title">👤 People & Authors</span>
+                <div class="dbg-chips-wrap" id="entitiesPeople">—</div>
+              </div>
+              <div class="dbg-entity-card">
+                <span class="dbg-entity-card-title">💻 Tech & Frameworks</span>
+                <div class="dbg-chips-wrap" id="entitiesTech">—</div>
+              </div>
+              <div class="dbg-entity-card">
+                <span class="dbg-entity-card-title">🏆 Awards & Accolades</span>
+                <div class="dbg-chips-wrap" id="entitiesAwards">—</div>
+              </div>
+              <div class="dbg-entity-card">
+                <span class="dbg-entity-card-title">🎬 Works & Titles</span>
+                <div class="dbg-chips-wrap" id="entitiesWorks">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Embedding Vector Sparkline & Inspection -->
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>Dense 384-Dim Semantic Vector Embedding</span>
+              <span class="dbg-hint">MiniLM L6-v2 (L2 Normalized)</span>
+            </div>
+            <div class="dbg-vector-box">
+              <div class="dbg-vector-stats">
+                <span id="vecDimStat">Dimensions: 384</span>
+                <span id="vecNormStat">L2 Norm: 1.000</span>
+                <span id="vecVersionStat">VecVersion: 3 (math)</span>
+              </div>
+              <div class="dbg-sparkline-wrap">
+                <canvas id="vectorCanvas" height="48" width="500"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Raw Stored TabCard Record -->
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>Raw JSON Stored in TabCard Document</span>
+              <button class="dbg-btn-copy" data-copy="rawDbJson">Copy JSON</button>
+            </div>
+            <pre class="dbg-code-block"><code id="rawDbJson">// Run pipeline to inspect stored record...</code></pre>
+          </div>
+        </div>
+
+        <!-- ================= STAGE 2: DOM EXTRACTION ================= -->
+        <div id="panel-stage-extract" class="dbg-stage-panel">
+          <div class="dbg-card-header">
+            <h3>DOM Extraction & Readability Signals</h3>
+            <span class="dbg-badge" id="extractLevelBadge">Level: —</span>
+          </div>
+
+          <div class="dbg-meta-grid">
+            <div class="dbg-meta-box">
+              <span class="dbg-meta-label">Page Title:</span>
+              <span class="dbg-meta-val" id="extractTitle">—</span>
+            </div>
+            <div class="dbg-meta-box">
+              <span class="dbg-meta-label">Schema.org @type:</span>
+              <span class="dbg-meta-val dbg-mono" id="extractSchemaType">—</span>
+            </div>
+            <div class="dbg-meta-box">
+              <span class="dbg-meta-label">Readability Byline / Author:</span>
+              <span class="dbg-meta-val" id="extractByline">—</span>
+            </div>
+            <div class="dbg-meta-box">
+              <span class="dbg-meta-label">Harvested Authoritative Tags:</span>
+              <div class="dbg-chips-wrap" id="extractHarvestTags">—</div>
+            </div>
+            <div class="dbg-meta-box">
+              <span class="dbg-meta-label">Extracted Code & Badge Signatures:</span>
+              <div class="dbg-chips-wrap" id="extractCodeSignatures">—</div>
+            </div>
+          </div>
+
+          <!-- Stop-Word Filtered Keyphrase Synopsis -->
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>Stop-Word Filtered Keyphrase Synopsis (High Information Density)</span>
+              <span class="dbg-char-count" id="filteredWordsCount">0 words</span>
+            </div>
+            <div class="dbg-preview-box dbg-mono" id="extractDenseKeywords">No keyphrases extracted yet.</div>
+          </div>
+
+          <!-- Readability Main Text Preview -->
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>Readability Parsed Main Text (Capped at 4,000 chars)</span>
+              <span class="dbg-char-count" id="mainTextLen">0 chars</span>
+            </div>
+            <div class="dbg-preview-box" id="extractMainText">No text extracted yet.</div>
+          </div>
+
+          <!-- Pseudo-Doc (Fed to Vector Embedder) -->
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>Synthesized PseudoDoc (Title &times; 2 + Domain + Excerpt)</span>
+              <span class="dbg-char-count" id="pseudoDocLen">0 chars</span>
+            </div>
+            <div class="dbg-preview-box dbg-mono" id="extractPseudoDoc">No pseudoDoc generated yet.</div>
+          </div>
+
+          <!-- Structured Metadata -->
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>JSON-LD & OpenGraph Structured Graph</span>
+            </div>
+            <pre class="dbg-code-block"><code id="extractStructuredJson">// Structured metadata...</code></pre>
+          </div>
+        </div>
+
+        <!-- ================= STAGE 3: RAW LLM REQUEST / RESPONSE ================= -->
+        <div id="panel-stage-llm" class="dbg-stage-panel">
+          <div class="dbg-card-header">
+            <h3>Upstream LLM Query Compiler (O(1) Constant Cost)</h3>
+            <span class="dbg-badge-gold">Query-Side Model Only</span>
+          </div>
+
+          <div class="dbg-architecture-note">
+            <strong>Architecture Fact:</strong> The LLM parses the <em>user query</em>, never the tabs. It receives zero page titles or browsing history, protecting privacy and running in <code>O(1)</code> time whether you have 5 or 1,000 tabs open.
+          </div>
+
+          <!-- Raw Prompt Request sent to LLM -->
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>1. Exact Raw Prompt Sent to LLM (As It Is)</span>
+              <button class="dbg-btn-copy" data-copy="rawLlmRequest">Copy Prompt</button>
+            </div>
+            <div class="dbg-prompt-viewer">
+              <div class="dbg-prompt-role">SYSTEM PROMPT:</div>
+              <pre class="dbg-code-block dbg-code-system"><code id="rawLlmSystemPrompt">Loading system prompt...</code></pre>
+              
+              <div class="dbg-prompt-role">USER MESSAGE:</div>
+              <pre class="dbg-code-block dbg-code-user"><code id="rawLlmUserMessage">Loading user query...</code></pre>
+            </div>
+          </div>
+
+          <!-- Raw LLM Response -->
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>2. Raw Response from LLM (Unparsed Text)</span>
+              <span class="dbg-hint" id="llmLatencyBadge">Latency: —</span>
+            </div>
+            <pre class="dbg-code-block"><code id="rawLlmResponse">// Model response JSON...</code></pre>
+          </div>
+
+          <!-- Validated AST Query Object -->
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>3. Validated Structured Query AST</span>
+              <span class="dbg-badge-success" id="astValidBadge">Validated</span>
+            </div>
+            <div class="dbg-ast-grid">
+              <div class="dbg-ast-card">
+                <span class="dbg-ast-title">Detected Intent</span>
+                <span class="dbg-ast-val" id="astIntent">—</span>
+              </div>
+              <div class="dbg-ast-card">
+                <span class="dbg-ast-title">Target Concepts</span>
+                <span class="dbg-ast-val" id="astConcepts">—</span>
+              </div>
+              <div class="dbg-ast-card">
+                <span class="dbg-ast-title">Combine Strategy</span>
+                <span class="dbg-ast-val" id="astCombine">—</span>
+              </div>
+              <div class="dbg-ast-card">
+                <span class="dbg-ast-title">Confidence</span>
+                <span class="dbg-ast-val" id="astConfidence">—</span>
+              </div>
+            </div>
+            <pre class="dbg-code-block"><code id="astJson">// Structured AST...</code></pre>
+          </div>
+        </div>
+
+        <!-- ================= STAGE 4: NLI INFERENCE & 2-TIER MATCH ================= -->
+        <div id="panel-stage-nli" class="dbg-stage-panel">
+          <div class="dbg-card-header">
+            <h3>Two-Tier Hybrid Matcher & NLI Entailment Inspector</h3>
+            <span class="dbg-badge" id="nliDecisionBadge">Awaiting Run</span>
+          </div>
+
+          <!-- Tier 1: Vector Cosine & Lexical-Category Fast-Track -->
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>Tier 1: Instant Hybrid Screening (Vector Math + Lexical/Category Fast-Track)</span>
+              <span class="dbg-hint">0ms Cost — Instant Pre-Filter</span>
+            </div>
+
+            <div class="dbg-cosine-meter-card">
+              <div class="dbg-meter-header">
+                <span class="dbg-meter-title">Combined Tier 1 Score:</span>
+                <span class="dbg-meter-score" id="valCosineScore">0.000</span>
+              </div>
+              
+              <!-- Visual Ambiguity Band Bar -->
+              <div class="dbg-meter-track">
+                <div class="dbg-meter-zone zone-reject" style="width: 20%;">
+                  <span>Auto-Reject (&lt;0.20)</span>
+                </div>
+                <div class="dbg-meter-zone zone-band" style="width: 25%;">
+                  <span>Ambiguous Band (0.20 - 0.45) &rarr; NLI Tier 2</span>
+                </div>
+                <div class="dbg-meter-zone zone-accept" style="width: 55%;">
+                  <span>Auto-Accept (&ge;0.45, 0 NLI Passes)</span>
+                </div>
+                <div class="dbg-meter-marker" id="cosineMarker" style="left: 0%;"></div>
+              </div>
+
+              <!-- Tier 1 Hybrid Breakdown Cards -->
+              <div class="dbg-meta-grid" style="margin-top: 14px;">
+                <div class="dbg-meta-box">
+                  <span class="dbg-meta-label">Raw 384-d Cosine:</span>
+                  <span class="dbg-meta-val dbg-mono" id="valRawCosineScore">0.000</span>
+                </div>
+                <div class="dbg-meta-box">
+                  <span class="dbg-meta-label">Category Match Boost (+0.20):</span>
+                  <span class="dbg-meta-val dbg-mono" id="valCatBoost">0.00</span>
+                </div>
+                <div class="dbg-meta-box">
+                  <span class="dbg-meta-label">Lexical Tech Substring (+0.15):</span>
+                  <span class="dbg-meta-val dbg-mono" id="valLexicalBoost">0.00</span>
+                </div>
+                <div class="dbg-meta-box">
+                  <span class="dbg-meta-label">Tier 1 Decision:</span>
+                  <span class="dbg-meta-val dbg-badge-success" id="valTier1Decision">AUTO_ACCEPT</span>
+                </div>
+              </div>
+
+              <div class="dbg-tier1-result" id="tier1Explanation" style="margin-top: 10px;">
+                Cosine and category alignment evaluate all open tabs simultaneously with zero neural forward passes.
+              </div>
+            </div>
+          </div>
+
+          <!-- Tier 2: Natural Language Inference (NLI) -->
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>Tier 2: DeBERTa-v3 NLI Zero-Shot Inference</span>
+              <span class="dbg-hint">Xenova/nli-deberta-v3-xsmall (~70MB ONNX)</span>
+            </div>
+
+            <!-- Premise sent to NLI -->
+            <div class="dbg-nli-box">
+              <div class="dbg-nli-label">Exact Premise Tested Against Model:</div>
+              <div class="dbg-nli-text dbg-mono" id="nliPremiseText">"${card.title} ${card.url} ${card.enrichment.category} ${tags}"</div>
+            </div>
+
+            <!-- Hypothesis sent to NLI -->
+            <div class="dbg-nli-box">
+              <div class="dbg-nli-label">Exact Hypothesis Sent to Model:</div>
+              <div class="dbg-nli-text dbg-mono" id="nliHypothesisText">"This browser tab is about ${concept}."</div>
+            </div>
+
+            <!-- NLI Probabilities Breakdown -->
+            <div class="dbg-nli-scores-grid">
+              <div class="dbg-nli-card">
+                <span class="dbg-nli-card-title">Entailment Probability</span>
+                <span class="dbg-nli-card-score" id="nliEntailmentScore">—</span>
+              </div>
+              <div class="dbg-nli-card">
+                <span class="dbg-nli-card-title">Threshold (&ge; 0.55)</span>
+                <span class="dbg-nli-card-status" id="nliThresholdStatus">—</span>
+              </div>
+              <div class="dbg-nli-card">
+                <span class="dbg-nli-card-title">Uncertain Band (&ge; 0.35)</span>
+                <span class="dbg-nli-card-status" id="nliUncertainStatus">—</span>
+              </div>
+              <div class="dbg-nli-card">
+                <span class="dbg-nli-card-title">Final Action Decision</span>
+                <span class="dbg-nli-card-decision" id="nliFinalDecision">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= STAGE 5: DUAL STORAGE & SQLITE DISK ================= -->
+        <div id="panel-stage-storage" class="dbg-stage-panel">
+          <div class="dbg-card-header">
+            <h3>Dual Storage System: L1 (IndexedDB Cache) + L2 (Computer SQLite Disk)</h3>
+            <div class="dbg-header-btns">
+              <button id="btnSyncSqlite" class="dbg-btn dbg-btn-sm dbg-btn-gold">💾 Sync to Disk</button>
+              <button id="btnRefreshDb" class="dbg-btn dbg-btn-sm">🔄 Refresh</button>
+              <button id="btnClearDb" class="dbg-btn dbg-btn-sm dbg-btn-danger">🗑️ Clear</button>
+            </div>
+          </div>
+
+          <div class="dbg-sqlite-status-card">
+            <div class="dbg-sqlite-status-header">
+              <span class="dbg-sqlite-badge">Permanent Storage (backend/db.sqlite3)</span>
+              <span class="dbg-sqlite-ping" id="sqlitePingStatus">Checking Backend…</span>
+            </div>
+            <div class="dbg-sqlite-grid">
+              <div class="dbg-sqlite-box">
+                <span class="dbg-sqlite-label">L1 IndexedDB (RAM/Browser):</span>
+                <span class="dbg-sqlite-val" id="dbTotalCount">0 cards</span>
+              </div>
+              <div class="dbg-sqlite-box">
+                <span class="dbg-sqlite-label">L2 SQLite (Computer Disk):</span>
+                <span class="dbg-sqlite-val" id="sqliteTotalCount">—</span>
+              </div>
+              <div class="dbg-sqlite-box">
+                <span class="dbg-sqlite-label">SQLite Entities Indexed:</span>
+                <span class="dbg-sqlite-val" id="sqliteEntitiesCount">—</span>
+              </div>
+              <div class="dbg-sqlite-box">
+                <span class="dbg-sqlite-label">FTS5 Full-Text Index:</span>
+                <span class="dbg-sqlite-val dbg-badge-success">Active & Searchable</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- FTS5 Live Search Test in SQLite -->
+          <div class="dbg-section" style="margin-top: 16px;">
+            <div class="dbg-section-title">
+              <span>SQLite FTS5 BM25 Live Search Test</span>
+              <span class="dbg-hint">/api/tabs/fts?q=...</span>
+            </div>
+            <div class="dbg-fts-search-bar">
+              <input type="text" id="ftsSearchInput" class="dbg-input" placeholder="Search keywords on disk SQLite (e.g. 'PyTorch', 'sourdough', 'kernel', 'Hoffman')..." value="kernel">
+              <button id="btnRunFts" class="dbg-btn dbg-btn-sm">Run FTS Search</button>
+            </div>
+            <div id="ftsResultsWrap" class="dbg-preview-box dbg-mono" style="margin-top: 8px;">No FTS search executed yet.</div>
+          </div>
+
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>Live Stored Tab Records Table (Primary Key: <code>urlHash</code>)</span>
+            </div>
+            <div class="dbg-table-wrap">
+              <table class="dbg-table" id="dbRecordsTable">
+                <thead>
+                  <tr>
+                    <th>urlHash</th>
+                    <th>Title</th>
+                    <th>Domain</th>
+                    <th>Category</th>
+                    <th>Tags</th>
+                    <th>Extracted At</th>
+                  </tr>
+                </thead>
+                <tbody id="dbTableBody">
+                  <tr><td colspan="6" class="dbg-empty-table">No records found in IndexedDB. Run pipeline to store tabs.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Included Pipeline Scripts -->
+  <script src="vendor/readibility.js"></script>
+  <script src="extract-core.js"></script>
+  <script src="domain-priors.js"></script>
+  <script src="enrich-math.js"></script>
+  <script src="concept-core.js"></script>
+  <script src="llm-query.js"></script>
+  <script src="db.js"></script>
+  <script src="debug.js"></script>
+</body>
+</html>

@@ -21,7 +21,11 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["content.css", "session-manager.html", "session-manager.css"],
+      "resources": ["content.css", "session-manager.html", "session-manager.css", "debug.html", "debug.css", "debug.js", "fonts/playfair-display.woff2", "fonts/cormorant-italic.woff2"],
+      "matches": ["<all_urls>"]
+    },
+    {
+      "resources": ["vendor/ort-wasm-simd.wasm", "vendor/ort-wasm.wasm"],
       "matches": ["<all_urls>"]
     }
   ],

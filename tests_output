@@ -1,0 +1,1787 @@
+Before the files: a few labeling calls were genuinely soft. `multi-topic-page.html` is deliberately built to span
+esports culture and industry economics, so I gave it `entertainment` with `finance` as acceptable rather than forcing
+one. `repo-page.html`'s extraction level is a judgment call (partial vs. full) since code-hosting pages usually have
+real README prose but also heavy chrome. `cookie-interstitial.html` and `boilerplate-heavy.html` are both `partial` even
+though a real article exists underneath, because the surrounding noise materially degrades what a naive extractor would
+recover. Most importantly: I do **not** have the actual contents of the 6 pre-existing fixtures (`news-cricket-jsonld`,
+`recipe-sourdough`, `wikipedia-catlinks`, `repo-page`, `spa-video-empty-article`, `injection-title`) — those 6 lines in
+the goldset are inferred from filenames only, not from content per rule 1, and you should treat them as placeholders to
+correct against the real files.
+
+---
+
+**news-og-only.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>State Approves $2.4B Funding for High-Speed Rail Line</title>
+    <meta property="og:title" content="State Approves $2.4B Funding for High-Speed Rail Line">
+    <meta property="og:description"
+        content="Lawmakers voted 62-38 to fund a new high-speed rail line connecting the capital to its largest port city.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://capitalherald.example/news/rail-funding-approved">
+    <meta property="og:image" content="./cover.jpg">
+    <meta name="author" content="Dana Okafor">
+    <style>
+        body {
+            font-family: Georgia, 'Times New Roman', serif;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #1a1a1a;
+            line-height: 1.65
+        }
+
+        header,
+        nav,
+        footer {
+            font-family: Arial, Helvetica, sans-serif
+        }
+
+        nav {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 20px
+        }
+
+        nav a {
+            margin-right: 16px;
+            color: #0645ad;
+            text-decoration: none;
+            font-size: 14px
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 4px
+        }
+
+        .byline {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px
+        }
+
+        footer {
+            margin-top: 40px;
+            border-top: 1px solid #ddd;
+            padding-top: 16px;
+            color: #777;
+            font-size: 13px
+        }
+    </style>
+</head>
+
+<body>
+    <nav><a href="/">Home</a><a href="/politics">Politics</a><a href="/business">Business</a><a href="/local">Local</a>
+    </nav>
+    <header>
+        <h1>State Approves $2.4B Funding for High-Speed Rail Line</h1>
+        <p class="byline">By Dana Okafor · Capital Herald · July 14, 2026</p>
+    </header>
+    <article>
+        <p>State lawmakers voted 62-38 on Wednesday to approve $2.4 billion in funding for a new high-speed rail line
+            connecting the state capital to its largest port city, a project supporters say will cut travel time between
+            the two cities from four hours to under ninety minutes.</p>
+        <p>The bill, which passed after eighteen months of committee hearings and three failed attempts in previous
+            sessions, allocates funding over a seven-year construction window. Transportation officials say the first
+            segment of track could be operational within four years, with the full route completed by 2033.</p>
+        <p>Opponents of the measure argued that the cost estimate is likely to grow, pointing to overruns on similar
+            projects in neighboring states. Freight and logistics groups largely supported the bill, citing reduced
+            congestion on parallel highway corridors.</p>
+        <p>"This is the single biggest infrastructure investment this state has made in a generation," the governor's
+            office said in a statement following the vote. Critics, however, warned that fare pricing has not yet been
+            finalized and that ridership projections may be optimistic.</p>
+        <p>Construction is expected to begin next spring, pending final environmental review. The rail authority said it
+            will hold public comment sessions in each county the line passes through before finalizing the route.</p>
+    </article>
+    <footer>© 2026 Capital Herald. All rights reserved.</footer>
+</body>
+
+</html>
+```
+
+**api-docs.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>WeatherSync API Reference — /forecast endpoint</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #222;
+            line-height: 1.6
+        }
+
+        nav {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 20px
+        }
+
+        nav a {
+            margin-right: 16px;
+            color: #0645ad;
+            text-decoration: none;
+            font-size: 14px
+        }
+
+        h1 {
+            font-size: 24px
+        }
+
+        code,
+        pre {
+            background: #f4f4f4;
+            border-radius: 4px;
+            font-family: Consolas, monospace
+        }
+
+        pre {
+            padding: 12px;
+            overflow-x: auto;
+            font-size: 13px
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0
+        }
+
+        td,
+        th {
+            border: 1px solid #ddd;
+            padding: 6px 10px;
+            text-align: left;
+            font-size: 14px
+        }
+
+        footer {
+            margin-top: 40px;
+            border-top: 1px solid #ddd;
+            padding-top: 16px;
+            color: #777;
+            font-size: 13px
+        }
+    </style>
+</head>
+
+<body>
+    <nav><a href="/docs">Docs</a><a href="/docs/auth">Auth</a><a href="/docs/endpoints">Endpoints</a><a
+            href="/docs/sdks">SDKs</a></nav>
+    <article>
+        <h1>GET /v2/forecast</h1>
+        <p>Returns a 7-day forecast for a given latitude and longitude. Requires an API key passed via the
+            <code>Authorization</code> header.</p>
+        <h2>Request</h2>
+        <pre><code>GET /v2/forecast?lat=40.71&lon=-74.00&units=metric
+Authorization: Bearer YOUR_API_KEY</code></pre>
+        <h2>Parameters</h2>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Required</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>lat</td>
+                <td>float</td>
+                <td>yes</td>
+                <td>Latitude in decimal degrees</td>
+            </tr>
+            <tr>
+                <td>lon</td>
+                <td>float</td>
+                <td>yes</td>
+                <td>Longitude in decimal degrees</td>
+            </tr>
+            <tr>
+                <td>units</td>
+                <td>string</td>
+                <td>no</td>
+                <td>metric or imperial, defaults to metric</td>
+            </tr>
+        </table>
+        <h2>Response</h2>
+        <pre><code>{
+  "location": "New York, US",
+  "daily": [
+    {"date": "2026-07-15", "high": 29, "low": 21, "condition": "partly_cloudy"}
+  ]
+}</code></pre>
+        <h2>Rate limits</h2>
+        <p>Free tier requests are limited to 60 calls per minute. Exceeding this returns a 429 status with a
+            <code>Retry-After</code> header.</p>
+    </article>
+    <footer>WeatherSync API Docs · v2.3</footer>
+</body>
+
+</html>
+```
+
+**product-listing.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>AeroSound Pro Wireless Headphones — $179.99</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #222;
+            line-height: 1.6
+        }
+
+        nav {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #666
+        }
+
+        h1 {
+            font-size: 22px;
+            margin-bottom: 6px
+        }
+
+        .price {
+            font-size: 22px;
+            color: #b12704;
+            font-weight: bold
+        }
+
+        .rating {
+            color: #e67e22;
+            font-size: 14px;
+            margin-bottom: 12px
+        }
+
+        ul.specs {
+            padding-left: 18px
+        }
+
+        button {
+            background: #f0c14b;
+            border: 1px solid #a88734;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px
+        }
+
+        footer {
+            margin-top: 40px;
+            border-top: 1px solid #ddd;
+            padding-top: 16px;
+            color: #777;
+            font-size: 13px
+        }
+    </style>
+</head>
+
+<body>
+    <nav>Home &gt; Electronics &gt; Headphones &gt; AeroSound Pro</nav>
+    <article>
+        <h1>AeroSound Pro Wireless Headphones</h1>
+        <p class="rating">★★★★☆ 4.3 out of 5 — 2,148 ratings</p>
+        <p class="price">$179.99</p>
+        <p>Over-ear wireless headphones with active noise cancellation, 40-hour battery life, and multipoint Bluetooth
+            5.3 pairing. Designed for daily commuting and long listening sessions.</p>
+        <h2>Key features</h2>
+        <ul class="specs">
+            <li>Active noise cancellation with transparency mode</li>
+            <li>40-hour battery life, 5-minute quick charge for 4 hours playback</li>
+            <li>Bluetooth 5.3 with simultaneous dual-device pairing</li>
+            <li>Memory foam ear cushions, foldable travel design</li>
+            <li>Available in midnight black, slate gray, and cream</li>
+        </ul>
+        <h2>What's in the box</h2>
+        <p>Headphones, USB-C charging cable, 3.5mm audio cable, hard travel case, quick start guide.</p>
+        <button>Add to Cart</button>
+    </article>
+    <footer>Free returns within 30 days. Ships from and sold by AeroSound.</footer>
+</body>
+
+</html>
+```
+
+**video-watch-page.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Full Playthrough Highlights — Retro Platformer Speedrun</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #0f0f0f;
+            line-height: 1.6;
+            background: #fff
+        }
+
+        .player {
+            background: #000;
+            color: #fff;
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 40px
+        }
+
+        h1 {
+            font-size: 19px;
+            margin: 14px 0 4px
+        }
+
+        .meta {
+            color: #606060;
+            font-size: 13px;
+            margin-bottom: 16px
+        }
+
+        .desc {
+            background: #f2f2f2;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            margin-bottom: 20px
+        }
+
+        .comment {
+            border-top: 1px solid #eee;
+            padding: 10px 0;
+            font-size: 13px
+        }
+
+        .comment .user {
+            font-weight: bold
+        }
+
+        footer {
+            margin-top: 30px;
+            color: #909090;
+            font-size: 12px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="player">▶</div>
+    <h1>Full Playthrough Highlights — Retro Platformer Speedrun (Any% Glitchless)</h1>
+    <p class="meta">142,038 views · Published July 2, 2026 · PixelDash Runs</p>
+    <div class="desc">
+        <p>Complete any% glitchless run through all six worlds, finishing in 38 minutes 12 seconds. Timestamps below for
+            each world boundary. This run uses the frame-perfect ledge-clip in World 4 but no out-of-bounds skips, so it
+            should count for the glitchless leaderboard.</p>
+        <p>00:00 World 1 · 06:40 World 2 · 13:15 World 3 · 19:50 World 4 · 27:30 World 5 · 33:45 World 6 boss</p>
+    </div>
+    <section>
+        <div class="comment"><span class="user">retrofan88:</span> that world 4 clip is insane, how long did it take to
+            learn</div>
+        <div class="comment"><span class="user">speedqueen_lu:</span> new PB inspired, going for sub-37 this weekend
+        </div>
+        <div class="comment"><span class="user">jsp_arcade:</span> the boss fight route at the end saved so much time
+        </div>
+    </section>
+    <footer>PixelDash Runs · 340K subscribers</footer>
+</body>
+
+</html>
+```
+
+**discussion-thread.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Best budget mechanical keyboards in 2026? — KeebTalk Forums</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #222;
+            line-height: 1.5
+        }
+
+        h1 {
+            font-size: 20px
+        }
+
+        .post {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px
+        }
+
+        .post .user {
+            font-weight: bold;
+            color: #2c5f9c;
+            font-size: 13px
+        }
+
+        .post .time {
+            color: #999;
+            font-size: 11px;
+            float: right
+        }
+
+        footer {
+            margin-top: 30px;
+            color: #999;
+            font-size: 12px
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Best budget mechanical keyboards in 2026?</h1>
+    <div class="post"><span class="user">clackattack</span><span class="time">3d ago</span>
+        <p>Looking to spend under $60 on my first mechanical board. Mostly typing, some light gaming. Any recs?</p>
+    </div>
+    <div class="post"><span class="user">tenkeyless_tim</span><span class="time">3d ago</span>
+        <p>The Redline K3 is $49 and comes with hot-swap sockets, that's the easy pick right now.</p>
+    </div>
+    <div class="post"><span class="user">clackattack</span><span class="time">2d ago</span>
+        <p>Does hot-swap actually matter if I'm never changing switches?</p>
+    </div>
+    <div class="post"><span class="user">switchnerd</span><span class="time">2d ago</span>
+        <p>It matters more than people think — even if you don't swap now, you probably will in six months once you try
+            a different feel.</p>
+    </div>
+    <div class="post"><span class="user">budget_bob</span><span class="time">1d ago</span>
+        <p>Seconding the K3. I also liked the Vantage Mini 65% for something more compact, closer to $65 though.</p>
+    </div>
+    <div class="post"><span class="user">tenkeyless_tim</span><span class="time">22h ago</span>
+        <p>Avoid the Corex Lite, the stabilizers rattle out of the box and it's a pain to fix.</p>
+    </div>
+    <div class="post"><span class="user">clackattack</span><span class="time">14h ago</span>
+        <p>Ordered the K3, will report back once it arrives. Thanks all.</p>
+    </div>
+    <footer>142 replies · KeebTalk Forums · Hardware &amp; Peripherals</footer>
+</body>
+
+</html>
+```
+
+**academic-abstract.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Effects of Microplastic Accumulation on Coral Reef Ecosystems</title>
+    <style>
+        body {
+            font-family: Georgia, serif;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #1a1a1a;
+            line-height: 1.65
+        }
+
+        h1 {
+            font-size: 22px
+        }
+
+        .authors {
+            color: #444;
+            font-size: 14px;
+            margin-bottom: 4px
+        }
+
+        .affil {
+            color: #777;
+            font-size: 12px;
+            margin-bottom: 18px
+        }
+
+        h2 {
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #555;
+            margin-top: 22px
+        }
+
+        .keywords {
+            font-size: 13px;
+            color: #555
+        }
+
+        footer {
+            margin-top: 30px;
+            color: #999;
+            font-size: 12px
+        }
+    </style>
+</head>
+
+<body>
+    <article>
+        <h1>Effects of Microplastic Accumulation on Coral Reef Ecosystems: A Five-Year Field Study</h1>
+        <p class="authors">R. Almeida, T. Nakamura, S. Okoro</p>
+        <p class="affil">Department of Marine Biology, Coastal Research Institute</p>
+        <h2>Abstract</h2>
+        <p>Microplastic contamination in shallow reef environments has increased substantially over the past decade, yet
+            its long-term ecological consequences remain poorly quantified. We conducted a five-year field study across
+            twelve reef sites, measuring microplastic density, coral polyp stress response, and associated fish
+            community composition. Sites with the highest microplastic concentrations showed a 34% reduction in coral
+            recruitment and measurable shifts in polyp feeding behavior. Fish species richness declined most sharply
+            among reef-dependent grazers, suggesting cascading effects beyond direct coral impact. These findings
+            indicate that microplastic load is a meaningful, independent stressor on reef resilience, distinct from and
+            additive to thermal bleaching pressure.</p>
+        <h2>Keywords</h2>
+        <p class="keywords">microplastics, coral reef ecology, marine pollution, reef resilience, benthic ecosystems</p>
+    </article>
+    <footer>Journal of Marine Ecology, Vol. 41, Issue 3 · Received Feb 2026, Accepted May 2026</footer>
+</body>
+
+</html>
+```
+
+**personal-blog.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Two Weeks Backpacking Through Patagonia — Notes From the Trail</title>
+    <style>
+        body {
+            font-family: Georgia, serif;
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #2b2b2b;
+            line-height: 1.7
+        }
+
+        h1 {
+            font-size: 26px;
+            margin-bottom: 6px
+        }
+
+        .byline {
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 22px;
+            font-family: Arial, sans-serif
+        }
+
+        footer {
+            margin-top: 34px;
+            color: #999;
+            font-size: 12px;
+            font-family: Arial, sans-serif
+        }
+    </style>
+</head>
+
+<body>
+    <article>
+        <h1>Two Weeks Backpacking Through Patagonia</h1>
+        <p class="byline">Posted by Marisol Vega · June 28, 2026</p>
+        <p>I'd been putting off this trip for three years, mostly out of fear I'd underestimated the weather. I hadn't —
+            the wind in Torres del Paine really does knock you sideways, and I lost a hat to it on day two that I never
+            saw again.</p>
+        <p>The first four days were the hardest, both physically and mentally. My pack felt heavier than it had any
+            right to be, and I second-guessed the whole itinerary somewhere around the second river crossing. But by day
+            five, once the trail dropped down toward the lake, something clicked and I stopped counting kilometers.</p>
+        <p>Camping near the base of the towers on the seventh night is the memory I keep coming back to. No one in the
+            campsite talked much that evening. You didn't need to.</p>
+        <p>If you're planning something similar: bring more layers than you think you need, book the refugios early if
+            you want a bed instead of a tent, and don't rush the W trek just to say you did the full circuit. Slower was
+            better every single day.</p>
+    </article>
+    <footer>Filed under: hiking, south america, long-distance trips</footer>
+</body>
+
+</html>
+```
+
+**livescore-page.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Live Scores — Saturday Fixtures</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #222
+        }
+
+        h1 {
+            font-size: 18px
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+            font-size: 13px
+        }
+
+        td,
+        th {
+            border: 1px solid #ddd;
+            padding: 6px 8px;
+            text-align: left
+        }
+
+        .live {
+            color: #c0392b;
+            font-weight: bold
+        }
+
+        .ft {
+            color: #666
+        }
+
+        footer {
+            margin-top: 20px;
+            color: #999;
+            font-size: 12px
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Live Scores — Saturday Fixtures</h1>
+    <table>
+        <tr>
+            <th>Status</th>
+            <th>Home</th>
+            <th></th>
+            <th>Away</th>
+            <th>League</th>
+        </tr>
+        <tr>
+            <td class="live">67'</td>
+            <td>Ashfield United</td>
+            <td>1 - 1</td>
+            <td>Riverport City</td>
+            <td>Div 1</td>
+        </tr>
+        <tr>
+            <td class="ft">FT</td>
+            <td>Northgate FC</td>
+            <td>2 - 0</td>
+            <td>Millbrook Town</td>
+            <td>Div 1</td>
+        </tr>
+        <tr>
+            <td class="live">23'</td>
+            <td>Sable Rovers</td>
+            <td>0 - 0</td>
+            <td>Castleview</td>
+            <td>Div 2</td>
+        </tr>
+        <tr>
+            <td class="ft">FT</td>
+            <td>Harborline</td>
+            <td>3 - 3</td>
+            <td>Westfield Athletic</td>
+            <td>Div 2</td>
+        </tr>
+        <tr>
+            <td>19:45</td>
+            <td>Grand Union</td>
+            <td>vs</td>
+            <td>Elmswood</td>
+            <td>Div 1</td>
+        </tr>
+    </table>
+    <h2 style="font-size:14px">Top scorers this week</h2>
+    <table>
+        <tr>
+            <th>Player</th>
+            <th>Team</th>
+            <th>Goals</th>
+        </tr>
+        <tr>
+            <td>D. Marchetti</td>
+            <td>Northgate FC</td>
+            <td>2</td>
+        </tr>
+        <tr>
+            <td>K. Obuya</td>
+            <td>Harborline</td>
+            <td>2</td>
+        </tr>
+    </table>
+    <footer>Scores update automatically every 60 seconds during live matches.</footer>
+</body>
+
+</html>
+```
+
+**paywall-stub.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Central Bank Signals Possible Rate Pause After Inflation Data</title>
+    <style>
+        body {
+            font-family: Georgia, serif;
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #1a1a1a;
+            line-height: 1.6
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 14px
+        }
+
+        .wall {
+            background: #f7f7f7;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            margin-top: 20px
+        }
+
+        .wall h2 {
+            font-size: 17px;
+            margin-bottom: 8px
+        }
+
+        .wall button {
+            background: #111;
+            color: #fff;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-top: 10px;
+            cursor: pointer
+        }
+
+        footer {
+            margin-top: 30px;
+            color: #999;
+            font-size: 12px
+        }
+    </style>
+</head>
+
+<body>
+    <article>
+        <h1>Central Bank Signals Possible Rate Pause After Inflation Data</h1>
+        <p>Policymakers left interest rates unchanged on Thursday for the second consecutive meeting, citing signs that
+            inflation is cooling faster than expected. The decision was widely anticipated by markets ahead of next
+            week's jobs report.</p>
+        <div class="wall">
+            <h2>You've reached your free article limit</h2>
+            <p>Subscribe to continue reading this story and get unlimited access to our markets coverage.</p>
+            <button>Subscribe for $1/week</button>
+        </div>
+    </article>
+    <footer>Financial Ledger · Markets Desk</footer>
+</body>
+
+</html>
+```
+
+**login-wall.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sign In — Northbridge Community Portal</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 420px;
+            margin: 80px auto;
+            padding: 24px;
+            color: #222;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px
+        }
+
+        h1 {
+            font-size: 18px
+        }
+
+        input {
+            display: block;
+            width: 100%;
+            padding: 9px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #2c5f9c;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-top: 6px;
+            cursor: pointer
+        }
+
+        p.note {
+            font-size: 12px;
+            color: #888;
+            margin-top: 16px
+        }
+
+        footer {
+            margin-top: 30px;
+            color: #999;
+            font-size: 11px
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Sign in to Northbridge Community Portal</h1>
+    <p class="note">Please sign in to view this content.</p>
+    <input type="text" placeholder="Username" disabled>
+    <input type="password" placeholder="Password" disabled>
+    <button>Sign In</button>
+    <p class="note">Not a member? Registration is currently invite-only.</p>
+    <footer>© 2026 Northbridge Community Portal</footer>
+</body>
+
+</html>
+```
+
+**cookie-interstitial.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>5 Small Habits That Actually Improve Your Sleep and Nutrition</title>
+    <style>
+        body {
+            font-family: Georgia, serif;
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #1a1a1a;
+            line-height: 1.6;
+            position: relative
+        }
+
+        .consent {
+            border: 2px solid #333;
+            background: #fafafa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 24px
+        }
+
+        .consent h2 {
+            font-size: 16px;
+            margin-top: 0
+        }
+
+        .consent ul {
+            font-size: 13px;
+            color: #444;
+            padding-left: 18px
+        }
+
+        .consent .buttons button {
+            margin-right: 10px;
+            padding: 8px 16px;
+            border-radius: 5px;
+            border: none;
+            font-size: 13px;
+            cursor: pointer
+        }
+
+        .consent .accept {
+            background: #111;
+            color: #fff
+        }
+
+        .consent .manage {
+            background: #eee;
+            color: #111;
+            border: 1px solid #ccc
+        }
+
+        article {
+            opacity: 0.6
+        }
+
+        h1 {
+            font-size: 22px
+        }
+
+        footer {
+            margin-top: 24px;
+            color: #999;
+            font-size: 12px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="consent">
+        <h2>We value your privacy</h2>
+        <p>We use cookies and similar technologies to personalize content, measure ad performance, and analyze traffic.
+            By clicking "Accept All," you consent to our use of cookies as described in our Cookie Policy.</p>
+        <ul>
+            <li>Strictly necessary cookies (always active)</li>
+            <li>Performance and analytics cookies</li>
+            <li>Advertising and personalization cookies</li>
+            <li>Social media cookies</li>
+        </ul>
+        <div class="buttons">
+            <button class="accept">Accept All</button>
+            <button class="manage">Manage Preferences</button>
+            <button class="manage">Reject All</button>
+        </div>
+    </div>
+    <article>
+        <h1>5 Small Habits That Actually Improve Your Sleep and Nutrition</h1>
+        <p>Most sleep advice focuses on the hour before bed, but what you eat earlier in the day matters more than
+            people assume. A consistent breakfast time helps anchor your circadian rhythm even more reliably than a
+            fixed bedtime.</p>
+        <p>Cutting caffeine after 2pm made the single biggest difference in the small trial we cite below, more than any
+            change to screen time or room temperature.</p>
+    </article>
+    <footer>Wellness Weekly · Health &amp; Habits</footer>
+</body>
+
+</html>
+```
+
+**news-duplicate-reworded.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Senate Backs Multibillion-Dollar Bullet Train Plan in Narrow Vote</title>
+    <meta property="og:title" content="Senate Backs Multibillion-Dollar Bullet Train Plan in Narrow Vote">
+    <meta property="og:type" content="article">
+    <style>
+        body {
+            font-family: Georgia, serif;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #1a1a1a;
+            line-height: 1.65
+        }
+
+        nav {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-family: Arial, sans-serif
+        }
+
+        nav a {
+            margin-right: 16px;
+            color: #0645ad;
+            text-decoration: none;
+            font-size: 14px
+        }
+
+        h1 {
+            font-size: 27px;
+            margin-bottom: 4px
+        }
+
+        .byline {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+            font-family: Arial, sans-serif
+        }
+
+        footer {
+            margin-top: 40px;
+            border-top: 1px solid #ddd;
+            padding-top: 16px;
+            color: #777;
+            font-size: 13px;
+            font-family: Arial, sans-serif
+        }
+    </style>
+</head>
+
+<body>
+    <nav><a href="/">Home</a><a href="/state">State</a><a href="/transit">Transit</a></nav>
+    <header>
+        <h1>Senate Backs Multibillion-Dollar Bullet Train Plan in Narrow Vote</h1>
+        <p class="byline">By Marcus Feld · The Statewide Ledger · July 14, 2026</p>
+    </header>
+    <article>
+        <p>A divided state senate narrowly approved a $2.4 billion package Wednesday to build a bullet train linking the
+            capital with the state's busiest port, after years of delay and two prior attempts that never made it to a
+            floor vote.</p>
+        <p>The 62-38 tally came after a marathon debate session in which several rural senators voiced concern that
+            their districts would see none of the promised economic benefit despite bearing part of the construction
+            footprint.</p>
+        <p>Rail authority planners expect the earliest usable stretch of track to open in roughly four years, with the
+            entire corridor finished by the early 2030s if the budget holds. Industry groups tied to freight shipping
+            welcomed the news, framing it as relief for clogged interstate corridors.</p>
+        <p>A senior aide to the governor called it "a generational bet on the state's infrastructure," while a leading
+            critic countered that the fare model still hasn't been made public and that ridership numbers used to
+            justify the bill "assume best-case everything."</p>
+        <p>Groundbreaking is penciled in for spring, assuming the pending environmental review clears without major
+            objection.</p>
+    </article>
+    <footer>© 2026 The Statewide Ledger.</footer>
+</body>
+
+</html>
+```
+
+**news-syndicated-reprint.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>State Approves $2.4B Funding for High-Speed Rail Line</title>
+    <meta property="og:title" content="State Approves $2.4B Funding for High-Speed Rail Line">
+    <meta property="og:type" content="article">
+    <style>
+        body {
+            font-family: Georgia, serif;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #1a1a1a;
+            line-height: 1.65
+        }
+
+        nav {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-family: Arial, sans-serif
+        }
+
+        nav a {
+            margin-right: 16px;
+            color: #0645ad;
+            text-decoration: none;
+            font-size: 14px
+        }
+
+        h1 {
+            font-size: 27px;
+            margin-bottom: 4px
+        }
+
+        .byline {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 6px;
+            font-family: Arial, sans-serif
+        }
+
+        .syn {
+            color: #999;
+            font-size: 12px;
+            margin-bottom: 20px;
+            font-family: Arial, sans-serif;
+            font-style: italic
+        }
+
+        footer {
+            margin-top: 40px;
+            border-top: 1px solid #ddd;
+            padding-top: 16px;
+            color: #777;
+            font-size: 13px;
+            font-family: Arial, sans-serif
+        }
+    </style>
+</head>
+
+<body>
+    <nav><a href="/">Home</a><a href="/wire">Wire</a><a href="/partners">Partner Content</a></nav>
+    <header>
+        <h1>State Approves $2.4B Funding for High-Speed Rail Line</h1>
+        <p class="byline">By Dana Okafor</p>
+        <p class="syn">Originally published by Capital Herald. Republished by Regional Wire Network under syndication
+            agreement.</p>
+    </header>
+    <article>
+        <p>State lawmakers voted 62-38 on Wednesday to approve $2.4 billion in funding for a new high-speed rail line
+            connecting the state capital to its largest port city, a project supporters say will cut travel time between
+            the two cities from four hours to under ninety minutes.</p>
+        <p>The bill, which passed after eighteen months of committee hearings and three failed attempts in previous
+            sessions, allocates funding over a seven-year construction window. Transportation officials say the first
+            segment of track could be operational within four years, with the full route completed by 2033.</p>
+        <p>Opponents of the measure argued that the cost estimate is likely to grow, pointing to overruns on similar
+            projects in neighboring states. Freight and logistics groups largely supported the bill, citing reduced
+            congestion on parallel highway corridors.</p>
+        <p>"This is the single biggest infrastructure investment this state has made in a generation," the governor's
+            office said in a statement following the vote. Critics, however, warned that fare pricing has not yet been
+            finalized and that ridership projections may be optimistic.</p>
+        <p>Construction is expected to begin next spring, pending final environmental review. The rail authority said it
+            will hold public comment sessions in each county the line passes through before finalizing the route.</p>
+    </article>
+    <footer>© 2026 Regional Wire Network. Original reporting © Capital Herald.</footer>
+</body>
+
+</html>
+```
+
+**boilerplate-heavy.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Local Farmers Market Returns This Weekend — Millbrook Gazette</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 0;
+            color: #222;
+            font-size: 13px
+        }
+
+        .topnav {
+            background: #222;
+            color: #fff;
+            padding: 8px 16px;
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap
+        }
+
+        .topnav a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 12px
+        }
+
+        .layout {
+            display: flex;
+            gap: 20px;
+            padding: 16px
+        }
+
+        main {
+            flex: 2
+        }
+
+        aside {
+            flex: 1;
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 6px
+        }
+
+        aside h3 {
+            font-size: 12px;
+            margin-top: 0
+        }
+
+        aside ul {
+            padding-left: 16px;
+            font-size: 11px;
+            color: #555
+        }
+
+        article h1 {
+            font-size: 18px;
+            margin-bottom: 6px
+        }
+
+        article p {
+            font-size: 14px;
+            line-height: 1.6
+        }
+
+        footer {
+            background: #eee;
+            padding: 16px;
+            font-size: 10px;
+            color: #777;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px
+        }
+
+        footer a {
+            color: #555;
+            text-decoration: none
+        }
+    </style>
+</head>
+
+<body>
+    <div class="topnav">
+        <a href="/">Home</a><a href="/news">News</a><a href="/sports">Sports</a><a href="/opinion">Opinion</a><a
+            href="/obituaries">Obituaries</a><a href="/classifieds">Classifieds</a><a href="/weather">Weather</a><a
+            href="/events">Events</a><a href="/subscribe">Subscribe</a><a href="/contact">Contact</a>
+    </div>
+    <div class="layout">
+        <main>
+            <article>
+                <h1>Local Farmers Market Returns This Weekend</h1>
+                <p>The Millbrook Farmers Market opens for its 2026 season this Saturday at Town Square, running every
+                    weekend through October with produce, baked goods, and crafts from over thirty local vendors.</p>
+                <p>New this year is a dedicated stall row for first-time vendors, part of an effort by the town council
+                    to make the market more accessible to smaller growers.</p>
+            </article>
+        </main>
+        <aside>
+            <h3>Popular Tags</h3>
+            <ul>
+                <li>town council</li>
+                <li>events</li>
+                <li>local business</li>
+                <li>parks</li>
+                <li>schools</li>
+                <li>road closures</li>
+            </ul>
+            <h3>This Week's Weather</h3>
+            <p style="font-size:11px">Sat: 24°C sunny · Sun: 22°C partly cloudy</p>
+            <h3>Newsletter</h3>
+            <p style="font-size:11px">Sign up for the weekly Millbrook digest.</p>
+        </aside>
+    </div>
+    <footer>
+        <a href="/about">About Us</a><a href="/advertise">Advertise</a><a href="/privacy">Privacy Policy</a><a
+            href="/terms">Terms of Service</a><a href="/archive">Archive</a><a href="/staff">Staff Directory</a><a
+            href="/careers">Careers</a><a href="/rss">RSS</a><a href="/facebook">Facebook</a><a
+            href="/twitter">Twitter</a><span>© 2026 Millbrook Gazette</span>
+    </footer>
+</body>
+
+</html>
+```
+
+**multi-topic-page.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>The Business of Esports: How Competitive Gaming Became a Billion-Dollar Industry</title>
+    <style>
+        body {
+            font-family: Georgia, serif;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #1a1a1a;
+            line-height: 1.65
+        }
+
+        h1 {
+            font-size: 25px
+        }
+
+        .byline {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 20px;
+            font-family: Arial, sans-serif
+        }
+
+        footer {
+            margin-top: 30px;
+            color: #999;
+            font-size: 12px
+        }
+    </style>
+</head>
+
+<body>
+    <article>
+        <h1>The Business of Esports: How Competitive Gaming Became a Billion-Dollar Industry</h1>
+        <p class="byline">By Priya Ramanathan · Culture &amp; Markets</p>
+        <p>Ten years ago, watching strangers play video games for prize money was a niche hobby streamed to a few
+            thousand viewers. Today, championship events fill arenas and pull in television-scale audiences, and the
+            underlying economics have shifted just as dramatically.</p>
+        <p>Team ownership stakes now trade in ways that resemble traditional sports franchises, with venture funds and
+            even a few legacy sports owners buying into top organizations at valuations that would have seemed absurd a
+            decade ago. Sponsorship deals, once limited to energy drinks and gaming peripherals, now include banks,
+            airlines, and luxury brands chasing a young, hard-to-reach audience.</p>
+        <p>Media rights are the newest frontier. Streaming platforms are bidding aggressively for exclusive broadcast
+            rights to major tournaments, mirroring the rights wars that reshaped traditional sports broadcasting in the
+            2000s. Analysts covering the space now publish the same kind of revenue and franchise-valuation reports once
+            reserved for the NBA or Premier League.</p>
+        <p>Not everyone in the scene is thrilled with the shift. Longtime players and community organizers worry that
+            the influx of institutional money is pricing out the grassroots tournaments that built the culture in the
+            first place.</p>
+    </article>
+    <footer>Culture &amp; Markets · Industry Desk</footer>
+</body>
+
+</html>
+```
+
+**non-english-page.html**
+```html
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cómo Preparar una Paella Valenciana Tradicional</title>
+    <style>
+        body {
+            font-family: Georgia, serif;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #1a1a1a;
+            line-height: 1.65
+        }
+
+        h1 {
+            font-size: 24px
+        }
+
+        .byline {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 20px;
+            font-family: Arial, sans-serif
+        }
+
+        footer {
+            margin-top: 30px;
+            color: #999;
+            font-size: 12px
+        }
+    </style>
+</head>
+
+<body>
+    <article>
+        <h1>Cómo Preparar una Paella Valenciana Tradicional</h1>
+        <p class="byline">Por Carmen Ibáñez · Cocina y Tradición</p>
+        <p>La paella valenciana auténtica no lleva marisco, a pesar de lo que muchos turistas esperan. La receta
+            original nació en las zonas rurales de Valencia y se preparaba con lo que había a mano: pollo, conejo, judía
+            verde y garrofón, cocinados lentamente sobre fuego de leña de naranjo.</p>
+        <p>El secreto está en el sofrito y en el arroz correcto. Un buen sofrito de tomate rallado, pimentón y un toque
+            de azafrán le da a la paella su color y profundidad de sabor, mientras que un arroz de grano corto como el
+            bomba absorbe el caldo sin pasarse.</p>
+        <p>El socarrat, esa capa ligeramente tostada que se forma en el fondo de la paellera, es para muchos la parte
+            más apreciada del plato. Conseguirlo requiere paciencia: subir el fuego solo en los últimos minutos y
+            escuchar con atención el sonido del arroz.</p>
+        <p>Se sirve directamente en la paellera, en el centro de la mesa, acompañada de gajos de limón y, según la
+            familia, una copa de vino tinto de la región.</p>
+    </article>
+    <footer>Cocina y Tradición · Recetas Regionales</footer>
+</body>
+
+</html>
+```
+
+**title-body-mismatch.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Top 10 Vacation Destinations for 2026</title>
+    <style>
+        body {
+            font-family: Georgia, serif;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #1a1a1a;
+            line-height: 1.65
+        }
+
+        h1 {
+            font-size: 24px
+        }
+
+        .byline {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 20px;
+            font-family: Arial, sans-serif
+        }
+
+        footer {
+            margin-top: 30px;
+            color: #999;
+            font-size: 12px
+        }
+    </style>
+</head>
+
+<body>
+    <article>
+        <h1>A Complete Guide to Itemizing Tax Deductions</h1>
+        <p class="byline">By Wallace Chen, CPA · Money &amp; Filing</p>
+        <p>Most filers take the standard deduction because it's simpler, but if your deductible expenses run high
+            enough, itemizing can meaningfully lower your taxable income. The most commonly overlooked category is
+            unreimbursed medical expenses above 7.5% of adjusted gross income.</p>
+        <p>Mortgage interest and state and local taxes remain the two largest itemized categories for most households,
+            though the cap on state and local tax deductions limits how much high-tax-state residents can claim.</p>
+        <p>Charitable contributions are worth tracking carefully throughout the year rather than reconstructing them in
+            April — keep receipts for cash donations over $250 and get a written acknowledgment from the organization.
+        </p>
+        <p>Run the numbers both ways before filing. A quick comparison against the standard deduction takes a few
+            minutes and can be the difference between a modest refund and a meaningfully larger one.</p>
+    </article>
+    <footer>Money &amp; Filing · Personal Finance</footer>
+</body>
+
+</html>
+```
+
+**nearly-empty-page.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Untitled Draft</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px;
+            color: #333;
+            text-align: center
+        }
+
+        h1 {
+            font-size: 20px;
+            color: #999;
+            font-weight: normal
+        }
+
+        footer {
+            margin-top: 60px;
+            color: #ccc;
+            font-size: 11px
+        }
+
+        .placeholder {
+            border: 1px dashed #ddd;
+            border-radius: 8px;
+            padding: 40px;
+            margin-top: 20px;
+            color: #bbb;
+            font-size: 13px
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Draft</h1>
+    <div class="placeholder">No content has been added to this page yet.</div>
+    <footer>Last saved: unsaved draft</footer>
+</body>
+
+</html>
+```
+
+**malformed-jsonld.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Solid-State Battery Breakthrough Promises Faster Charging</title>
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article"
+  "headline": "Solid-State Battery Breakthrough Promises Faster Charging",
+  "datePublished": "2026-07-14",
+  "author": {"@type": "Person" "name": "Elena Torres"}
+}
+</script>
+    <style>
+        body {
+            font-family: Georgia, serif;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #1a1a1a;
+            line-height: 1.65
+        }
+
+        h1 {
+            font-size: 24px
+        }
+
+        .byline {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 20px;
+            font-family: Arial, sans-serif
+        }
+
+        footer {
+            margin-top: 30px;
+            color: #999;
+            font-size: 12px
+        }
+    </style>
+</head>
+
+<body>
+    <article>
+        <h1>Solid-State Battery Breakthrough Promises Faster Charging</h1>
+        <p class="byline">By Elena Torres · Tech Desk</p>
+        <p>Researchers announced a new solid-state battery design this week that reportedly reaches 80% charge in under
+            ten minutes while retaining over 90% capacity after 1,000 charge cycles, figures that would put it well
+            ahead of current lithium-ion packs used in most electric vehicles.</p>
+        <p>The team says the key change is a sulfide-based solid electrolyte that suppresses the dendrite formation
+            which has historically made solid-state cells prone to short-circuiting during fast charging.</p>
+        <p>Independent labs have not yet reproduced the results, and the researchers acknowledged that manufacturing the
+            cells at automotive scale remains an open problem. A pilot production line is planned for next year to test
+            whether the process holds up outside a lab setting.</p>
+    </article>
+    <footer>Tech Desk · Energy &amp; Materials</footer>
+</body>
+
+</html>
+```
+
+---
+
+**goldset.jsonl**
+```jsonl
+{"fixture":"news-cricket-jsonld.html","expectedCategory":"sports","acceptableCategories":["sports","news"],"expectedTags":["cricket","india"],"expectedExtractionLevel":"full","shouldDedupeWith":null,"notes":"Pre-existing
+fixture; JSON-LD NewsArticle with sport keywords — label inferred from filename only, content not supplied"}
+{"fixture":"recipe-sourdough.html","expectedCategory":"food","acceptableCategories":["food"],"expectedTags":["sourdough","baking"],"expectedExtractionLevel":"full","shouldDedupeWith":null,"notes":"Pre-existing
+fixture; recipe page — label inferred from filename only, content not supplied"}
+{"fixture":"wikipedia-catlinks.html","expectedCategory":"reference","acceptableCategories":["reference"],"expectedTags":["cats","encyclopedia"],"expectedExtractionLevel":"full","shouldDedupeWith":null,"notes":"Pre-existing
+fixture; Wikipedia-style page, name suggests heavy catlinks/navbox boilerplate stressing boilerplate-vs-content
+separation — label inferred from filename only"}
+{"fixture":"repo-page.html","expectedCategory":"programming","acceptableCategories":["programming","technology"],"expectedTags":["repository","open-source"],"expectedExtractionLevel":"partial","shouldDedupeWith":null,"notes":"Pre-existing
+fixture; code-hosting repo page, sidebar/file-tree chrome likely outweighs prose — label inferred from filename only"}
+{"fixture":"spa-video-empty-article.html","expectedCategory":"other","acceptableCategories":["entertainment","other"],"expectedTags":["video","client-rendered"],"expectedExtractionLevel":"minimal","shouldDedupeWith":null,"notes":"Pre-existing
+fixture; SPA video page with empty static <article>, tests JS-rendered content with nothing server-side to extract —
+    label inferred from filename only"}
+    {"fixture":"injection-title.html","expectedCategory":"other","acceptableCategories":["other"],"expectedTags":["injection","security-test"],"expectedExtractionLevel":"partial","shouldDedupeWith":null,"notes":"Pre-existing
+    fixture; likely contains prompt-injection-style text aimed at the categorizer, must be treated as inert page data,
+    never followed — label inferred from filename only"}
+    {"fixture":"news-og-only.html","expectedCategory":"news","acceptableCategories":["news"],"expectedTags":["rail","infrastructure","legislation"],"expectedExtractionLevel":"full","shouldDedupeWith":null,"notes":"Baseline
+    long-form news article, OpenGraph tags but no JSON-LD; anchor for the #12/#13 dedup pair"}
+    {"fixture":"api-docs.html","expectedCategory":"programming","acceptableCategories":["programming","technology"],"expectedTags":["api","documentation"],"expectedExtractionLevel":"full","shouldDedupeWith":null,"notes":"Developer
+    reference docs; tests structured, code-heavy content extraction"}
+    {"fixture":"product-listing.html","expectedCategory":"shopping","acceptableCategories":["shopping"],"expectedTags":["headphones","electronics"],"expectedExtractionLevel":"full","shouldDedupeWith":null,"notes":"E-commerce
+    product page with specs, price, and description"}
+    {"fixture":"video-watch-page.html","expectedCategory":"entertainment","acceptableCategories":["entertainment"],"expectedTags":["gaming","speedrun"],"expectedExtractionLevel":"full","shouldDedupeWith":null,"notes":"YouTube-style
+    watch page with description text present"}
+    {"fixture":"discussion-thread.html","expectedCategory":"technology","acceptableCategories":["technology"],"expectedTags":["keyboards","forum"],"expectedExtractionLevel":"partial","shouldDedupeWith":null,"notes":"Forum
+    thread of many short comments, no single article body; tests extraction when content is fragmented rather than
+    absent"}
+    {"fixture":"academic-abstract.html","expectedCategory":"science","acceptableCategories":["science"],"expectedTags":["microplastics","coral-reefs"],"expectedExtractionLevel":"full","shouldDedupeWith":null,"notes":"Academic
+    abstract page, tests dense technical prose extraction"}
+    {"fixture":"personal-blog.html","expectedCategory":"travel","acceptableCategories":["travel"],"expectedTags":["patagonia","backpacking"],"expectedExtractionLevel":"full","shouldDedupeWith":null,"notes":"Personal
+    blog post with author byline, first-person travel narrative"}
+    {"fixture":"livescore-page.html","expectedCategory":"sports","acceptableCategories":["sports"],"expectedTags":["football","livescore"],"expectedExtractionLevel":"partial","shouldDedupeWith":null,"notes":"Table-heavy
+    live-score page with little prose; category must come from structured data, not article text"}
+    {"fixture":"paywall-stub.html","expectedCategory":"finance","acceptableCategories":["finance"],"expectedTags":["central-bank","interest-rates"],"expectedExtractionLevel":"partial","shouldDedupeWith":null,"notes":"Two
+    real sentences then a subscription wall; tests graceful partial extraction instead of treating the paywall copy as
+    the article"}
+    {"fixture":"login-wall.html","expectedCategory":"other","acceptableCategories":["other"],"expectedTags":["login","members-only"],"expectedExtractionLevel":"minimal","shouldDedupeWith":null,"notes":"No
+    content visible until authentication; nothing determinable beyond title and URL"}
+    {"fixture":"cookie-interstitial.html","expectedCategory":"health","acceptableCategories":["health"],"expectedTags":["nutrition","wellness"],"expectedExtractionLevel":"partial","shouldDedupeWith":null,"notes":"Cookie-consent
+    banner dominates the DOM; underlying health article only reachable via title/meta signal"}
+    {"fixture":"news-duplicate-reworded.html","expectedCategory":"news","acceptableCategories":["news"],"expectedTags":["rail","infrastructure","legislation"],"expectedExtractionLevel":"full","shouldDedupeWith":null,"notes":"Same
+    underlying story as news-og-only.html from a different outlet, reworded headline and prose; must NOT dedupe —
+    contrast case for news-syndicated-reprint.html"}
+    {"fixture":"news-syndicated-reprint.html","expectedCategory":"news","acceptableCategories":["news"],"expectedTags":["rail","infrastructure","transit"],"expectedExtractionLevel":"full","shouldDedupeWith":"news-og-only.html","notes":"Verbatim
+    syndicated reprint of news-og-only.html's body at a different URL/outlet branding; SHOULD dedupe — tests that dedup
+    is content-based, not URL-based"}
+    {"fixture":"boilerplate-heavy.html","expectedCategory":"food","acceptableCategories":["food"],"expectedTags":["farmers-market","local"],"expectedExtractionLevel":"partial","shouldDedupeWith":null,"notes":"Nav,
+    sidebar, and footer boilerplate outweighs the real article text; category must come from content, not surrounding
+    chrome"}
+    {"fixture":"multi-topic-page.html","expectedCategory":"entertainment","acceptableCategories":["entertainment","finance"],"expectedTags":["esports","gaming","industry"],"expectedExtractionLevel":"full","shouldDedupeWith":null,"notes":"Legitimately
+    spans esports culture and industry economics; genuinely ambiguous, encoded via acceptableCategories rather than
+    forced to one label"}
+    {"fixture":"non-english-page.html","expectedCategory":"food","acceptableCategories":["food"],"expectedTags":["paella","spanish-cuisine"],"expectedExtractionLevel":"full","shouldDedupeWith":null,"notes":"Spanish-language
+    article with real body content; tests non-English extraction and categorization"}
+    {"fixture":"title-body-mismatch.html","expectedCategory":"finance","acceptableCategories":["finance"],"expectedTags":["taxes","filing"],"expectedExtractionLevel":"full","shouldDedupeWith":null,"notes":"Title
+    claims vacation destinations but the body is a tax-filing guide; label follows the body per rule 1, not the
+    misleading title"}
+    {"fixture":"nearly-empty-page.html","expectedCategory":"other","acceptableCategories":["other"],"expectedTags":["draft","untitled"],"expectedExtractionLevel":"minimal","shouldDedupeWith":null,"notes":"Only
+    a title and one heading, no body copy; nothing determinable"}
+    {"fixture":"malformed-jsonld.html","expectedCategory":"technology","acceptableCategories":["technology","science"],"expectedTags":["battery","energy-storage"],"expectedExtractionLevel":"full","shouldDedupeWith":null,"notes":"Contains
+    a JSON-LD script with broken JSON syntax; real article body is still present and extractable, and the malformed JSON
+    must not crash the parser"}
+    ```
+
+    **commands.jsonl**
+    ```jsonl
+    {"_tabPool":[{"id":1,"url":"https://www.espncricinfo.com/series/ind-vs-aus-2026/3rd-test/live","title":"India vs
+    Australia, 3rd
+    Test","category":"sports","tags":["cricket","test-match"]},{"id":2,"url":"https://www.youtube.com/watch?v=cricket-highlights-2026","title":"Cricket
+    World Cup Highlights: Best
+    Sixes","category":"sports","tags":["cricket","video"]},{"id":3,"url":"https://www.bbc.com/sport/football/tables","title":"Premier
+    League Table, Week
+    12","category":"sports","tags":["football","soccer"]},{"id":4,"url":"https://www.iplt20.com/auction/2026","title":"IPL
+    Auction 2026: Full Player
+    List","category":"sports","tags":["cricket","ipl"]},{"id":5,"url":"https://forums.keebtalk-example.com/t/best-budget-mechanical-keyboards-2026","title":"Best
+    Budget Mechanical Keyboards
+    2026","category":"technology","tags":["keyboards","hardware"]},{"id":6,"url":"https://creatorhub-example.com/guides/how-to-add-closed-captions","title":"How
+    to Add Closed Captions to Your
+    Videos","category":"technology","tags":["captions","video-editing"]},{"id":7,"url":"https://www.fifa.com/worldcup/qualifiers/standings","title":"World
+    Cup Qualifiers: Group
+    Standings","category":"sports","tags":["football","soccer"]},{"id":8,"url":"https://www.cricketreport-example.com/day3-old-trafford-report","title":"England
+    v Australia: Day 3 Report, Old
+    Trafford","category":"sports","tags":["test-match","england"]},{"id":9,"url":"https://www.bloomberg.com/news/central-bank-rate-pause","title":"Central
+    Bank Signals Possible Rate
+    Pause","category":"finance","tags":["finance","economy"]},{"id":10,"url":"https://www.foodnetwork.com/recipes/easy-weeknight-pasta","title":"Easy
+    Weeknight Pasta
+    Recipes","category":"food","tags":["recipe","pasta"]},{"id":11,"url":"https://www.travelblog-example.com/thailand-hidden-beaches","title":"Top
+    10 Hidden Beaches in
+    Thailand","category":"travel","tags":["travel","beaches"]},{"id":12,"url":"https://docs.google.com/document/d/1AbCdEfGhIjKlMnOpQrSt/edit","title":"Q3
+    Team
+    Roadmap","category":"work","tags":["docs","planning"]},{"id":13,"url":"https://docs.google.com/document/d/2XyZaBcDeFgHiJkLmNoP/edit","title":"Sprint
+    Planning
+    Notes","category":"work","tags":["docs","planning"]},{"id":14,"url":"https://www.youtube.com/watch?v=funny-cat-compilation","title":"Funny
+    Cat
+    Compilation","category":"entertainment","tags":["video","cats"]},{"id":15,"url":"https://www.energynews-example.com/solar-farm-nevada-desert","title":"Solar
+    Farm Doubles Capacity in Nevada Desert","category":"science","tags":["solar","renewable"]}]}
+    {"command":"close my cricket
+    tabs","expectedIntent":"close_tabs","expectedTabIds":[1,2,4],"mustNotSelect":[7],"requiresConfirmation":true,"notes":"Straightforward
+    topical selection; tab 7 is football and must not match cricket"}
+    {"command":"group my keyboard
+    tabs","expectedIntent":"group_tabs","expectedTabIds":[5],"mustNotSelect":[],"requiresConfirmation":false,"notes":"Straightforward
+    topical selection on a single technology tab"}
+    {"command":"pin my travel
+    tabs","expectedIntent":"pin_tabs","expectedTabIds":[11],"mustNotSelect":[],"requiresConfirmation":false,"notes":"Straightforward
+    topical selection on a single travel tab"}
+    {"command":"reload my work
+    tabs","expectedIntent":"reload_tabs","expectedTabIds":[12,13],"mustNotSelect":[],"requiresConfirmation":false,"notes":"Straightforward
+    topical selection on both work tabs"}
+    {"command":"close all youtube.com
+    tabs","expectedIntent":"close_tabs","expectedTabIds":[2,14],"mustNotSelect":[],"requiresConfirmation":true,"notes":"Domain-scoped
+    selection; the dot in youtube.com matters"}
+    {"command":"pin all bbc.com
+    tabs","expectedIntent":"pin_tabs","expectedTabIds":[3],"mustNotSelect":[],"requiresConfirmation":false,"notes":"Domain-scoped
+    selection on a single bbc.com tab"}
+    {"command":"bookmark all google.com
+    tabs","expectedIntent":"bookmark_tabs","expectedTabIds":[12,13],"mustNotSelect":[],"requiresConfirmation":false,"notes":"Domain-scoped
+    selection; docs.google.com tabs count as google.com"}
+    {"command":"don't close my docs, just group
+    them","expectedIntent":"group_tabs","expectedTabIds":[12,13],"mustNotSelect":[],"requiresConfirmation":false,"notes":"Negated
+    command; negation must suppress close_tabs and route to group_tabs"}
+    {"command":"don't mute the finance tab, just pin
+    it","expectedIntent":"pin_tabs","expectedTabIds":[9],"mustNotSelect":[],"requiresConfirmation":false,"notes":"Negated
+    command; must not select mute_tabs"}
+    {"command":"unpin
+    everything","expectedIntent":"unpin_tabs","expectedTabIds":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],"mustNotSelect":[],"requiresConfirmation":false,"notes":"Un-prefixed
+    verb; must resolve to unpin_tabs, not pin_tabs"}
+    {"command":"unmute the cat
+    video","expectedIntent":"unmute_tabs","expectedTabIds":[14],"mustNotSelect":[],"requiresConfirmation":false,"notes":"Un-prefixed
+    verb; must resolve to unmute_tabs, not mute_tabs"}
+    {"command":"group my closed caption
+    tabs","expectedIntent":"group_tabs","expectedTabIds":[6],"mustNotSelect":[],"requiresConfirmation":false,"notes":"close
+    appears only inside closed caption, a noun phrase, not the verb"}
+    {"command":"bookmark my tabs about the stock market
+    close","expectedIntent":"bookmark_tabs","expectedTabIds":[9],"mustNotSelect":[],"requiresConfirmation":false,"notes":"close
+    refers to the trading-day close, not the close_tabs action"}
+    {"command":"pin and mute my finance
+    tabs","expectedIntent":"pin_tabs","expectedTabIds":[9],"mustNotSelect":[],"requiresConfirmation":false,"expectAmbiguous":true,"notes":"Names
+    two valid intents, pin_tabs and mute_tabs, over the same target"}
+    {"command":"mute or pin my sports
+    tabs","expectedIntent":"mute_tabs","expectedTabIds":[1,2,3,4,7,8],"mustNotSelect":[],"requiresConfirmation":false,"expectAmbiguous":true,"notes":"Names
+    two valid intents, mute_tabs and pin_tabs, over the full sports category"}
+    {"command":"my cricket
+    tabs","expectedIntent":"search_and_switch","expectedTabIds":[1,2,4],"mustNotSelect":[7],"requiresConfirmation":false,"notes":"No
+    verb at all; least-destructive default is to surface/switch, not mutate state"}
+    {"command":"the football
+    tabs","expectedIntent":"search_and_switch","expectedTabIds":[3,7],"mustNotSelect":[],"requiresConfirmation":false,"notes":"No
+    verb at all; least-destructive default applies"}
+    {"command":"close my knitting
+    tabs","expectedIntent":"close_tabs","expectedTabIds":[],"mustNotSelect":[],"requiresConfirmation":true,"notes":"No
+    knitting-related tab exists in the pool; intent is still classifiable even with an empty selection"}
+    {"command":"mute my crypto
+    tabs","expectedIntent":"mute_tabs","expectedTabIds":[],"mustNotSelect":[9],"requiresConfirmation":false,"notes":"No
+    cryptocurrency tab exists; tab 9 is central-bank/rate-pause finance content and must not be treated as crypto"}
+    {"command":"reload
+    everything","expectedIntent":"reload_tabs","expectedTabIds":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],"mustNotSelect":[],"requiresConfirmation":false,"notes":"Selects
+    the entire tab pool"}
+    {"command":"bookmark all my
+    tabs","expectedIntent":"bookmark_tabs","expectedTabIds":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],"mustNotSelect":[],"requiresConfirmation":false,"notes":"Selects
+    the entire tab pool"}
+    {"command":"close the Ashes
+    tabs","expectedIntent":"close_tabs","expectedTabIds":[8],"mustNotSelect":[],"requiresConfirmation":true,"notes":"Semantic
+    match: the Ashes is the England-Australia Test series; tab 8's title and URL share no literal word with the
+    command"}
+    {"command":"pin the tab about clean
+    power","expectedIntent":"pin_tabs","expectedTabIds":[15],"mustNotSelect":[],"requiresConfirmation":false,"notes":"Semantic
+    match: solar energy is clean power; tab 15's title and URL share no literal word with the command"}
+    {"command":"clsoe my crickt
+    tabs","expectedIntent":"close_tabs","expectedTabIds":[1,2,4],"mustNotSelect":[7],"requiresConfirmation":true,"notes":"Misspellings
+    of close and cricket"}
+    {"command":"gruop my tehc
+    tabs","expectedIntent":"group_tabs","expectedTabIds":[5,6],"mustNotSelect":[],"requiresConfirmation":false,"notes":"Misspellings
+    of group and tech"}

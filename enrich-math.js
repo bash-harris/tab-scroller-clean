@@ -269,7 +269,7 @@
       entities: { people: [], orgs: [], works: [] },
       contentType,
       tier: 'math',
-      vecVersion: 2,
+      vecVersion: 3,
       enrichedAt: Date.now()
     };
   }

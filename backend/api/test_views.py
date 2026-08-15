@@ -205,3 +205,169 @@ class GenerateEndpointTest(TestCase):
                 content_type="application/json",
             )
         self.assertEqual(response.status_code, 502)
+
+
+class TabStorageAndFTSTests(TestCase):
+    """Test persistent tab storage, URL-hash deduplication, SQLite FTS5 search, and entity queries."""
+
+    def setUp(self):
+        self.client = Client()
+        self.sample_tabs = [
+            {
+                "urlHash": "hash_hf_1",
+                "url": "https://huggingface.co/CohereLabs/North-Micro-Vision-Instruct",
+                "title": "CohereLabs/North-Micro-Vision-Instruct · Hugging Face",
+                "domain": "huggingface.co",
+                "category": "coding",
+                "tags": ["python", "transformers", "pytorch"],
+                "keywords": ["vision-language", "open-weight", "multimodal"],
+                "pseudoDoc": "CohereLabs North Micro Vision Instruct open weight vision language model fine tuning",
+                "mainText": "Apache 2.0 open-weight vision language model designed for prototyping and fine-tuning with PyTorch and Transformers.",
+                "embedding": [0.1] * 384,
+                "extractionTier": "local_ner",
+                "entities": [
+                    {"name": "CohereLabs", "type": "org", "confidence": 0.99},
+                    {"name": "PyTorch", "type": "tech", "confidence": 0.95}
+                ]
+            },
+            {
+                "urlHash": "hash_yt_1",
+                "url": "https://www.youtube.com/watch?v=YzWHHNbiHZ4",
+                "title": "If you can only watch one sleep video, make it this - YouTube",
+                "domain": "youtube.com",
+                "category": "video",
+                "tags": ["sleep", "health"],
+                "keywords": ["circadian", "testosterone", "deep sleep"],
+                "pseudoDoc": "Watch one sleep video maximize testosterone deep sleep optimization",
+                "mainText": "Achieve 1000+ testosterone in 1:1 coaching and optimize deep REM sleep.",
+                "embedding": [0.0] * 384,
+                "extractionTier": "local_ner",
+                "entities": [
+                    {"name": "YouTube", "type": "platform", "confidence": 1.0}
+                ]
+            },
+            {
+                "urlHash": "hash_movie_1",
+                "url": "https://www.imdb.com/title/tt0402850/",
+                "title": "Capote (2005) - IMDb",
+                "domain": "imdb.com",
+                "category": "entertainment",
+                "tags": ["movie", "biography", "drama"],
+                "keywords": ["philip seymour hoffman", "oscar", "academy award"],
+                "pseudoDoc": "Capote 2005 biography drama starring Philip Seymour Hoffman Academy Award winner",
+                "mainText": "In 1959 Truman Capote learns of the murders of a Kansas family and writes In Cold Blood.",
+                "embedding": [0.2] * 384,
+                "extractionTier": "llm_enriched",
+                "entities": [
+                    {"name": "Philip Seymour Hoffman", "type": "person", "confidence": 0.98},
+                    {"name": "Academy Award", "type": "award", "confidence": 0.95},
+                    {"name": "Capote", "type": "movie", "confidence": 0.99}
+                ]
+            }
+        ]
+
+    def test_sync_tabs_bulk_upsert_and_deduplication(self):
+        """POST /api/tabs/sync bulk upserts tabs and updates on duplicate hash."""
+        # 1. Initial bulk sync
+        resp = self.client.post(
+            "/api/tabs/sync",
+            data=json.dumps({"tabs": self.sample_tabs}),
+            content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["synced"], 3)
+        self.assertEqual(data["total"], 3)
+
+        # 2. Duplicate sync (updates existing rows without inflating total count)
+        updated_tabs = [
+            {
+                "urlHash": "hash_hf_1",
+                "url": "https://huggingface.co/CohereLabs/North-Micro-Vision-Instruct",
+                "title": "Updated Title - Hugging Face",
+                "domain": "huggingface.co",
+                "category": "coding",
+            }
+        ]
+        resp2 = self.client.post(
+            "/api/tabs/sync",
+            data=json.dumps({"tabs": updated_tabs}),
+            content_type="application/json"
+        )
+        data2 = resp2.json()
+        self.assertEqual(data2["synced"], 1)
+        self.assertEqual(data2["total"], 3)  # Total remains 3
+
+    def test_get_cards_retrieval(self):
+        """GET /api/tabs/cards returns stored tab cards."""
+        self.client.post("/api/tabs/sync", data=json.dumps({"tabs": self.sample_tabs}), content_type="application/json")
+
+        # Get all
+        resp = self.client.get("/api/tabs/cards")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(len(data["cards"]), 3)
+        self.assertEqual(data["total"], 3)
+
+        # Get specific hashes
+        resp2 = self.client.get("/api/tabs/cards?hashes=hash_hf_1,hash_yt_1")
+        data2 = resp2.json()
+        self.assertEqual(len(data2["cards"]), 2)
+
+    def test_fts_search_bm25_fast_keyword_query(self):
+        """GET /api/tabs/fts searches SQLite FTS5 table with BM25 ranking."""
+        self.client.post("/api/tabs/sync", data=json.dumps({"tabs": self.sample_tabs}), content_type="application/json")
+
+        # Search for "PyTorch" -> matches HuggingFace card
+        resp = self.client.get("/api/tabs/fts?q=PyTorch")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertGreaterEqual(data["count"], 1)
+        self.assertEqual(data["results"][0]["urlHash"], "hash_hf_1")
+
+        # Search for "testosterone" -> matches YouTube card
+        resp2 = self.client.get("/api/tabs/fts?q=testosterone")
+        data2 = resp2.json()
+        self.assertEqual(data2["count"], 1)
+        self.assertEqual(data2["results"][0]["urlHash"], "hash_yt_1")
+
+    def test_entity_query_lookup(self):
+        """POST /api/tabs/entity_query matches tabs by named entities."""
+        self.client.post("/api/tabs/sync", data=json.dumps({"tabs": self.sample_tabs}), content_type="application/json")
+
+        resp = self.client.post(
+            "/api/tabs/entity_query",
+            data=json.dumps({"entities": ["Philip Seymour Hoffman", "CohereLabs"]}),
+            content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(data["count"], 2)
+        matched_hashes = {m["urlHash"] for m in data["matches"]}
+        self.assertIn("hash_movie_1", matched_hashes)
+        self.assertIn("hash_hf_1", matched_hashes)
+
+    def test_get_stats_and_delete(self):
+        """GET /api/tabs/stats and POST /api/tabs/delete."""
+        self.client.post("/api/tabs/sync", data=json.dumps({"tabs": self.sample_tabs}), content_type="application/json")
+
+        stats_resp = self.client.get("/api/tabs/stats")
+        self.assertEqual(stats_resp.status_code, 200)
+        stats = stats_resp.json()
+        self.assertEqual(stats["totalCards"], 3)
+        self.assertTrue(stats["ftsReady"])
+
+        # Delete one
+        del_resp = self.client.post(
+            "/api/tabs/delete",
+            data=json.dumps({"hashes": ["hash_yt_1"]}),
+            content_type="application/json"
+        )
+        self.assertEqual(del_resp.status_code, 200)
+        self.assertEqual(del_resp.json()["deleted"], 1)
+
+        # Check total is now 2
+        stats_resp2 = self.client.get("/api/tabs/stats")
+        self.assertEqual(stats_resp2.json()["totalCards"], 2)
+

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>WeatherSync API Reference — /forecast endpoint</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 24px;
+            color: #222;
+            line-height: 1.6
+        }
+
+        nav {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 20px
+        }
+
+        nav a {
+            margin-right: 16px;
+            color: #0645ad;
+            text-decoration: none;
+            font-size: 14px
+        }
+
+        h1 {
+            font-size: 24px
+        }
+
+        code,
+        pre {
+            background: #f4f4f4;
+            border-radius: 4px;
+            font-family: Consolas, monospace
+        }
+
+        pre {
+            padding: 12px;
+            overflow-x: auto;
+            font-size: 13px
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0
+        }
+
+        td,
+        th {
+            border: 1px solid #ddd;
+            padding: 6px 10px;
+            text-align: left;
+            font-size: 14px
+        }
+
+        footer {
+            margin-top: 40px;
+            border-top: 1px solid #ddd;
+            padding-top: 16px;
+            color: #777;
+            font-size: 13px
+        }
+    </style>
+</head>
+
+<body>
+    <nav><a href="/docs">Docs</a><a href="/docs/auth">Auth</a><a href="/docs/endpoints">Endpoints</a><a
+            href="/docs/sdks">SDKs</a></nav>
+    <article>
+        <h1>GET /v2/forecast</h1>
+        <p>Returns a 7-day forecast for a given latitude and longitude. Requires an API key passed via the
+            <code>Authorization</code> header.</p>
+        <h2>Request</h2>
+        <pre><code>GET /v2/forecast?lat=40.71&lon=-74.00&units=metric
+Authorization: Bearer YOUR_API_KEY</code></pre>
+        <h2>Parameters</h2>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Required</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>lat</td>
+                <td>float</td>
+                <td>yes</td>
+                <td>Latitude in decimal degrees</td>
+            </tr>
+            <tr>
+                <td>lon</td>
+                <td>float</td>
+                <td>yes</td>
+                <td>Longitude in decimal degrees</td>
+            </tr>
+            <tr>
+                <td>units</td>
+                <td>string</td>
+                <td>no</td>
+                <td>metric or imperial, defaults to metric</td>
+            </tr>
+        </table>
+        <h2>Response</h2>
+        <pre><code>{
+  "location": "New York, US",
+  "daily": [
+    {"date": "2026-07-15", "high": 29, "low": 21, "condition": "partly_cloudy"}
+  ]
+}</code></pre>
+        <h2>Rate limits</h2>
+        <p>Free tier requests are limited to 60 calls per minute. Exceeding this returns a 429 status with a
+            <code>Retry-After</code> header.</p>
+    </article>
+    <footer>WeatherSync API Docs · v2.3</footer>
+</body>
+
+</html>

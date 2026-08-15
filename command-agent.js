@@ -168,40 +168,265 @@ function classifyCommand(cmd) {
   if (typeof cmd !== 'string') return 'semantic';
   const cmdLower = cmd.slice(0, 500).toLowerCase().trim();
   
-  // Domain patterns (e.g. youtube.com, github.com) — shared constant
-  const domainMatch = hasDomainPattern(cmdLower);
-
-  // Structural/syntactic keywords
-  const syntacticKeywords = [
-    'all tabs', 'all open tabs', 'all the tabs', 'duplicates', 'duplicate', 'pinned', 'unpinned',
-    'audible', 'playing', 'mute', 'unmute', 'sound', 'noisy', 'silent', 'inactive', 'old',
-    'stale', 'unused', 'last active', 'sorting', 'sort by', 'order by', 'group by domain', 'group by host',
-    'reddit', 'youtube', 'github', 'google', 'twitter', 'facebook', 'instagram', 'linkedin', 'amazon'
-  ];
-
-  const hasSyntacticKeyword = syntacticKeywords.some(kw => cmdLower.includes(kw));
-  
-  if (domainMatch || hasSyntacticKeyword) {
-    // If it has strong topical indicators, classify as semantic
-    const semanticIndicators = [
-      'about', 'related to', 'referring to', 'contains info on', 'topic', 'subject', 'discussing',
-      'web series', 'mortgage', 'science', 'entertainment', 'sports', 'celebrity', 'celebrities', 'news', 'housing'
-    ];
-    const hasSemanticIndicator = semanticIndicators.some(ind => cmdLower.includes(ind));
-    if (hasSemanticIndicator) {
-      return 'semantic';
-    }
+  // 1. Explicit domain patterns (e.g. youtube.com, github.com)
+  if (hasDomainPattern(cmdLower)) {
     return 'syntactic';
   }
 
+  // 2. Pure all-tabs actions (e.g. "close all tabs", "reload all tabs", "pin all tabs")
+  const ALL_TABS_CLEAN = /^(close|group|pin|unpin|mute|unmute|reload|bookmark|sort)\s+(all|all\s+the|all\s+open|every)\s+tabs?(\s+together)?$/i;
+  if (ALL_TABS_CLEAN.test(cmdLower)) {
+    return 'syntactic';
+  }
+
+  // 3. Pure structural actions (duplicates, audio/mute, pinned state, domain sorting)
+  const PURE_STRUCTURAL_PHRASES = [
+    'duplicate', 'duplicates', 'same url',
+    'pinned tabs', 'unpinned tabs', 'unpin all', 'pin active',
+    'audible tabs', 'playing audio', 'mute tabs', 'unmute tabs', 'noisy tabs', 'silent tabs',
+    'sort by domain', 'sort by host', 'order by domain', 'sort tabs by domain'
+  ];
+
+  for (const phrase of PURE_STRUCTURAL_PHRASES) {
+    if (cmdLower.includes(phrase)) {
+      // Ensure there are no leftover topic words
+      const words = commandWords(cmdLower).filter(w => !['duplicate', 'duplicates', 'pinned', 'unpinned', 'audible', 'mute', 'unmute', 'sort', 'tabs', 'tab'].includes(w));
+      if (words.length === 0) {
+        return 'syntactic';
+      }
+    }
+  }
+
+  // Any other command containing topic words (e.g. "programming", "cricket", "movies") must be semantic
   return 'semantic';
 }
 
-async function retrieveCandidates(cmd, windowId) {
+// Retrieval tuning. These are the knobs that decide how much of the browser
+// gets looked at and how much survives to the reranker.
+//
+// PREFILTER_MAX is deliberately far larger than the number of tabs the model
+// will ultimately see: its job is to be a cheap high-recall net, not to decide.
+const PREFILTER_MAX = 120;
+// buildTabCard() injects a content script and runs extraction, so it is by far
+// the most expensive thing in this file. Before the prefilter existed, EVERY
+// uncarded open tab was indexed on every command -- with ~1000 tabs open that
+// is ~1000 extractions at concurrency 5 per command.
+const DYNAMIC_INDEX_MAX = 40;
+const DYNAMIC_INDEX_CONCURRENCY = 5;
+
+// Tokenise a command into content words, dropping stopwords and 1-2 char noise.
+function commandWords(cmd) {
+  return String(cmd || '').toLowerCase().split(/\s+/)
+    .filter(w => w.length > 2 && !STOPWORDS.has(w));
+}
+
+// Word-boundary test that also treats '-' and '.' as separators, so the tag
+// "test-match" is two matchable words and "sports" does not contain "port".
+function hasWord(haystack, word) {
+  if (!haystack || !word) return false;
+  const esc = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^a-z0-9])${esc}([^a-z0-9]|$)`, 'i').test(haystack);
+}
+
+// Cheap lexical evidence for one tab. Works with or without an enrichment card,
+// which is what lets the prefilter rank uncarded tabs before paying to index
+// them. Returns graded fractions, never a flat bonus -- see scoreCandidate.
+function lexicalSignals(words, { title, url, category, tags }) {
+  const n = words.length || 1;
+  const t = (title || '').toLowerCase();
+  const u = (url || '').toLowerCase();
+  const c = (category || '').toLowerCase();
+  const g = (tags || []).join(' ').toLowerCase();
+
+  let titleHits = 0, catHits = 0, urlHits = 0, dom = 0;
+  for (const w of words) {
+    if (hasWord(t, w)) titleHits++;
+    if (hasWord(c, w) || hasWord(g, w)) catHits++;
+    if (u.includes(w)) urlHits++;
+    // An exact host token is hard evidence, not fuzzy similarity.
+    if (/\w\.\w/.test(w)) {
+      const host = ((u.match(/\/\/([^/]+)/) || [])[1] || '');
+      const bare = w.replace(/^www\./, '');
+      if (host === bare || host.endsWith('.' + bare) || host.includes(bare)) dom = 1;
+    }
+  }
+  return { lex: titleHits / n, cat: catHits / n, url: urlHits / n, dom };
+}
+
+// Blended relevance score.
+//
+// Every signal is weighted and graded; none may overwrite or flat-add to the
+// total. That is the entire fix for the saturation bug: the previous scorer did
+//     if (keywordScore > score) score = keywordScore;   // pins to exactly 1.0
+//     if (categoryBoost) score += 0.4;                  // same 0.4 for everyone
+// so every tab in a named category landed on precisely 1.40, the ranking carried
+// no information, and the model received a list ordered by IndexedDB insertion.
+//
+// Weights for vec/lex/cat/url/dom are the ones measured in bench/retrieval-bench.js
+// (recall and MRR held exactly, avg ties at #1 fell 1.6 -> 1.0). tagOverlap and
+// entity are extension-only signals with no fixture coverage in that bench, so
+// they carry deliberately small weights.
+function scoreCandidate({ vec, lex, cat, url, dom, tagOverlap = 0, entity = 0 }) {
+  return (
+    0.45 * vec +
+    0.25 * lex +
+    0.20 * cat +
+    0.10 * url +
+    1.00 * dom +
+    0.15 * tagOverlap +
+    0.10 * entity +
+    // epsilon on cosine: separates otherwise-identical evidence without
+    // disturbing real ordering, so ties never fall back to insertion order.
+    0.001 * vec
+  );
+}
+
+function cosineSim(query, emb) {
+  let dot = 0, normA = 0, normB = 0;
+  const len = Math.min(query.length, emb.length);
+  for (let i = 0; i < len; i++) {
+    dot += query[i] * emb[i];
+    normA += query[i] * query[i];
+    normB += emb[i] * emb[i];
+  }
+  const denom = Math.sqrt(normA) * Math.sqrt(normB);
+  return denom ? dot / denom : 0;
+}
+
+// The compact shape actually sent to the model. Extracted so the context-budget
+// calculation below measures the same bytes reasonOverCandidates will send,
+// rather than a guess that can drift away from it.
+function toCompactCard(c, i) {
+  return {
+    index: i + 1,
+    tabId: c.tabId,
+    title: c.title,
+    domain: c.domain,
+    category: c.enrichment?.category || 'other',
+    tags: (c.enrichment?.tags || []).slice(0, 4).map(t => t.tag),
+    contentType: c.enrichment?.contentType || 'other',
+    people: c.enrichment?.entities?.people || [],
+    subTopics: c.enrichment?.subTopics || []
+  };
+}
+
+// How many candidates actually fit in the model's context window.
+//
+// The previous calculation was
+//     maxTabs = (8192 / 50) * 0.9   // = 147
+// which reserved the whole window for tab cards -- nothing for the system
+// instruction and nothing for the model's own reply, which callOllama requests
+// up to 4096 tokens of. It also assumed 50 tokens per card; real cards measured
+// ~95. At 147 the prompt would silently overflow num_ctx and Ollama would slide
+// the window, truncating the tab list without any error.
+//
+// This walks the real serialized cards and stops when prompt + reply no longer
+// fit, so the answer follows the data instead of a constant.
+const CHARS_PER_TOKEN = 4;
+// A local 3B model runs out of PATIENCE before it runs out of context. Measured
+// on the reporting profile: 22 candidates (8320 prompt chars) took 20.0s on
+// qwen2.5-coder:3b. The 8192-token budget below would happily fit ~55, which
+// extrapolates past 45s -- long enough that the feature feels broken even though
+// nothing overflows. So the local path is bounded by latency as well as context,
+// and the tighter of the two wins.
+//
+// Not applied to Gemini/backend: those are network calls whose cost is dominated
+// by round-trip, not by candidate count.
+const LOCAL_SHORTLIST_MAX = 30;
+
+// The NLI selector is NOT capped by a candidate count. That is deliberate, and
+// it replaces a cap that was wrong.
+//
+// The old constant was NLI_SHORTLIST_MAX = 12, justified by retrieval-bench:
+// recall@10 and recall@30 were both 97%, so ranks 11-30 looked free to discard.
+// That measurement was taken on a 15-TAB POOL, where 12 is 80% of everything in
+// existence -- it was structurally incapable of finding a tab below the cut. On a
+// real 454-tab window it silently truncated:
+//
+//   Sending 12 candidates to nli (top scores: 0.37, 0.34, 0.34, 0.22, 0.14)
+//   NLI select: mode=nli matches=9
+//
+// "9 matches" meant 9 of the 12 examined, not 9 of 454. A second Codeforces tab
+// and several Gemini tabs sat at rank 13+ and were never scored at all. Same
+// class of bug as the original chrome.tabs.query({windowId}): retrieval cannot
+// be allowed to make the selection decision.
+//
+// So membership is decided by CONFIDENCE, which is the only limiter that scales
+// with the answer instead of with a budget -- the right number of programming
+// tabs is however many programming tabs exist.
+//
+// The wall-clock budget that briefly replaced the count cap is GONE TOO. It was
+// the same mistake wearing a different hat: at 1423ms/pass it tripped after 18
+// tabs and left 102 unscored, so the same real matches went missing and the
+// answer changed depending on how warm the cache happened to be -- 14 tabs on
+// one run, 23 on the next, 40+ on the third. A limiter that makes results
+// nondeterministic is worse than no limiter.
+//
+// Nothing bounds selection now, because nothing needs to: selection no longer
+// costs one model call per tab. See the band comment in nli-select.js.
+
+function fitCandidatesToContext(candidates, settings) {
+  // NLI has no context window and no per-tab model cost worth capping. Hand it
+  // every candidate and let confidence decide.
+  if ((settings.selectionEngine || 'nli') === 'nli') {
+    return candidates;
+  }
+
+  // Gemini 1.5+ has a 1M window; local models are pinned to num_ctx: 8192.
+  const isLocal = settings.useOllama || settings.useBackend;
+  const contextTokens = isLocal ? 8192 : 1000000;
+  const SYSTEM_TOKENS = 420;   // systemInstruction + command + JSON scaffolding
+  const TOKENS_PER_MATCH = 35; // one {"tabId","reason","confidence"} object
+  const SAFETY = 256;
+  const MIN_OUTPUT = 512, MAX_OUTPUT = 4096;
+
+  const hardMax = isLocal ? Math.min(LOCAL_SHORTLIST_MAX, candidates.length) : candidates.length;
+
+  let usedChars = 0, fitted = 0;
+  for (let i = 0; i < hardMax; i++) {
+    usedChars += JSON.stringify(toCompactCard(candidates[i], i)).length + 2;
+    const promptTokens = SYSTEM_TOKENS + Math.ceil(usedChars / CHARS_PER_TOKEN);
+    // Worst case the model matches every candidate it was shown.
+    const outputTokens = Math.min(MAX_OUTPUT, Math.max(MIN_OUTPUT, 256 + TOKENS_PER_MATCH * (i + 1)));
+    if (promptTokens + outputTokens + SAFETY > contextTokens) break;
+    fitted = i + 1;
+  }
+  return candidates.slice(0, fitted);
+}
+
+// Intents whose RETRIEVAL must stay inside the focused window.
+//
+// Only sorting qualifies: it reorders one window's tab strip, so candidates from
+// elsewhere are meaningless.
+//
+// Grouping is deliberately NOT here even though a tab group cannot span windows.
+// Scoping grouping's retrieval to one window reintroduces the original bug --
+// "group all entertainment tabs" would silently ignore matching tabs in every
+// other window. Instead retrieval spans all windows and handleGroupTabs buckets
+// the result by window, creating one identically-named group in each.
+const WINDOW_SCOPED_INTENTS = new Set(['sort_tabs']);
+
+async function retrieveCandidates(cmd, windowId, intent = null) {
   const settings = await self.readAiSettings();
   const queryEmbedding = await self.Embed.embed(cmd);
   const allCards = await self.TabDB.getAllTabCards();
-  const openTabs = await chrome.tabs.query({ windowId });
+
+  // Scope: all windows, not just the focused one.
+  //
+  // This was chrome.tabs.query({ windowId }). With 1061 tabs open across several
+  // windows only the current window was ever considered, so tabs living in any
+  // other window could not be selected no matter how well they matched -- they
+  // were never candidates at all. No amount of reranking recovers a tab that
+  // retrieval never saw.
+  const windowScoped = WINDOW_SCOPED_INTENTS.has(intent);
+  const openTabs = windowScoped
+    ? await chrome.tabs.query({ windowId })
+    : await chrome.tabs.query({});
+
+  const cardsByHash = new Map();
+  for (const c of allCards) {
+    if (c && c.urlHash) cardsByHash.set(c.urlHash, c);
+  }
 
   // Match cards to open tabs by URL, not by the card's stored tabId.
   //
@@ -210,34 +435,89 @@ async function retrieveCandidates(cmd, windowId) {
   // had been recycled and, worse, could attach one tab's card to a different tab
   // that happened to inherit the id. Keying on urlHash makes the join exact and
   // turns the old O(n*m) candidates.some() scan into a Map lookup.
-  const cardsByHash = new Map();
-  for (const c of allCards) {
-    if (c && c.urlHash) cardsByHash.set(c.urlHash, c);
-  }
-
-  const candidates = [];
-  const missingTabs = [];
-  for (const tab of openTabs) {
-    if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('edge://')) continue;
-    let hash = null;
+  // Hash every open tab's URL in parallel.
+  //
+  // This was a serial `await self.sha256(...)` inside a for-of loop, so a
+  // 454-tab window performed 454 sequential round trips through SubtleCrypto
+  // before retrieval could even begin. Each is independent -- there is no
+  // ordering dependency and no shared state -- so the await points are pure
+  // dead time. Promise.all lets the whole set proceed together.
+  const hashes = await Promise.all(openTabs.map(async (tab) => {
+    if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('edge://')) return null;
     try {
-      hash = await self.sha256(self.normalizeUrl(tab.url));
-    } catch (e) { /* unhashable url — treat as missing */ }
-    const card = hash ? cardsByHash.get(hash) : null;
-    if (card) {
-      // Bind the card to the tab that is actually showing it right now.
-      candidates.push({ ...card, tabId: tab.id });
-    } else {
-      missingTabs.push(tab);
+      return await self.sha256(self.normalizeUrl(tab.url));
+    } catch (e) {
+      return null;   // unhashable url -- treated as uncarded below
     }
+  }));
+
+  const carded = [];
+  const uncarded = [];
+  for (let i = 0; i < openTabs.length; i++) {
+    const tab = openTabs[i];
+    if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('edge://')) continue;
+    const card = hashes[i] ? cardsByHash.get(hashes[i]) : null;
+    if (card) carded.push({ ...card, tabId: tab.id });
+    else uncarded.push(tab);
   }
 
-  if (missingTabs.length > 0) {
-    console.log(`[CommandAgent] Dynamically indexing ${missingTabs.length} missing cards (parallel, cap 5)`);
-    const CONCURRENCY = 5;
-    for (let i = 0; i < missingTabs.length; i += CONCURRENCY) {
-      const batch = missingTabs.slice(i, i + CONCURRENCY);
-      await Promise.all(batch.map(async (tab) => {
+  const query = new Float32Array(queryEmbedding);
+  const words = commandWords(cmd);
+
+  // ---- Prefilter -------------------------------------------------------
+  // A cheap, no-model pass over every open tab, so the expensive work below
+  // touches ~PREFILTER_MAX tabs instead of all of them.
+  const cardedRanked = carded.map(c => {
+    const sig = lexicalSignals(words, {
+      title: c.title,
+      url: c.url || c.domain,
+      category: c.enrichment?.category,
+      tags: (c.enrichment?.tags || []).map(t => t.tag)
+    });
+    const vec = (c.embedding && c.embedding.length)
+      ? cosineSim(query, new Float32Array(c.embedding)) : 0;
+    return { card: c, sig, vec, pre: scoreCandidate({ ...sig, vec }) };
+  }).sort((a, b) => b.pre - a.pre);
+
+  // Uncarded tabs have no embedding yet, so they can only be ranked lexically.
+  // They are ranked and capped SEPARATELY rather than merged into one list:
+  // carded tabs carry a cosine term that uncarded tabs structurally cannot, so
+  // a single sorted list would always starve the uncarded ones -- and on a
+  // fresh profile, where nothing is carded, that is every tab in the browser.
+  const uncardedRanked = uncarded.map(tab => {
+    const sig = lexicalSignals(words, { title: tab.title, url: tab.url });
+    return { tab, sig, pre: scoreCandidate({ ...sig, vec: 0 }) };
+  }).sort((a, b) => b.pre - a.pre);
+
+  // Carded tabs are NOT truncated.
+  //
+  // PREFILTER_MAX used to cut this list to 120, which on a 453-tab window threw
+  // away 332 tabs before anything looked at them -- and the log then cheerfully
+  // reported high confidence on the handful that survived. That is how "group
+  // programming tabs" returned neither LeetCode nor Codeforces.
+  //
+  // The cut existed because scoring was expensive. It is not: a carded tab
+  // already has its embedding stored, so scoring it is a dot product over 384
+  // floats. Scoring all 453 costs microseconds. There is nothing to save.
+  //
+  // The cap that remains is on INDEXING (buildTabCard injects a content script
+  // and runs extraction, which is genuinely expensive and genuinely needs a
+  // bound). Scoring and indexing are different costs and no longer share a
+  // constant.
+  const cardedSurvivors = cardedRanked;
+  const toIndex = uncardedRanked;
+
+  const candidates = cardedSurvivors.map(r => r.card);
+  console.log(`[CommandAgent] Prefilter: ${openTabs.length} tabs (${windowScoped ? 'this window' : 'all windows'}) -> ` +
+    `${cardedSurvivors.length} carded (all scored) + ${toIndex.length} to index`);
+  reportProgress('scan', `Scanned ${openTabs.length} tabs`, 20);
+
+  if (toIndex.length > 0) {
+    console.log(`[CommandAgent] Dynamically indexing ${toIndex.length} missing cards (parallel, cap ${DYNAMIC_INDEX_CONCURRENCY})`);
+    reportProgress('index', `Reading ${toIndex.length} new tabs`, 28);
+    for (let i = 0; i < toIndex.length; i += DYNAMIC_INDEX_CONCURRENCY) {
+      const batch = toIndex.slice(i, i + DYNAMIC_INDEX_CONCURRENCY);
+      await Promise.all(batch.map(async ({ tab }) => {
         try {
           const newCard = await self.buildTabCard(tab, allCards);
           candidates.push({ ...newCard, tabId: tab.id });
@@ -247,9 +527,6 @@ async function retrieveCandidates(cmd, windowId) {
       }));
     }
   }
-
-  const query = new Float32Array(queryEmbedding);
-  const scored = [];
 
   // Query -> tag expansion via the same centroid vocabulary (multi-label set operation)
   let queryTags = [];
@@ -263,120 +540,65 @@ async function retrieveCandidates(cmd, windowId) {
     }
   } catch (e) { /* enrichment unavailable — skip tag overlap */ }
 
+  // ---- Full scoring over the survivors ---------------------------------
+  const scored = [];
   for (const c of candidates) {
-    let score = 0;
-    if (c.embedding && c.embedding.length > 0) {
-      const emb = new Float32Array(c.embedding);
-      let dot = 0, normA = 0, normB = 0;
-      for (let i = 0; i < query.length; i++) {
-        dot += query[i] * emb[i];
-        normA += query[i] * query[i];
-        normB += emb[i] * emb[i];
-      }
-      score = dot / (Math.sqrt(normA) * Math.sqrt(normB) || 1);
-    }
+    const vec = (c.embedding && c.embedding.length)
+      ? cosineSim(query, new Float32Array(c.embedding)) : 0;
 
-    // Keyword/title fallback — floor so candidates without embeddings
-    // (or low semantic similarity) never all score 0.
-    // Include enrichment tags in keyword text so category words like 'entertainment' match tagged tabs
-    const tagText = (c.enrichment?.tags || []).map(t => t.tag).join(' ');
-    const text = `${c.title || ''} ${c.domain || ''} ${c.enrichment?.category || ''} ${tagText}`.toLowerCase();
-    const tokens = cmd.toLowerCase().split(/\s+/).filter(t => t.length > 2 && !STOPWORDS.has(t));
-    let keywordScore = 0;
-    if (tokens.length > 0) {
-      let hits = 0;
-      for (const tok of tokens) {
-        if (text.includes(tok)) hits++;
-      }
-      keywordScore = hits / tokens.length;
-    }
-    if (keywordScore > score) score = keywordScore;
-    
-    // Tag-overlap boost (multi-label): query tags ∩ card tags
-    if (queryTags && queryTags.length && c.enrichment?.tags) {
+    const sig = lexicalSignals(words, {
+      title: c.title,
+      url: c.url || c.domain,
+      category: c.enrichment?.category,
+      tags: (c.enrichment?.tags || []).map(t => t.tag)
+    });
+
+    // Tag overlap, graded by how much of the expansion matched rather than a
+    // flat bonus per hit.
+    let tagOverlap = 0;
+    if (queryTags.length && c.enrichment?.tags) {
       const cardTagSet = new Set(c.enrichment.tags.map(t => t.tag));
-      let overlap = 0;
-      for (const qt of queryTags) if (cardTagSet.has(qt)) overlap++;
-      if (overlap > 0) score += 0.3 * Math.min(overlap, 2);
+      let hits = 0;
+      for (const qt of queryTags) if (cardTagSet.has(qt)) hits++;
+      tagOverlap = hits / queryTags.length;
     }
 
-    // Entity match boost
-    const cmdTokens = cmd.toLowerCase().split(/\s+/).filter(t => t.length > 2);
-    let entityMatch = false;
-    if (c.enrichment?.entities) {
+    // Entity match, graded by the fraction of command words naming an entity.
+    let entity = 0;
+    if (c.enrichment?.entities && words.length) {
       const allEntities = [
         ...(c.enrichment.entities.people || []),
         ...(c.enrichment.entities.orgs || []),
         ...(c.enrichment.entities.works || [])
       ].map(e => e.toLowerCase());
-
-      for (const token of cmdTokens) {
-        if (allEntities.some(e => e.includes(token))) {
-          entityMatch = true;
-          break;
-        }
-      }
-    }
-    if (entityMatch) {
-      score += 0.15;
+      let hits = 0;
+      for (const w of words) if (allEntities.some(e => e.includes(w))) hits++;
+      entity = hits / words.length;
     }
 
-    // Category-match boost: if the command mentions a word that matches
-    // the card's category or any of its enrichment tags, give a strong boost.
-    // This ensures "entertainment tabs" surfaces tabs categorized as entertainment.
-    const cardCategory = (c.enrichment?.category || '').toLowerCase();
-    const cardTagNames = (c.enrichment?.tags || []).map(t => t.tag.toLowerCase());
-    const cmdWords = cmd.toLowerCase().split(/\s+/).filter(w => w.length > 3 && !STOPWORDS.has(w));
-    let categoryBoost = false;
-    for (const w of cmdWords) {
-      if (cardCategory === w || cardCategory.includes(w) || cardTagNames.some(t => t === w || t.includes(w))) {
-        categoryBoost = true;
-        break;
-      }
-    }
-    if (categoryBoost) {
-      score += 0.4;
-    }
-
-    scored.push({ card: c, score });
+    scored.push({ card: c, score: scoreCandidate({ ...sig, vec, tagOverlap, entity }), vec });
   }
 
-  scored.sort((a, b) => b.score - a.score);
-  const MIN_SCORE = 0.3;
-  const qualified = scored.filter(s => s.score >= MIN_SCORE);
-  // Always return at least the top 5 even if below threshold, but cap dynamically to avoid prompt overflow
-  let contextSize = 8192; // Default limit configured for local models (Ollama/Backend)
-  if (!settings.useOllama && !settings.useBackend) {
-    contextSize = 1000000; // Gemini 1.5+ context window
-  }
-  
-  // Highest tokens a compact tab card can occupy is roughly 50 tokens
-  const maxTokensPerTab = 50;
-  const maxTabs = Math.floor((contextSize / maxTokensPerTab) * 0.9);
+  // Tie-break on cosine so equal-evidence tabs still arrive in a stable,
+  // meaningful order rather than whatever order IndexedDB returned them in.
+  scored.sort((a, b) => b.score - a.score || b.vec - a.vec);
 
-  const result = qualified.length >= 5 ? qualified : scored.slice(0, 5);
-  return result.slice(0, maxTabs).map(s => ({
-    ...s.card,
-    similarityScore: s.score
-  }));
+  // No floor-bypass and no fixed MIN_SCORE. Retrieval's job is to hand the
+  // reranker a high-recall shortlist in a useful order; deciding which of them
+  // actually match is the reranker's job, and "none of them" is a legal answer
+  // it is allowed to reach. The old `qualified.length >= 5 ? qualified : top5`
+  // guaranteed at least 5 tabs were offered for every command, including
+  // commands with no matching tab at all.
+  const ranked = scored.map(s => ({ ...s.card, similarityScore: s.score }));
+  return fitCandidatesToContext(ranked, settings);
 }
 
 async function reasonOverCandidates(cmd, candidates) {
   const settings = await self.readAiSettings();
   
-  const compactCards = candidates.map((c, i) => {
-    return {
-      index: i + 1,
-      tabId: c.tabId,
-      title: c.title,
-      domain: c.domain,
-      category: c.enrichment?.category || 'other',
-      tags: (c.enrichment?.tags || []).slice(0, 4).map(t => t.tag),
-      contentType: c.enrichment?.contentType || 'other',
-      people: c.enrichment?.entities?.people || [],
-      subTopics: c.enrichment?.subTopics || []
-    };
-  });
+  // Same shape fitCandidatesToContext measured, so the budget it computed
+  // describes the bytes actually sent here.
+  const compactCards = candidates.map((c, i) => toCompactCard(c, i));
 
   const promptR1 = `Command: "${cmd}"
 Candidates:
@@ -527,12 +749,39 @@ function parseJSONDefensively(text) {
   }
 }
 
+// Report pipeline progress to whichever tab issued the command.
+//
+// WHY THIS EXISTS
+// A semantic command over a large window takes tens of seconds, and until now the
+// only feedback was the input placeholder changing to "Processing...". Nothing
+// moved for the whole run, so the honest user reading was "it is broken".
+//
+// These stages are REAL -- each is emitted at the point that work actually
+// begins, and the tab counts are the true ones. A synthetic animation that
+// advanced on a timer would be worse than nothing: it would imply progress the
+// pipeline was not making, and it would keep advancing after a stall.
+//
+// Best-effort by design: the receiving tab may have navigated away or been
+// closed mid-command, and a failed progress ping must never break the command
+// that is still usefully running.
+let progressTarget = null;
+function setProgressTarget(tabId) { progressTarget = tabId; }
+function reportProgress(stage, detail, pct) {
+  if (progressTarget == null) return;
+  try {
+    chrome.tabs.sendMessage(progressTarget, {
+      type: 'AI_PROGRESS', stage, detail: detail || '', pct: pct ?? null
+    }, () => { void chrome.runtime.lastError; });
+  } catch (e) { /* tab gone -- the command continues regardless */ }
+}
+
 async function runCommandPipeline(userCommand, windowId) {
   if (self.ensureRagReady) {
     await self.ensureRagReady();
   }
   const cleanCommand = sanitizeQuery(userCommand);
   console.log('[CommandAgent] Pipeline running for:', cleanCommand);
+  reportProgress('parse', 'Reading your command', 5);
 
   const classification = classifyCommand(cleanCommand);
   console.log(`[CommandAgent] Classification: ${classification}`);
@@ -557,8 +806,13 @@ async function runCommandPipeline(userCommand, windowId) {
 
   if (classification === 'syntactic') {
     console.log('[CommandAgent] Syntactic fast path matched');
-    
-    const allTabs = await chrome.tabs.query({ windowId });
+
+    // Same all-windows scope as the semantic path: "close all youtube.com tabs"
+    // must mean every window, not just the focused one. Grouping is the one
+    // exception, since a tab group cannot span windows.
+    const allTabs = WINDOW_SCOPED_INTENTS.has(intent)
+      ? await chrome.tabs.query({ windowId })
+      : await chrome.tabs.query({});
     const ruleResult = self.tryRuleBasedGrouping(cleanCommand, allTabs);
     
     if (ruleResult) {
@@ -608,8 +862,83 @@ async function runCommandPipeline(userCommand, windowId) {
   return await runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive, windowId);
 }
 
+// Choose the selection engine.
+//
+// 'nli'  local zero-shot entailment (nli-select.js). Default.
+// 'llm'  the original generative path (reasonOverCandidates).
+//
+// Kept switchable because swapping the selector changes behaviour for EVERY
+// command, so a one-setting rollback has to exist. Falls back to the LLM
+// automatically if the NLI model cannot load -- a fresh profile downloads ~70MB
+// on first use, and a user offline at that moment should get the old path rather
+// than a broken feature.
+async function selectMatches(cleanCommand, candidates, settings) {
+  const engine = settings.selectionEngine || 'nli';
+
+  if (engine === 'nli' && typeof self.NliSelect !== 'undefined') {
+    try {
+      // Compile the command into a structured query first. This is the only
+      // place a generative model touches the selection path, and it never sees
+      // a tab -- it reads the user's own words and returns intent + concepts +
+      // real-world expansions. Cached per normalized command, so a repeated
+      // command costs nothing, and it degrades to the deterministic parser
+      // whenever Ollama is absent or slow.
+      let query = null;
+      if (settings.useQueryParser !== false && typeof self.LlmQuery !== 'undefined') {
+        const t0 = Date.now();
+        reportProgress('understand', 'Understanding what you meant', 35);
+        query = await self.LlmQuery.parse(cleanCommand);
+        console.log(`[CommandAgent] Query parse (${query.source}) in ${Date.now() - t0}ms: ` +
+          `intent=${query.intent} concepts=${JSON.stringify(query.concepts)} ` +
+          `expansions=${Object.keys(query.expansions || {}).length}`);
+      }
+
+      // The cosine stage needs the same embedder that produced the stored card
+      // vectors, or the two sides are not comparable. Wiring it here (rather
+      // than importing inside nli-select) keeps its absence a supported state:
+      // no embedder means every tab falls through to NLI.
+      if (typeof self.Embed !== 'undefined') {
+        self.NliSelect.setEmbedder(self.Embed.embed.bind(self.Embed));
+      }
+
+      const t1 = Date.now();
+      // The matching stage is where the seconds go, so it reports its own
+      // progress per tab rather than being one long silence. onProgress is
+      // called by nli-select as it works; 40-92% is reserved for it because it
+      // dominates the wall clock.
+      const result = await self.NliSelect.select(cleanCommand, candidates,
+        Object.assign({
+          onProgress: (done, total, freeCount) => {
+            const pct = 40 + Math.round(52 * (done / Math.max(1, total)));
+            reportProgress('match',
+              total ? `Checking ${done} of ${total} tabs that need a closer look` : 'Matching tabs',
+              pct);
+            void freeCount;
+          },
+          onCosineDone: (nliCount, totalTabs) => {
+            reportProgress('match',
+              nliCount
+                ? `${totalTabs - nliCount} tabs decided instantly, ${nliCount} need a closer look`
+                : `All ${totalTabs} tabs decided instantly`,
+              40);
+          }
+        }, query ? { query } : {}));
+      console.log(`[CommandAgent] NLI select: mode=${result.mode} matches=${result.matches.length} in ${Date.now() - t1}ms`);
+      // The parsed intent is more reliable than the regex ladder for typo'd and
+      // negated commands, so hand it back for the pipeline to prefer.
+      if (query && query.source !== 'fallback' && query.intent) result.parsedIntent = query.intent;
+      return result;
+    } catch (e) {
+      console.warn('[CommandAgent] NLI unavailable, falling back to LLM:', e.message);
+    }
+  }
+
+  return await reasonOverCandidates(cleanCommand, candidates);
+}
+
 async function runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive, windowId) {
-  const candidates = await retrieveCandidates(cleanCommand, windowId);
+  const settings = await self.readAiSettings();
+  const candidates = await retrieveCandidates(cleanCommand, windowId, intent);
 
   if (candidates.length === 0) {
     console.log('[CommandAgent] No candidates found, returning 0 match result');
@@ -624,9 +953,9 @@ async function runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive
     };
   }
 
-  console.log(`[CommandAgent] Sending ${candidates.length} candidates to LLM (top scores: ${candidates.slice(0, 5).map(c => c.similarityScore?.toFixed(2)).join(', ')})`);
+  console.log(`[CommandAgent] Sending ${candidates.length} candidates to ${settings.selectionEngine || 'nli'} (top scores: ${candidates.slice(0, 5).map(c => c.similarityScore?.toFixed(2)).join(', ')})`);
 
-  const agentResult = await reasonOverCandidates(cleanCommand, candidates);
+  const agentResult = await selectMatches(cleanCommand, candidates, settings);
   if (agentResult && agentResult.providerError) {
     throw new Error(`AI provider unavailable: ${agentResult.providerError}`);
   }
@@ -667,13 +996,28 @@ async function runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive
 
   const finalConfidence = matchesCount > 0 ? (totalConfidence / matchesCount) : 0.0;
 
+  // Prefer the parsed intent over the regex ladder.
+  //
+  // detectIntent() is literal pattern matching, so "clsoe my crickt tabs" falls
+  // through to the default group_tabs and the user's close never happens. The
+  // query parser reads the typo correctly. Destructiveness is RECOMPUTED from
+  // whichever intent wins -- if the parser upgrades an action to close_tabs, the
+  // confirmation requirement has to follow it, or a destructive action could
+  // execute without the preview that DESTRUCTIVE_INTENTS is there to force.
+  let finalIntent = intent;
+  if (agentResult.parsedIntent && agentResult.parsedIntent !== intent) {
+    console.log(`[CommandAgent] Intent: regex said ${intent}, parser said ${agentResult.parsedIntent} — using parser`);
+    finalIntent = agentResult.parsedIntent;
+  }
+  const finalDestructive = DESTRUCTIVE_INTENTS.has(finalIntent);
+
   return {
-    intent,
+    intent: finalIntent,
     tabIds: matchedTabIds,
     perTabReasons,
     uncertain: uncertainTabIds,
     confidence: finalConfidence,
-    destructive: isDestructive,
+    destructive: finalDestructive,
     path: 'semantic'
   };
 }
@@ -690,6 +1034,7 @@ self.INTENT_TO_TOOL = INTENT_TO_TOOL;
 self.retrieveCandidates = retrieveCandidates;
 self.reasonOverCandidates = reasonOverCandidates;
 self.runCommandPipeline = runCommandPipeline;
+self.setProgressTarget = setProgressTarget;
 
 // Node-side export so the pure routing logic can be unit-tested without chrome.
 if (typeof module !== 'undefined' && module.exports) {

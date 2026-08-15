@@ -133,10 +133,87 @@
       const tx = this._db.transaction('tabCards', 'readwrite');
       const store = tx.objectStore('tabCards');
       store.put(card);
+      
+      // Queue non-blocking background sync to permanent computer storage (SQLite)
+      this.queueSync(card);
+
       return new Promise((resolve, reject) => {
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
       });
+    },
+
+    // Persistent Computer Sync Buffer (SQLite Backend)
+    _syncBuffer: [],
+    _syncTimer: null,
+    _backendUrl: 'http://127.0.0.1:8000',
+
+    queueSync(card) {
+      if (!card || !card.urlHash) return;
+      if (typeof globalThis.fetch !== 'function') return;
+      this._syncBuffer.push(card);
+      if (this._syncBuffer.length >= 25) {
+        this.flushSyncBuffer();
+      } else if (!this._syncTimer && typeof globalThis.setTimeout === 'function') {
+        this._syncTimer = globalThis.setTimeout(() => {
+          this._syncTimer = null;
+          this.flushSyncBuffer();
+        }, 1500);
+      }
+    },
+
+    async flushSyncBuffer() {
+      if (this._syncBuffer.length === 0) return;
+      if (typeof globalThis.fetch !== 'function') return;
+      const batch = this._syncBuffer.splice(0, 50);
+      try {
+        await globalThis.fetch(`${this._backendUrl}/api/tabs/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tabs: batch })
+        });
+      } catch (e) {
+        // Backend might be offline; silent fallback
+      }
+    },
+
+    // Restore cards from permanent computer storage (SQLite) if IndexedDB was wiped
+    async restoreFromPermanentStorage() {
+      if (typeof globalThis.fetch !== 'function') return 0;
+      try {
+        const res = await globalThis.fetch(`${this._backendUrl}/api/tabs/cards?limit=5000`);
+        if (!res.ok) return 0;
+        const data = await res.json();
+        const cards = data.cards || [];
+        if (cards.length === 0) return 0;
+
+        const tx = this._db.transaction('tabCards', 'readwrite');
+        const store = tx.objectStore('tabCards');
+        for (const card of cards) {
+          store.put(card);
+        }
+        await new Promise((resolve, reject) => {
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+        console.log(`[TabDB] Restored ${cards.length} cards from permanent computer SQLite storage`);
+        return cards.length;
+      } catch (e) {
+        return 0;
+      }
+    },
+
+    // Sub-10ms Full Text Search via SQLite FTS5 backend
+    async searchFts(query, limit = 50) {
+      if (typeof globalThis.fetch !== 'function') return [];
+      try {
+        const res = await globalThis.fetch(`${this._backendUrl}/api/tabs/fts?q=${encodeURIComponent(query)}&limit=${limit}`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        return data.results || [];
+      } catch (e) {
+        return [];
+      }
     },
 
     // Primary lookup. Stable across browser restarts.
@@ -173,6 +250,16 @@
       const tx = this._db.transaction('tabCards', 'readwrite');
       const store = tx.objectStore('tabCards');
       store.delete(urlHash);
+      
+      // Async delete from backend
+      if (typeof globalThis.fetch === 'function') {
+        globalThis.fetch(`${this._backendUrl}/api/tabs/delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hashes: [urlHash] })
+        }).catch(() => {});
+      }
+
       return new Promise((resolve, reject) => {
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
@@ -191,6 +278,16 @@
       const tx = this._db.transaction('tabCards', 'readwrite');
       const store = tx.objectStore('tabCards');
       for (const row of toDelete) store.delete(row.urlHash);
+      
+      // Async delete from backend
+      if (typeof globalThis.fetch === 'function') {
+        globalThis.fetch(`${this._backendUrl}/api/tabs/delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hashes: toDelete.map(r => r.urlHash) })
+        }).catch(() => {});
+      }
+
       return new Promise((resolve, reject) => {
         tx.oncomplete = () => resolve(toDelete.length);
         tx.onerror = () => reject(tx.error);

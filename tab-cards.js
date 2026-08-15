@@ -62,7 +62,22 @@ async function sha256(text) {
 function normalizeUrl(url) {
   try {
     const parsed = new URL(url);
-    return `${parsed.protocol}//${parsed.hostname}${parsed.pathname}`;
+    // Strip pure tracking, referral, and cosmetic query params
+    const trackingParams = new Set([
+      'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+      'ref', 'ref_src', 'fbclid', 'gclid', 'msclkid', 'si', 'feature', 'list', 'index', 't', 'ab_channel'
+    ]);
+
+    const keepParams = new URLSearchParams();
+    for (const [k, v] of parsed.searchParams.entries()) {
+      const keyLower = k.toLowerCase();
+      if (!trackingParams.has(keyLower) && !keyLower.startsWith('utm_')) {
+        keepParams.append(k, v);
+      }
+    }
+
+    const queryString = keepParams.toString() ? `?${keepParams.toString()}` : '';
+    return `${parsed.protocol}//${parsed.hostname}${parsed.pathname}${queryString}`.replace(/\/+$/, '');
   } catch {
     return url;
   }
@@ -118,11 +133,11 @@ async function buildTabCard(tab, cachedCards) {
 
   const isFresh = (c) =>
     !!c &&
-    c.enrichment?.vecVersion === 2 &&
+    c.enrichment?.vecVersion === 3 &&
     c.enrichment?.enrichedAt > 0 &&
     (Date.now() - c.enrichment.enrichedAt) < 7 * 24 * 60 * 60 * 1000;
 
-  // Cache hit: same URL + valid vec2 enrichment + fresh TTL.
+  // Cache hit: same URL + valid vec3 enrichment + fresh TTL.
   // No re-extraction, no script injection, no re-embedding — ~2ms.
   let cachedCard = null;
   if (savedCards) {
@@ -176,7 +191,7 @@ async function buildTabCard(tab, cachedCards) {
         ? { people: richData.structured.people, orgs: [], works: [] } : { people: [], orgs: [], works: [] },
       contentType: 'other',
       tier: 'math',
-      vecVersion: 2,
+      vecVersion: 3,
       enrichedAt: Date.now()
     },
     embedding: new Float32Array(0),
@@ -212,6 +227,7 @@ async function buildTabCard(tab, cachedCards) {
   }
 
   card.pseudoDoc = pseudoDoc;
+  card.entities = (richData && richData.entities) || [];
 
   await self.TabDB.storeTabCard(card);
 

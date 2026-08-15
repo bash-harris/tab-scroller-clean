@@ -3,6 +3,7 @@ const saveOptions = () => {
   const settings = {
     autoScroll: document.getElementById('autoScroll').checked,
     theme: document.getElementById('theme').value,
+    bgMode: document.getElementById('bgMode').value,
     displayMode: document.getElementById('displayMode').value,
     collapseDelay: parseInt(document.getElementById('collapseDelay').value, 10) || 1500,
     stripColor: document.getElementById('stripColor').value,
@@ -16,6 +17,8 @@ const saveOptions = () => {
     enableAutoFallback: document.getElementById('enableAutoFallback').checked,
     fallbackNotifications: document.getElementById('fallbackNotifications').checked,
     fallbackTier: document.getElementById('fallbackTier').value,
+    // ===== Tab selection engine ('nli' local classifier | 'llm' generative) =====
+    selectionEngine: document.getElementById('selectionEngine').value,
     // ===== NEW: Ollama Settings =====
     useOllama: document.getElementById('useOllama').checked,
     ollamaUrl: document.getElementById('ollamaUrl').value,
@@ -48,6 +51,7 @@ const restoreOptions = () => {
   chrome.storage.sync.get({
     autoScroll: true,
     theme: 'system',
+    bgMode: 'ivory',
     displayMode: 'always_show',
     collapseDelay: 1500,
     stripColor: '#0c0c0f',
@@ -61,6 +65,8 @@ const restoreOptions = () => {
     enableAutoFallback: true,
     fallbackNotifications: true,
     fallbackTier: 'auto',
+    // ===== Tab selection engine default =====
+    selectionEngine: 'nli',
     // ===== NEW: Ollama Defaults =====
     useOllama: false,
     ollamaUrl: 'http://localhost:11434',
@@ -80,6 +86,7 @@ const restoreOptions = () => {
   }, (items) => {
     document.getElementById('autoScroll').checked = items.autoScroll;
     document.getElementById('theme').value = items.theme;
+    document.getElementById('bgMode').value = items.bgMode || 'ivory';
     document.getElementById('displayMode').value = items.displayMode;
     document.getElementById('collapseDelay').value = items.collapseDelay;
     document.getElementById('stripColor').value = items.stripColor || '#0c0c0f';
@@ -94,6 +101,9 @@ const restoreOptions = () => {
     document.getElementById('fallbackNotifications').checked = items.fallbackNotifications;
     document.getElementById('fallbackTier').value = items.fallbackTier;
     
+    // ===== Restore selection engine; defaults to the local classifier =====
+    document.getElementById('selectionEngine').value = items.selectionEngine || 'nli';
+
     // ===== NEW: Restore Ollama Settings =====
     document.getElementById('useOllama').checked = items.useOllama || false;
     document.getElementById('ollamaUrl').value = items.ollamaUrl || 'http://localhost:11434';
@@ -324,6 +334,7 @@ function loadFallbackStats() {
 }
 
 // ===== NEW: Ollama Event Listeners =====
+document.getElementById('selectionEngine')?.addEventListener('change', saveOptions);
 document.getElementById('useOllama')?.addEventListener('change', saveOptions);
 document.getElementById('ollamaUrl')?.addEventListener('change', saveOptions);
 document.getElementById('ollamaModel')?.addEventListener('change', saveOptions);
