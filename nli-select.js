@@ -450,6 +450,8 @@
       return { decision: 'final', mode: 'no_concept', matches: [], needDetails: [] };
     }
 
+    console.log(`🤖 [NLI Select] Starting tab selection for concept(s): [${concepts.join(', ')}] across ${candidates.length} candidate tabs`);
+
     const zs = await load();
 
     // ---- Stage 1: cosine over EVERY tab, no model calls ------------------
@@ -486,6 +488,7 @@
     // has no opinion", which routes the tab to NLI rather than silently
     // rejecting it. Degradation must not look like a decision.
     const cosScores = new Map();
+    let stage1Accepted = 0, stage1Rejected = 0;
     for (const c of candidates) {
       let best = null;
       const cv = c.embedding && c.embedding.length ? c.embedding : null;
@@ -499,11 +502,8 @@
           const conceptLower = concept.toLowerCase();
           let canonQuery = null;
           try {
-            if (typeof self !== 'undefined' && self.EnrichMath?.matchTag) {
-              canonQuery = self.EnrichMath.matchTag(conceptLower);
-            } else if (typeof require !== 'undefined') {
-              const EM = require('./enrich-math.js');
-              if (EM?.matchTag) canonQuery = EM.matchTag(conceptLower);
+            if (typeof self.DomainPriors !== 'undefined') {
+              canonQuery = self.DomainPriors.canonicalTag(conceptLower);
             }
           } catch (e) {}
 
@@ -535,6 +535,8 @@
         }
       }
       cosScores.set(c.tabId, best);
+      if (best !== null && best >= BAND_HIGH) stage1Accepted++;
+      else if (best !== null && best < BAND_LOW) stage1Rejected++;
     }
 
     // Count the tabs that will need a forward pass BEFORE starting, so the UI
@@ -545,6 +547,9 @@
       const cs = cosScores.get(c.tabId);
       if (cs === null || (cs < BAND_HIGH && cs >= BAND_LOW)) nliPending++;
     }
+    
+    console.log(`📊 [NLI Select] Stage 1 (Cosine + Prior Boosts): ${stage1Accepted} auto-accepted (>=0.45), ${stage1Rejected} rejected (<0.20), ${nliPending} uncertain band tabs requiring NLI verification`);
+
     if (typeof opts.onCosineDone === 'function') {
       try { opts.onCosineDone(nliPending, candidates.length); } catch (e) { /* UI only */ }
     }
@@ -594,6 +599,7 @@
 
           // Execute un-cached candidates in batched WebGPU tensor passes
           if (toInfer.length > 0) {
+            console.log(`🚀 [NLI Select] Stage 2: Dispatching ${toInfer.length} tabs to Offscreen Worker for batched NLI scoring against "${text}"...`);
             if (typeof opts.onProgress === 'function') {
               try { opts.onProgress(nliTabIds.size, nliPending); } catch (e) { /* UI only */ }
             }
@@ -609,8 +615,9 @@
                 scoreCache.set(toInfer[idx].key, s);
                 passes++;
               });
+              console.log(`✅ [NLI Select] Stage 2: Received batched NLI scores for ${batchOut.length} tabs`);
             } catch (err) {
-              console.warn('[NLI] Batch scoring error, falling back individually:', err.message);
+              console.warn('⚠️ [NLI Select] Batch scoring error, falling back individually:', err.message);
               for (const item of toInfer) {
                 try {
                   const singleOut = await inferZeroShot(item.premise, [text], {

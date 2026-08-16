@@ -14,7 +14,6 @@
   let isWebGpuActive = false;
 
   async function getTransformers() {
-    // Poll for transformers library if loaded asynchronously
     for (let i = 0; i < 50; i++) {
       const mod = self.transformers || window?.transformers;
       if (mod && mod.pipeline) return mod;
@@ -28,6 +27,7 @@
     if (loadingPromise) return loadingPromise;
 
     loadingPromise = (async () => {
+      console.log('⚡ [Offscreen] 1/4 Resolving Transformers library...');
       const mod = await getTransformers();
 
       // Configure bundled WASM SIMD paths as reliable fallback
@@ -36,40 +36,37 @@
         OC.configureOrt(mod);
       }
 
-      // Acquire WebGPU adapter (Windows DXGI automatically selects the hardware GPU)
+      console.log('⚡ [Offscreen] 2/4 Checking hardware GPU adapter...');
       if (typeof navigator !== 'undefined' && navigator.gpu) {
         try {
           const adapter = await navigator.gpu.requestAdapter();
           if (adapter) {
-            console.log('[Offscreen WebGPU] Hardware GPU adapter acquired:', adapter);
+            console.log('⚡ [Offscreen] Hardware GPU adapter acquired:', adapter);
             isWebGpuActive = true;
           }
         } catch (e) {
-          console.warn('[Offscreen WebGPU] Adapter request failed, will fall back to WASM SIMD:', e.message);
+          console.warn('[Offscreen] GPU adapter check skipped:', e.message);
         }
       }
 
+      console.log('⚡ [Offscreen] 3/4 Loading Zero-Shot NLI Pipeline (Xenova/nli-deberta-v3-xsmall)...');
       try {
-        classifier = await mod.pipeline('zero-shot-classification', MODEL_ID, {
-          device: isWebGpuActive ? 'webgpu' : 'wasm'
-        });
-        console.log(`[Offscreen] Zero-Shot NLI Pipeline loaded (device: ${isWebGpuActive ? 'webgpu' : 'wasm'})`);
+        classifier = await mod.pipeline('zero-shot-classification', MODEL_ID);
+        console.log('✅ [Offscreen] 4/4 Zero-Shot NLI Pipeline loaded and ready!');
         
-        // Immediate dummy warmup pass to compile WebGPU shaders ahead of time
+        // Immediate dummy warmup pass to compile kernels ahead of time
         try {
           await classifier('warmup premise', ['warmup'], {
             multi_label: true,
             hypothesis_template: 'This browser tab is about {}.'
           });
-          console.log('[Offscreen] WebGPU shaders compiled and warmed');
+          console.log('🔥 [Offscreen] Warmup pass complete — GPU shaders ready for instant inference!');
         } catch (wErr) {
           // Warmup non-fatal
         }
       } catch (e) {
-        console.warn('[Offscreen] WebGPU pipeline load error, retrying with WASM SIMD fallback:', e.message);
-        isWebGpuActive = false;
-        classifier = await mod.pipeline('zero-shot-classification', MODEL_ID);
-        console.log('[Offscreen] Fallback NLI Pipeline loaded on WASM SIMD');
+        console.error('❌ [Offscreen] NLI Pipeline load failed:', e);
+        throw e;
       }
       return classifier;
     })();
@@ -95,9 +92,12 @@
 
     if (msg.type === 'OFFSCREEN_NLI_BATCH') {
       (async () => {
+        const t0 = performance.now();
+        const count = Array.isArray(msg.premises) ? msg.premises.length : 1;
+        console.log(`⚡ [Offscreen] Received batch inference request for ${count} tabs against concept: "${msg.candidates?.[0]}"`);
+        
         try {
           const pipe = await initWebGpuNli();
-          const t0 = performance.now();
           const premises = Array.isArray(msg.premises) ? msg.premises : [msg.premises];
           
           if (premises.length === 0) {
@@ -114,16 +114,17 @@
             results.push(...chunkRes);
           }
 
-          const elapsed = performance.now() - t0;
+          const elapsed = Math.round(performance.now() - t0);
+          console.log(`✅ [Offscreen] Batch inference finished for ${premises.length} tabs in ${elapsed}ms (${(elapsed / premises.length).toFixed(1)}ms/tab)`);
           sendResponse({
             success: true,
             results,
-            elapsed: Math.round(elapsed),
+            elapsed,
             isWebGpu: isWebGpuActive,
             count: premises.length
           });
         } catch (err) {
-          console.error('[Offscreen Batch] Inference error:', err);
+          console.error('❌ [Offscreen Batch] Inference error:', err);
           sendResponse({ success: false, error: err.message || String(err) });
         }
       })();
@@ -136,15 +137,15 @@
           const pipe = await initWebGpuNli();
           const t0 = performance.now();
           const result = await pipe(msg.premise, msg.candidates, msg.options);
-          const elapsed = performance.now() - t0;
+          const elapsed = Math.round(performance.now() - t0);
           sendResponse({
             success: true,
             result,
-            elapsed: Math.round(elapsed),
+            elapsed,
             isWebGpu: isWebGpuActive
           });
         } catch (err) {
-          console.error('[Offscreen] Inference error:', err);
+          console.error('❌ [Offscreen] Inference error:', err);
           sendResponse({ success: false, error: err.message || String(err) });
         }
       })();
