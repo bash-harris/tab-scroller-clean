@@ -64,6 +64,47 @@
 
   // Message listener for zero-shot inference requests from service worker / nli-select.js
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.type === 'OFFSCREEN_NLI_BATCH') {
+      (async () => {
+        try {
+          const pipe = await initWebGpuNli();
+          const t0 = performance.now();
+          const premises = Array.isArray(msg.premises) ? msg.premises : [msg.premises];
+          
+          let results = [];
+          if (premises.length === 0) {
+            sendResponse({ success: true, results: [], elapsed: 0, isWebGpu: isWebGpuActive });
+            return;
+          }
+
+          // Execute in optimal hardware batch windows of 16
+          const CHUNK_SIZE = 16;
+          for (let i = 0; i < premises.length; i += CHUNK_SIZE) {
+            const chunk = premises.slice(i, i + CHUNK_SIZE);
+            const chunkRes = await pipe(chunk, msg.candidates, msg.options);
+            if (Array.isArray(chunkRes)) {
+              results.push(...chunkRes);
+            } else {
+              results.push(chunkRes);
+            }
+          }
+
+          const elapsed = performance.now() - t0;
+          sendResponse({
+            success: true,
+            results,
+            elapsed: Math.round(elapsed),
+            isWebGpu: isWebGpuActive,
+            count: premises.length
+          });
+        } catch (err) {
+          console.error('[Offscreen Batch] Inference error:', err);
+          sendResponse({ success: false, error: err.message || String(err) });
+        }
+      })();
+      return true; // Keep message channel open for async response
+    }
+
     if (msg.type === 'OFFSCREEN_NLI_ZERO_SHOT') {
       (async () => {
         try {
