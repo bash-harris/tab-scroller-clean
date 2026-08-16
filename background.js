@@ -4702,18 +4702,27 @@ var _offscreenCreating = null;
 
 async function ensureOffscreenDocument() {
   try {
-    if (typeof chrome.offscreen === 'undefined') return false;
-    const existingContexts = await chrome.runtime.getContexts({
-      contextTypes: [chrome.runtime.ContextType.OFFSCREEN_DOCUMENT]
-    });
-    if (existingContexts && existingContexts.length > 0) return true;
+    if (typeof chrome === 'undefined' || !chrome.offscreen) return false;
+    
+    // Check if document already exists
+    if (chrome.offscreen.hasDocument) {
+      const exists = await chrome.offscreen.hasDocument();
+      if (exists) return true;
+    } else {
+      const existingContexts = await chrome.runtime.getContexts?.({
+        contextTypes: ['OFFSCREEN_DOCUMENT']
+      });
+      if (existingContexts && existingContexts.length > 0) return true;
+    }
+
     if (_offscreenCreating) {
       await _offscreenCreating;
       return true;
     }
+
     _offscreenCreating = chrome.offscreen.createDocument({
       url: 'offscreen.html',
-      reasons: [chrome.offscreen.Reason.WORKERS, chrome.offscreen.Reason.LOCAL_STORAGE],
+      reasons: ['WORKERS'],
       justification: 'Hardware-accelerated WebGPU ML inference for tab clustering'
     });
     await _offscreenCreating;
@@ -4722,10 +4731,14 @@ async function ensureOffscreenDocument() {
     return true;
   } catch (e) {
     _offscreenCreating = null;
+    if (e.message && e.message.includes('Only a single offscreen document')) {
+      return true;
+    }
     console.warn('[background] Failed to create offscreen document:', e.message);
     return false;
   }
 }
+self.ensureOffscreenDocument = ensureOffscreenDocument;
 
 async function ensureRagReady() {
   if (_ragInitialized) return;

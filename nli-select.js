@@ -178,15 +178,34 @@
     return loading;
   }
 
+  // Ensures the WebGPU offscreen document exists before sending runtime messages
+  async function makeSureOffscreenReady() {
+    if (typeof self.ensureOffscreenDocument === 'function') {
+      return await self.ensureOffscreenDocument();
+    }
+    if (typeof chrome !== 'undefined' && chrome.offscreen) {
+      try {
+        if (chrome.offscreen.hasDocument && await chrome.offscreen.hasDocument()) return true;
+        await chrome.offscreen.createDocument({
+          url: 'offscreen.html',
+          reasons: ['WORKERS'],
+          justification: 'Hardware-accelerated WebGPU ML inference for tab clustering'
+        });
+        return true;
+      } catch (e) {
+        if (e.message && e.message.includes('Only a single')) return true;
+      }
+    }
+    return false;
+  }
+
   // WebGPU-accelerated batched inference helper via offscreen document
   async function inferZeroShotBatch(premises, candidates, options) {
     if (!Array.isArray(premises) || premises.length === 0) return [];
     
     if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage && typeof chrome.offscreen !== 'undefined') {
       try {
-        if (typeof self.ensureOffscreenDocument === 'function') {
-          await self.ensureOffscreenDocument();
-        }
+        await makeSureOffscreenReady();
         const resp = await new Promise((resolve, reject) => {
           const timeout = setTimeout(() => reject(new Error('Offscreen WebGPU batch inference timeout (30000ms)')), 30000);
           chrome.runtime.sendMessage({
@@ -220,9 +239,7 @@
   async function inferZeroShot(premise, candidates, options) {
     if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage && typeof chrome.offscreen !== 'undefined') {
       try {
-        if (typeof self.ensureOffscreenDocument === 'function') {
-          await self.ensureOffscreenDocument();
-        }
+        await makeSureOffscreenReady();
         const resp = await new Promise((resolve, reject) => {
           const timeout = setTimeout(() => reject(new Error('Offscreen WebGPU inference timeout (30000ms)')), 30000);
           chrome.runtime.sendMessage({
