@@ -4881,22 +4881,31 @@ async function sweepMissingCards() {
       if (!hash || !cardHashes.has(hash)) missing.push(t);
     }
 
+    const alreadyIndexedCount = eligible.length - missing.length;
+
     if (missing.length === 0) {
-      _indexingProgress = { isIndexing: false, done: 0, total: 0, pct: 100, currentTitle: '' };
+      _indexingProgress = {
+        isIndexing: false,
+        done: eligible.length,
+        total: eligible.length,
+        pct: 100,
+        currentTitle: ''
+      };
+      console.log(`[Indexer] Sweep complete: all ${eligible.length} tabs already indexed in database`);
       broadcastIndexProgress();
       return;
     }
     
     _indexingProgress = {
       isIndexing: true,
-      done: 0,
-      total: missing.length,
-      pct: 0,
+      done: alreadyIndexedCount,
+      total: eligible.length,
+      pct: Math.round((alreadyIndexedCount / eligible.length) * 100),
       currentTitle: missing[0]?.title || 'Tab'
     };
     broadcastIndexProgress();
 
-    console.log(`[Indexer] Full sweep: systematically indexing ${missing.length} unindexed tabs`);
+    console.log(`[Indexer] Full sweep: ${alreadyIndexedCount} of ${eligible.length} tabs already indexed in DB. Indexing remaining ${missing.length} tabs...`);
     const CONCURRENCY = 5;
     for (let i = 0; i < missing.length; i += CONCURRENCY) {
       const batch = missing.slice(i, i + CONCURRENCY);
@@ -4911,15 +4920,16 @@ async function sweepMissingCards() {
           // skip
         }
       }));
-      _indexingProgress.done = Math.min(missing.length, i + batch.length);
-      _indexingProgress.pct = Math.round((_indexingProgress.done / missing.length) * 100);
+      _indexingProgress.done = alreadyIndexedCount + Math.min(missing.length, i + batch.length);
+      _indexingProgress.pct = Math.round((_indexingProgress.done / eligible.length) * 100);
       broadcastIndexProgress();
     }
 
     _indexingProgress.isIndexing = false;
+    _indexingProgress.done = eligible.length;
     _indexingProgress.pct = 100;
     broadcastIndexProgress();
-    console.log(`[Indexer] Full sweep complete: ${missing.length} tabs indexed`);
+    console.log(`[Indexer] Full sweep complete: all ${eligible.length} tabs indexed in database`);
   } catch (e) {
     _indexingProgress.isIndexing = false;
     broadcastIndexProgress();

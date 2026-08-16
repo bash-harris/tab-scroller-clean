@@ -29,12 +29,12 @@
         OC.configureOrt(mod);
       }
 
-      // Request high-performance WebGPU adapter (NVIDIA / Dedicated GPU on Windows)
+      // Acquire WebGPU adapter (Windows DXGI automatically selects the hardware GPU)
       if (typeof navigator !== 'undefined' && navigator.gpu) {
         try {
-          const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+          const adapter = await navigator.gpu.requestAdapter();
           if (adapter) {
-            console.log('[Offscreen WebGPU] High-performance GPU adapter acquired:', adapter);
+            console.log('[Offscreen WebGPU] Hardware GPU adapter acquired:', adapter);
             isWebGpuActive = true;
           }
         } catch (e) {
