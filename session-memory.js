@@ -29,19 +29,55 @@ const SessionMemoryEngine = (() => {
   // --- Storage Helpers ---
   function storageGet(keys) {
     return new Promise((resolve) => {
-      chrome.storage.local.get(keys, (items) => resolve(items));
+      try {
+        if (typeof chrome === 'undefined' || !chrome.storage?.local) {
+          resolve(typeof keys === 'object' && keys !== null ? { ...keys } : {});
+          return;
+        }
+        chrome.storage.local.get(keys, (items) => {
+          if (chrome.runtime.lastError || !items) {
+            resolve(typeof keys === 'object' && keys !== null ? { ...keys } : {});
+          } else {
+            resolve(items);
+          }
+        });
+      } catch (e) {
+        resolve(typeof keys === 'object' && keys !== null ? { ...keys } : {});
+      }
     });
   }
 
   function storageSet(data) {
     return new Promise((resolve) => {
-      chrome.storage.local.set(data, () => resolve());
+      try {
+        if (typeof chrome === 'undefined' || !chrome.storage?.local) {
+          resolve();
+          return;
+        }
+        chrome.storage.local.set(data, () => {
+          const _ = chrome.runtime.lastError;
+          resolve();
+        });
+      } catch (e) {
+        resolve();
+      }
     });
   }
 
   function storageRemove(keys) {
     return new Promise((resolve) => {
-      chrome.storage.local.remove(keys, () => resolve());
+      try {
+        if (typeof chrome === 'undefined' || !chrome.storage?.local) {
+          resolve();
+          return;
+        }
+        chrome.storage.local.remove(keys, () => {
+          const _ = chrome.runtime.lastError;
+          resolve();
+        });
+      } catch (e) {
+        resolve();
+      }
     });
   }
 

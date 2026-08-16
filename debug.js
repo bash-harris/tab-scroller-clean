@@ -251,6 +251,86 @@ processor = AutoProcessor.from_pretrained("CohereLabs/North-Micro-Vision-Instruc
           <p>We are rewriting our distributed event ingestion pipeline. Our current Node.js service is hitting GC pauses under 100k req/sec.</p>
           <p>Between Rust's zero-cost abstractions and Go's simpler concurrency goroutine model, which has yielded better maintainability in your production experience?</p>
         </article></body></html>`
+    },
+    'leetcode-dp': {
+      url: 'https://leetcode.com/problems/coin-change/',
+      html: `<!DOCTYPE html><html><head><title>Coin Change - LeetCode</title>
+        <meta name="description" content="You are given an integer array coins representing coins of different denominations and an integer amount. Return the fewest number of coins that you need to make up that amount.">
+        <meta property="og:title" content="Coin Change - Dynamic Programming - LeetCode">
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "SoftwareSourceCode",
+          "name": "Coin Change DP Algorithm",
+          "programmingLanguage": "Python",
+          "keywords": "leetcode, dynamic-programming, python, algorithm, coding-interview"
+        }
+        </script>
+        </head><body>
+        <h1>322. Coin Change</h1>
+        <div class="tags"><span class="badge">Dynamic Programming</span><span class="badge">Breadth-First Search</span></div>
+        <article>
+          <p>You are given an integer array coins representing coins of different denominations and an integer amount representing a total amount of money.</p>
+          <p>Write an optimal dynamic programming solution in Python or C++ to calculate the fewest coins needed.</p>
+        </article></body></html>`
+    },
+    'stackoverflow-python': {
+      url: 'https://stackoverflow.com/questions/231767/what-does-the-yield-keyword-do-in-python',
+      html: `<!DOCTYPE html><html><head><title>What does the yield keyword do in Python? - Stack Overflow</title>
+        <meta name="description" content="Detailed technical explanation of Python generators, iterators, and the yield keyword with code examples.">
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "QAPage",
+          "name": "What does the yield keyword do in Python?",
+          "keywords": "python, yield, iterator, generator, programming, software-engineering"
+        }
+        </script>
+        </head><body>
+        <h1>What does the yield keyword do in Python?</h1>
+        <div class="tags"><span class="tag">python</span><span class="tag">iterator</span><span class="tag">generator</span><span class="tag">yield</span></div>
+        <article>
+          <p>To understand what yield does, you must understand what generators are. And before you can understand generators, you must understand iterables.</p>
+          <pre><code class="language-python">def create_generator():
+    mylist = range(3)
+    for i in mylist:
+        yield i*i</code></pre>
+        </article></body></html>`
+    },
+    'spotify-player': {
+      url: 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M',
+      html: `<!DOCTYPE html><html><head><title>Today's Top Hits | Spotify Music Playlist</title>
+        <meta name="description" content="Listen to Today's Top Hits on Spotify. The hottest 50 tracks right now featuring global pop stars and chart toppers.">
+        <meta property="og:type" content="music.playlist">
+        <meta property="og:title" content="Today's Top Hits">
+        <meta property="music:song_count" content="50">
+        </head><body>
+        <h1>Today's Top Hits</h1>
+        <p>Featuring the biggest songs in pop, hip-hop, and global dance music. Stream high quality audio on Spotify.</p>
+        </body></html>`
+    },
+    'google-flights': {
+      url: 'https://www.google.com/travel/flights/search?tfs=SFO-LHR',
+      html: `<!DOCTYPE html><html><head><title>Cheap Flights from San Francisco to London - Google Flights</title>
+        <meta name="description" content="Find the best deals on flights from San Francisco (SFO) to London (LHR). Compare airlines, prices, and nonstop flight routes.">
+        <meta property="og:title" content="SFO to London (LHR) Flight Search">
+        <meta name="keywords" content="flights, travel, airlines, sfo, london, booking, ticket, tourism">
+        </head><body>
+        <h1>Flights from San Francisco to London</h1>
+        <p>Compare non-stop and 1-stop flights from United Airlines, British Airways, and Virgin Atlantic. Best round-trip fares and travel calendar.</p>
+        </body></html>`
+    },
+    'finance-market': {
+      url: 'https://finance.yahoo.com/quote/NVDA/',
+      html: `<!DOCTYPE html><html><head><title>NVIDIA Corporation (NVDA) Stock Price, News, Quote & History - Yahoo Finance</title>
+        <meta name="description" content="Find the latest NVIDIA Corporation (NVDA) stock quote, history, news and other vital information to help you with your stock trading and investing.">
+        <meta property="og:title" content="NVIDIA Corporation (NVDA) Stock Price & Financials">
+        <meta name="keywords" content="stocks, finance, investing, nvda, nvidia, market-cap, nasdaq, wall-street">
+        </head><body>
+        <h1>NVIDIA Corporation (NVDA)</h1>
+        <div class="price">USD 128.50 +4.20 (+3.38%)</div>
+        <p>Market Cap: 3.15T | P/E Ratio: 55.4 | AI Data Center Accelerators and GPUs driving quarterly earnings growth.</p>
+        </body></html>`
     }
   };
 

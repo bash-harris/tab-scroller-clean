@@ -895,8 +895,10 @@
           callback(response);
         });
       } else {
-        // Fire-and-forget (e.g. SWITCH_TAB) — no response expected
-        chrome.runtime.sendMessage(msg);
+        // Fire-and-forget (e.g. SWITCH_TAB) — suppress unhandled lastError
+        chrome.runtime.sendMessage(msg, () => {
+          const _ = chrome.runtime.lastError;
+        });
       }
     } catch (e) {
       contextValid = false;
