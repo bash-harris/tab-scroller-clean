@@ -4698,6 +4698,34 @@ setInterval(() => {
 
 var _indexQueue = new Set();
 var _ragInitialized = false;
+var _offscreenCreating = null;
+
+async function ensureOffscreenDocument() {
+  try {
+    if (typeof chrome.offscreen === 'undefined') return false;
+    const existingContexts = await chrome.runtime.getContexts({
+      contextTypes: [chrome.runtime.ContextType.OFFSCREEN_DOCUMENT]
+    });
+    if (existingContexts && existingContexts.length > 0) return true;
+    if (_offscreenCreating) {
+      await _offscreenCreating;
+      return true;
+    }
+    _offscreenCreating = chrome.offscreen.createDocument({
+      url: 'offscreen.html',
+      reasons: [chrome.offscreen.Reason.WORKERS, chrome.offscreen.Reason.LOCAL_STORAGE],
+      justification: 'Hardware-accelerated WebGPU ML inference for tab clustering'
+    });
+    await _offscreenCreating;
+    _offscreenCreating = null;
+    console.log('[background] WebGPU Offscreen document initialized');
+    return true;
+  } catch (e) {
+    _offscreenCreating = null;
+    console.warn('[background] Failed to create offscreen document:', e.message);
+    return false;
+  }
+}
 
 async function ensureRagReady() {
   if (_ragInitialized) return;
@@ -4716,17 +4744,9 @@ async function ensureRagReady() {
   await Embed.init();
   _ragInitialized = true;
 
-  // Warm the NLI model OUT of band.
-  //
-  // Loading it costs ~9.4s (measured: a 27,351ms command whose scoring loop was
-  // only 17,942ms -- the difference is this load, because the timer in
-  // nli-select.js starts after await load()). Paying that inside the user's
-  // first command is the difference between "slow" and "broken", and MV3 tears
-  // down idle service workers, so it recurs rather than happening once.
-  //
-  // Deliberately NOT awaited: indexing must not block on it, and select() awaits
-  // the same promise anyway, so a command arriving mid-load waits exactly as
-  // long as it would have -- never longer.
+  // Warm the WebGPU offscreen document and NLI model OUT of band.
+  ensureOffscreenDocument().catch(() => {});
+
   if (typeof self.NliSelect !== 'undefined') {
     self.NliSelect.load()
       .then(() => console.log('[background] NLI model warm'))

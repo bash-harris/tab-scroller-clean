@@ -3,7 +3,7 @@
   "name": "Tab Scroller",
   "version": "1.0.0",
   "description": "Scroll through your open tabs with a hover-activated micro bar.",
-  "permissions": ["tabs", "storage", "tabGroups", "activeTab", "scripting", "history", "bookmarks"],
+  "permissions": ["tabs", "storage", "tabGroups", "activeTab", "scripting", "history", "bookmarks", "offscreen"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
@@ -21,7 +21,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["content.css", "session-manager.html", "session-manager.css", "debug.html", "debug.css", "debug.js", "fonts/playfair-display.woff2", "fonts/cormorant-italic.woff2"],
+      "resources": ["content.css", "session-manager.html", "session-manager.css", "debug.html", "debug.css", "debug.js", "offscreen.html", "offscreen.js", "fonts/playfair-display.woff2", "fonts/cormorant-italic.woff2"],
       "matches": ["<all_urls>"]
     },
     {

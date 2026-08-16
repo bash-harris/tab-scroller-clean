@@ -178,6 +178,41 @@
     return loading;
   }
 
+  // WebGPU-accelerated inference helper via offscreen document, with fallback to local classifier
+  async function inferZeroShot(premise, candidates, options) {
+    if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage && typeof chrome.offscreen !== 'undefined') {
+      try {
+        if (typeof self.ensureOffscreenDocument === 'function') {
+          await self.ensureOffscreenDocument();
+        }
+        const resp = await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error('Offscreen WebGPU inference timeout (8000ms)')), 8000);
+          chrome.runtime.sendMessage({
+            type: 'OFFSCREEN_NLI_ZERO_SHOT',
+            premise,
+            candidates,
+            options
+          }, (response) => {
+            clearTimeout(timeout);
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message));
+            } else if (!response || !response.success) {
+              reject(new Error(response?.error || 'Empty offscreen response'));
+            } else {
+              resolve(response.result);
+            }
+          });
+        });
+        return resp;
+      } catch (err) {
+        console.warn('[NLI] Offscreen WebGPU inference error, falling back to local model:', err.message);
+      }
+    }
+
+    const localClassifier = await load();
+    return localClassifier(premise, candidates, options);
+  }
+
   // The text the hypothesis is tested against.
   //
   // The FULL url is included, not just the hostname. This is not cosmetic: URL
@@ -475,7 +510,7 @@
           let s = scoreCache.get(key);
           if (s === undefined) {
             try {
-              const out = await zs(tabText(c), [text], {
+              const out = await inferZeroShot(tabText(c), [text], {
                 multi_label: true,
                 hypothesis_template: 'This browser tab is about {}.'
               });
