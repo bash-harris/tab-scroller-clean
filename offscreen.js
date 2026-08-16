@@ -13,18 +13,25 @@
   let loadingPromise = null;
   let isWebGpuActive = false;
 
+  async function getTransformers() {
+    // Poll for transformers library if loaded asynchronously
+    for (let i = 0; i < 50; i++) {
+      const mod = self.transformers || window?.transformers;
+      if (mod && mod.pipeline) return mod;
+      await new Promise(r => setTimeout(r, 50));
+    }
+    throw new Error('transformers.js unavailable in offscreen document');
+  }
+
   async function initWebGpuNli() {
     if (classifier) return classifier;
     if (loadingPromise) return loadingPromise;
 
     loadingPromise = (async () => {
-      const mod = self.transformers;
-      if (!mod || !mod.pipeline) {
-        throw new Error('transformers.js unavailable in offscreen document');
-      }
+      const mod = await getTransformers();
 
       // Configure bundled WASM SIMD paths as reliable fallback
-      const OC = self.OrtConfig;
+      const OC = self.OrtConfig || window?.OrtConfig;
       if (OC && typeof OC.configureOrt === 'function') {
         OC.configureOrt(mod);
       }
@@ -70,11 +77,22 @@
     return loadingPromise;
   }
 
-  // Preload and warm the pipeline immediately when offscreen document mounts
+  // Preload and warm the pipeline immediately in background
   initWebGpuNli().catch(e => console.warn('[Offscreen] Background warmup failed:', e.message));
 
-  // Message listener for zero-shot inference requests from service worker / nli-select.js
+  // Register onMessage listener SYNCHRONOUSLY at evaluation time
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    // Fast ping response so sender knows the offscreen document is alive
+    if (msg.type === 'OFFSCREEN_PING') {
+      sendResponse({
+        ok: true,
+        ready: !!classifier,
+        isWebGpu: isWebGpuActive,
+        gpuAvailable: typeof navigator !== 'undefined' && !!navigator.gpu
+      });
+      return false;
+    }
+
     if (msg.type === 'OFFSCREEN_NLI_BATCH') {
       (async () => {
         try {
@@ -112,22 +130,6 @@
       return true; // Keep message channel open for async response
     }
 
-          const elapsed = performance.now() - t0;
-          sendResponse({
-            success: true,
-            results,
-            elapsed: Math.round(elapsed),
-            isWebGpu: isWebGpuActive,
-            count: premises.length
-          });
-        } catch (err) {
-          console.error('[Offscreen Batch] Inference error:', err);
-          sendResponse({ success: false, error: err.message || String(err) });
-        }
-      })();
-      return true; // Keep message channel open for async response
-    }
-
     if (msg.type === 'OFFSCREEN_NLI_ZERO_SHOT') {
       (async () => {
         try {
@@ -147,16 +149,6 @@
         }
       })();
       return true; // Keep message channel open for async response
-    }
-
-    if (msg.type === 'OFFSCREEN_STATUS') {
-      sendResponse({
-        ok: true,
-        ready: !!classifier,
-        isWebGpu: isWebGpuActive,
-        gpuAvailable: typeof navigator !== 'undefined' && !!navigator.gpu
-      });
-      return false;
     }
   });
 })();

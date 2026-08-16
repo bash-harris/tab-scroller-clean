@@ -178,22 +178,43 @@
     return loading;
   }
 
-  // Ensures the WebGPU offscreen document exists before sending runtime messages
+  // Ensures the WebGPU offscreen document exists and is listening before sending runtime messages
   async function makeSureOffscreenReady() {
+    if (typeof chrome === 'undefined' || !chrome.offscreen) return false;
+    
+    // 1. Ensure document is created
     if (typeof self.ensureOffscreenDocument === 'function') {
-      return await self.ensureOffscreenDocument();
-    }
-    if (typeof chrome !== 'undefined' && chrome.offscreen) {
+      try { await self.ensureOffscreenDocument(); } catch (e) {}
+    } else {
       try {
-        if (chrome.offscreen.hasDocument && await chrome.offscreen.hasDocument()) return true;
-        await chrome.offscreen.createDocument({
-          url: 'offscreen.html',
-          reasons: ['WORKERS'],
-          justification: 'Hardware-accelerated WebGPU ML inference for tab clustering'
-        });
-        return true;
+        if (chrome.offscreen.hasDocument && await chrome.offscreen.hasDocument()) {
+          // Document exists
+        } else {
+          await chrome.offscreen.createDocument({
+            url: 'offscreen.html',
+            reasons: ['WORKERS'],
+            justification: 'Hardware-accelerated WebGPU ML inference for tab clustering'
+          });
+        }
       } catch (e) {
-        if (e.message && e.message.includes('Only a single')) return true;
+        if (!e.message || !e.message.includes('Only a single')) {
+          console.warn('[nli-select] offscreen create warning:', e.message);
+        }
+      }
+    }
+
+    // 2. Ping handshake with retry to guarantee the offscreen onMessage listener is mounted
+    for (let attempt = 0; attempt < 8; attempt++) {
+      try {
+        const ping = await new Promise((resolve, reject) => {
+          chrome.runtime.sendMessage({ type: 'OFFSCREEN_PING' }, (resp) => {
+            if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
+            else resolve(resp);
+          });
+        });
+        if (ping && ping.ok) return true;
+      } catch (err) {
+        await new Promise(r => setTimeout(r, 50));
       }
     }
     return false;
