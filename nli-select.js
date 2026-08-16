@@ -188,7 +188,7 @@
           await self.ensureOffscreenDocument();
         }
         const resp = await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Offscreen WebGPU batch inference timeout (12000ms)')), 12000);
+          const timeout = setTimeout(() => reject(new Error('Offscreen WebGPU batch inference timeout (30000ms)')), 30000);
           chrome.runtime.sendMessage({
             type: 'OFFSCREEN_NLI_BATCH',
             premises,
@@ -224,7 +224,7 @@
           await self.ensureOffscreenDocument();
         }
         const resp = await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Offscreen WebGPU inference timeout (8000ms)')), 8000);
+          const timeout = setTimeout(() => reject(new Error('Offscreen WebGPU inference timeout (30000ms)')), 30000);
           chrome.runtime.sendMessage({
             type: 'OFFSCREEN_NLI_ZERO_SHOT',
             premise,

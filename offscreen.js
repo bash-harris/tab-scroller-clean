@@ -47,6 +47,17 @@
           device: isWebGpuActive ? 'webgpu' : 'wasm'
         });
         console.log(`[Offscreen] Zero-Shot NLI Pipeline loaded (device: ${isWebGpuActive ? 'webgpu' : 'wasm'})`);
+        
+        // Immediate dummy warmup pass to compile WebGPU shaders ahead of time
+        try {
+          await classifier('warmup premise', ['warmup'], {
+            multi_label: true,
+            hypothesis_template: 'This browser tab is about {}.'
+          });
+          console.log('[Offscreen] WebGPU shaders compiled and warmed');
+        } catch (wErr) {
+          // Warmup non-fatal
+        }
       } catch (e) {
         console.warn('[Offscreen] WebGPU pipeline load error, retrying with WASM SIMD fallback:', e.message);
         isWebGpuActive = false;
@@ -71,23 +82,35 @@
           const t0 = performance.now();
           const premises = Array.isArray(msg.premises) ? msg.premises : [msg.premises];
           
-          let results = [];
           if (premises.length === 0) {
             sendResponse({ success: true, results: [], elapsed: 0, isWebGpu: isWebGpuActive });
             return;
           }
 
-          // Execute in optimal hardware batch windows of 16
-          const CHUNK_SIZE = 16;
+          // Process in concurrent GPU chunks of 8
+          const CHUNK_SIZE = 8;
+          let results = [];
           for (let i = 0; i < premises.length; i += CHUNK_SIZE) {
             const chunk = premises.slice(i, i + CHUNK_SIZE);
-            const chunkRes = await pipe(chunk, msg.candidates, msg.options);
-            if (Array.isArray(chunkRes)) {
-              results.push(...chunkRes);
-            } else {
-              results.push(chunkRes);
-            }
+            const chunkRes = await Promise.all(chunk.map(p => pipe(p, msg.candidates, msg.options)));
+            results.push(...chunkRes);
           }
+
+          const elapsed = performance.now() - t0;
+          sendResponse({
+            success: true,
+            results,
+            elapsed: Math.round(elapsed),
+            isWebGpu: isWebGpuActive,
+            count: premises.length
+          });
+        } catch (err) {
+          console.error('[Offscreen Batch] Inference error:', err);
+          sendResponse({ success: false, error: err.message || String(err) });
+        }
+      })();
+      return true; // Keep message channel open for async response
+    }
 
           const elapsed = performance.now() - t0;
           sendResponse({
