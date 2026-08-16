@@ -532,81 +532,50 @@
         ...(expW > 0 ? expansions.map(t => ({ text: t, w: expW })) : [])
       ];
       const scores = new Map();
-      
-      // Separate candidates: confident ones get assigned immediately, uncertain ones get batched
-      const uncertainCandidates = [];
       for (const c of candidates) {
         const cs = cosScores.get(c.tabId);
-        if (cs !== null && cs >= BAND_HIGH) {
-          scores.set(c.tabId, Math.max(threshold, cs));
-        } else if (cs !== null && cs < BAND_LOW) {
-          scores.set(c.tabId, 0);
-        } else {
-          uncertainCandidates.push(c);
-          nliTabIds.add(c.tabId);
+
+        // Cosine is confident. Do not pay a model to re-answer a settled
+        // question. The score is mapped above/below the decision threshold so
+        // downstream logic is unchanged.
+        if (cs !== null && cs >= BAND_HIGH) { scores.set(c.tabId, Math.max(threshold, cs)); continue; }
+        if (cs !== null && cs < BAND_LOW) { scores.set(c.tabId, 0); continue; }
+
+        nliTabIds.add(c.tabId);
+        // Report before the pass, not after: the user should see the counter
+        // move as work starts, and a stall then reads as "stuck on tab 12 of 30"
+        // rather than as a frozen bar.
+        if (typeof opts.onProgress === 'function') {
+          try { opts.onProgress(nliTabIds.size, nliPending); } catch (e) { /* UI only */ }
         }
-      }
-
-      if (uncertainCandidates.length > 0) {
+        let best = 0;
         for (const { text, w } of terms) {
-          // Identify un-cached candidates for this term
-          const toInfer = [];
-          for (const c of uncertainCandidates) {
-            const key = sha(text + '||' + tabText(c));
-            if (!scoreCache.has(key)) {
-              toInfer.push({ candidate: c, key, premise: tabText(c) });
-            } else {
-              cached++;
-            }
-          }
-
-          // Execute un-cached candidates in batched WebGPU tensor passes
-          if (toInfer.length > 0) {
-            console.log(`🚀 [NLI Select] Stage 2: Dispatching ${toInfer.length} tabs to Offscreen Worker for batched NLI scoring against "${text}"...`);
-            if (typeof opts.onProgress === 'function') {
-              try { opts.onProgress(nliTabIds.size, nliPending); } catch (e) { /* UI only */ }
-            }
+          const key = sha(text + '||' + tabText(c));
+          let s = scoreCache.get(key);
+          if (s === undefined) {
             try {
-              const premises = toInfer.map(item => item.premise);
-              const batchOut = await inferZeroShotBatch(premises, [text], {
+              const out = await inferZeroShot(tabText(c), [text], {
                 multi_label: true,
                 hypothesis_template: 'This browser tab is about {}.'
               });
-              
-              batchOut.forEach((res, idx) => {
-                const s = Array.isArray(res?.scores) ? res.scores[0] : 0;
-                scoreCache.set(toInfer[idx].key, s);
-                passes++;
-              });
-              console.log(`✅ [NLI Select] Stage 2: Received batched NLI scores for ${batchOut.length} tabs`);
-            } catch (err) {
-              console.warn('⚠️ [NLI Select] Batch scoring error, falling back individually:', err.message);
-              for (const item of toInfer) {
-                try {
-                  const singleOut = await inferZeroShot(item.premise, [text], {
-                    multi_label: true,
-                    hypothesis_template: 'This browser tab is about {}.'
-                  });
-                  const s = Array.isArray(singleOut?.scores) ? singleOut.scores[0] : 0;
-                  scoreCache.set(item.key, s);
-                  passes++;
-                } catch (e) {
-                  scoreCache.set(item.key, 0);
-                }
-              }
+              s = Array.isArray(out?.scores) ? out.scores[0] : (out?.scores || 0);
+              passes++;
+            } catch (e) {
+              console.warn('[NLI] scoring failed for tab', c.tabId, e.message);
+              s = 0;
             }
+            scoreCache.set(key, s);
             if (scoreCache.size > SCORE_CACHE_MAX) scoreCache.clear();
+          } else {
+            cached++;
           }
-
-          // Assign best scores for each uncertain candidate
-          for (const c of uncertainCandidates) {
-            const key = sha(text + '||' + tabText(c));
-            const s = scoreCache.get(key) || 0;
-            const weighted = s * w;
-            const prev = scores.get(c.tabId) || 0;
-            if (weighted > prev) scores.set(c.tabId, weighted);
-          }
+          const weighted = s * w;
+          if (weighted > best) best = weighted;
+          // The concept itself already clears the bar: no expansion can improve
+          // on that, so stop paying for forward passes.
+          if (best >= 0.9) break;
         }
+        scores.set(c.tabId, best);
       }
       perConcept.push(scores);
     }
