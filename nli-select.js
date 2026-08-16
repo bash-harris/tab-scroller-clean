@@ -496,41 +496,7 @@
         for (const concept of concepts) {
           const qv = conceptVecs.get(concept);
           if (!qv) continue;
-          let s = cosine(qv, cv);
-
-          // Lexical & Category Fast-Track for Obvious Matches
-          const conceptLower = concept.toLowerCase();
-          let canonQuery = null;
-          try {
-            if (typeof self.DomainPriors !== 'undefined') {
-              canonQuery = self.DomainPriors.canonicalTag(conceptLower);
-            }
-          } catch (e) {}
-
-          const cardCat = c.enrichment?.category;
-          const cardTags = (c.enrichment?.tags || []).map(t => (typeof t === 'string' ? t : t.tag));
-
-          let boost = 0;
-          // 1. Direct Category & Tag Alignment (e.g. concept "programming" -> "coding", card has category "coding")
-          if (canonQuery && (cardCat === canonQuery || cardTags.includes(canonQuery))) {
-            boost += 0.20;
-          }
-
-          // 2. High-confidence Lexical Substring match in title or tech signatures
-          const titleLower = (c.title || '').toLowerCase();
-          const keywords = (c.structured?.keywords || []).map(k => String(k).toLowerCase());
-          
-          if (titleLower.includes(conceptLower) || keywords.includes(conceptLower)) {
-            boost += 0.15;
-          } else if (canonQuery === 'coding' && /\b(python|javascript|typescript|react|rust|golang|c\+\+|java|rag|llm|pytorch|tensorflow|sql|docker|kubernetes|api|git|linux|kernel)\b/i.test(titleLower)) {
-            boost += 0.15;
-          } else if (canonQuery === 'cooking' && /\b(recipe|recipes|sourdough|baking|bake|cook|dinner|ingredients|bread)\b/i.test(titleLower)) {
-            boost += 0.15;
-          } else if (canonQuery === 'sports' && /\b(cricket|football|soccer|nba|tennis|ipl|score|match|tournament)\b/i.test(titleLower)) {
-            boost += 0.15;
-          }
-
-          s = Math.min(1.0, s + boost);
+          const s = cosine(qv, cv);
           if (best === null || s > best) best = s;
         }
       }
@@ -539,16 +505,13 @@
       else if (best !== null && best < BAND_LOW) stage1Rejected++;
     }
 
-    // Count the tabs that will need a forward pass BEFORE starting, so the UI
-    // can name a real total instead of counting up to an unknown ceiling. This
-    // is a cheap pass over an in-memory Map -- the expensive work is below.
     let nliPending = 0;
     for (const c of candidates) {
       const cs = cosScores.get(c.tabId);
       if (cs === null || (cs < BAND_HIGH && cs >= BAND_LOW)) nliPending++;
     }
     
-    console.log(`📊 [NLI Select] Stage 1 (Cosine + Prior Boosts): ${stage1Accepted} auto-accepted (>=0.45), ${stage1Rejected} rejected (<0.20), ${nliPending} uncertain band tabs requiring NLI verification`);
+    console.log(`📊 [NLI Select] Stage 1 (Pure Cosine): ${stage1Accepted} confident yes (>=${BAND_HIGH}), ${stage1Rejected} confident no (<${BAND_LOW}), ${nliPending} uncertain band tabs routed to NLI`);
 
     if (typeof opts.onCosineDone === 'function') {
       try { opts.onCosineDone(nliPending, candidates.length); } catch (e) { /* UI only */ }
