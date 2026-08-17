@@ -2169,9 +2169,9 @@
   color: var(--ts-text);
   padding: 24px;
   border-radius: 16px;
-  max-width: 520px;
-  width: 90%;
-  max-height: 85vh;
+  max-width: 760px;
+  width: 92%;
+  max-height: 88vh;
   display: flex;
   flex-direction: column;
   box-shadow: var(--ts-shadow-luxury);
@@ -2538,78 +2538,185 @@
 
 /* Multi-Group Preview Sections */
 .ts-mg-preview-container {
-  max-height: 48vh;
+  max-height: 65vh;
   overflow-y: auto;
   margin-bottom: 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding-right: 4px;
+  gap: 18px;
+  padding-right: 6px;
+}
+
+.ts-mg-preview-container::-webkit-scrollbar,
+.ts-mg-bucket-card .ts-preview-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ts-mg-preview-container::-webkit-scrollbar-thumb,
+.ts-mg-bucket-card .ts-preview-list::-webkit-scrollbar-thumb {
+  background: var(--ts-border-bright);
+  border-radius: 4px;
 }
 
 .ts-mg-bucket-card {
   border: 1px solid var(--ts-border);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--ts-bg-raise);
   overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
 }
 
 .ts-mg-bucket-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: 12px;
+  padding: 12px 16px;
   background: var(--ts-fill);
   border-bottom: 1px solid var(--ts-hairline);
 }
 
 .ts-mg-bucket-title-input {
   font-family: var(--ts-font-ui);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
   border: 1px solid var(--ts-border);
   background: var(--ts-bg);
   color: var(--ts-text);
   flex: 1;
-  max-width: 220px;
+  max-width: 260px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ts-mg-bucket-title-input:focus {
+  border-color: var(--ts-accent);
+  box-shadow: 0 0 0 2px rgba(156, 120, 23, 0.15);
+  outline: none;
 }
 
 .ts-mg-bucket-color-select {
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
   border: 1px solid var(--ts-border);
   background: var(--ts-bg);
   color: var(--ts-text);
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
 }
 
 .ts-mg-bucket-count {
-  font-size: 11px;
-  color: var(--ts-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ts-accent);
+  background: rgba(156, 120, 23, 0.12);
+  padding: 3px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(156, 120, 23, 0.25);
   margin-left: auto;
 }
 
+.ts-mg-bucket-card .ts-preview-list {
+  max-height: 260px;
+  min-height: 52px;
+  overflow-y: auto;
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  background: transparent;
+}
+
+.ts-preview-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--ts-hairline);
+  gap: 14px;
+  transition: background 0.15s ease;
+  color: var(--ts-text);
+  min-height: 42px;
+}
+
+.ts-preview-item:hover {
+  background: rgba(156, 120, 23, 0.07);
+}
+
+.ts-preview-item.checked-item {
+  background: rgba(156, 120, 23, 0.04);
+}
+
+.ts-preview-item.checked-item:hover {
+  background: rgba(156, 120, 23, 0.10);
+}
+
+.ts-preview-checkbox {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--ts-accent);
+  margin: 0;
+}
+
+.ts-preview-favicon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ts-fill-strong);
+  font-size: 11px;
+  font-weight: bold;
+  flex-shrink: 0;
+  color: var(--ts-text);
+}
+
+.ts-preview-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ts-preview-item-title {
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ts-text);
+}
+
 .ts-mg-unassigned-header {
-  padding: 8px 12px;
+  padding: 10px 14px;
   font-size: 12px;
   font-weight: 600;
   color: var(--ts-text-muted);
   background: var(--ts-bg-raise);
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px dashed var(--ts-hairline);
   cursor: pointer;
   user-select: none;
+  transition: background 0.15s;
+}
+
+.ts-mg-unassigned-header:hover {
+  background: var(--ts-fill);
 }
 
 .ts-mg-unassigned-list {
-  margin-top: 6px;
-  border-radius: 8px;
+  margin-top: 8px;
+  border-radius: 10px;
   background: var(--ts-bg);
-  opacity: 0.8;
-  max-height: 140px;
+  border: 1px solid var(--ts-hairline);
+  opacity: 0.85;
+  max-height: 160px;
   overflow-y: auto;
 }
 

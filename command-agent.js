@@ -167,38 +167,57 @@ function isAmbiguousIntent(cmdLower) {
 function classifyCommand(cmd) {
   if (typeof cmd !== 'string') return 'semantic';
   const cmdLower = cmd.slice(0, 500).toLowerCase().trim();
-  
+
+  // The syntactic fast path is deliberately narrow: it is trusted ONLY for the two
+  // command shapes it can resolve deterministically and correctly with no model --
+  //   1. Domain-scoped  -- "close all youtube.com tabs"      (exact hostname match)
+  //   2. Pure all-tabs  -- "pin all tabs", "bookmark all tabs to reading folder"
+  //
+  // Everything else falls through to 'semantic' (or is caught earlier by the
+  // router -> agent path). In particular, live-STATE / structural commands
+  // (duplicates, audible, pinned, muted, "sort by domain") are NOT classified here:
+  // the syntactic executor scores keywords (smartPreFilter) and has no live-state
+  // predicates, so it would match the *word* "audible" as a topic instead of tabs
+  // actually playing audio -- the wrong set. Those belong to the router/executor
+  // (deterministic set algebra) or the semantic path, never a faked syntactic hit.
+
   // 1. Explicit domain patterns (e.g. youtube.com, github.com)
   if (hasDomainPattern(cmdLower)) {
     return 'syntactic';
   }
 
-  // 2. Pure all-tabs actions (e.g. "close all tabs", "reload all tabs", "pin all tabs")
-  const ALL_TABS_CLEAN = /^(close|group|pin|unpin|mute|unmute|reload|bookmark|sort)\s+(all|all\s+the|all\s+open|every)\s+tabs?(\s+together)?$/i;
+  // 2. Pure all-tabs actions (e.g. "close all tabs", "reload all tabs", "pin all tabs").
+  //    The optional "to <folder>" tail keeps "bookmark all tabs to reading folder" on
+  //    the fast path (the destination folder is resolved downstream). The pattern stays
+  //    anchored so a topic like "close all cricket tabs" never matches, and multi-group
+  //    ("...into 3 groups", "...into work and personal") is caught by the router BEFORE
+  //    this runs -- so the tail cannot swallow a grouping command.
+  const ALL_TABS_CLEAN = /^(close|group|pin|unpin|mute|unmute|reload|bookmark|sort)\s+(all|all\s+the|all\s+open|every)\s+tabs?(\s+together)?(\s+to\s+.+)?$/i;
   if (ALL_TABS_CLEAN.test(cmdLower)) {
     return 'syntactic';
   }
 
-  // 3. Pure structural actions (duplicates, audio/mute, pinned state, domain sorting)
-  const PURE_STRUCTURAL_PHRASES = [
-    'duplicate', 'duplicates', 'same url',
-    'pinned tabs', 'unpinned tabs', 'unpin all', 'pin active',
-    'audible tabs', 'playing audio', 'mute tabs', 'unmute tabs', 'noisy tabs', 'silent tabs',
-    'sort by domain', 'sort by host', 'order by domain', 'sort tabs by domain'
-  ];
-
-  for (const phrase of PURE_STRUCTURAL_PHRASES) {
-    if (cmdLower.includes(phrase)) {
-      // Ensure there are no leftover topic words
-      const words = commandWords(cmdLower).filter(w => !['duplicate', 'duplicates', 'pinned', 'unpinned', 'audible', 'mute', 'unmute', 'sort', 'tabs', 'tab'].includes(w));
-      if (words.length === 0) {
-        return 'syntactic';
-      }
-    }
-  }
-
-  // Any other command containing topic words (e.g. "programming", "cricket", "movies") must be semantic
+  // Any other command -- topics ("programming", "cricket"), structural/state phrases,
+  // sorts -- is NOT syntactic.
   return 'semantic';
+}
+
+// "bookmark all tabs [to <folder>]" is the one all-tabs action that carries a
+// parameter: the destination folder. It cannot ride the normal all-tabs rule --
+// tryRuleBasedGrouping's RULE 1 only fires when keyword extraction is EMPTY, and
+// the folder words ("reading", "folder") survive extraction, so the command falls
+// through to smartPreFilter, which then keyword-matches those words as topics and
+// selects the WRONG tabs. The selection here is trivially "every tab" and the
+// folder is a literal the user typed, so we parse it deterministically instead of
+// handing it to a scorer. Returns { folderName } or null when the shape is not
+// an all-tabs bookmark. The trailing " folder" word is dropped ("to reading
+// folder" -> "reading"); an unspecified destination defaults to "Saved Tabs".
+const BOOKMARK_ALL_RE = /^bookmark\s+(?:all|all\s+the|all\s+open|every)\s+tabs?(?:\s+together)?(?:\s+to\s+(.+?))?(?:\s+folder)?$/i;
+function parseBookmarkAll(cmd) {
+  const m = BOOKMARK_ALL_RE.exec(String(cmd || '').trim());
+  if (!m) return null;
+  const folderName = (m[1] || '').trim();
+  return { folderName: folderName || 'Saved Tabs' };
 }
 
 // Retrieval tuning. These are the knobs that decide how much of the browser
@@ -836,6 +855,33 @@ async function runCommandPipeline(userCommand, windowId) {
     const allTabs = WINDOW_SCOPED_INTENTS.has(intent)
       ? await chrome.tabs.query({ windowId })
       : await chrome.tabs.query({});
+
+    // "bookmark all tabs to <folder>": select every bookmarkable tab and thread
+    // the parsed folder name via action_params so handleBookmark files them in the
+    // named folder. Done before tryRuleBasedGrouping because the folder words defeat
+    // its all-tabs rule (see parseBookmarkAll). chrome:// tabs are dropped up front
+    // so the preview count matches what handleBookmark will actually save (:2393).
+    if (intent === 'bookmark_tabs') {
+      const parsed = parseBookmarkAll(cleanCommand);
+      if (parsed) {
+        const tabIds = allTabs
+          .filter(t => t.url && !t.url.startsWith('chrome://'))
+          .map(t => t.id);
+        const perTabReasons = {};
+        tabIds.forEach(id => { perTabReasons[id] = `All-tabs bookmark -> "${parsed.folderName}"`; });
+        return {
+          intent: 'bookmark_tabs',
+          tabIds,
+          perTabReasons,
+          uncertain: [],
+          confidence: 1.0,
+          destructive: false,
+          path: 'syntactic',
+          action_params: { folderName: parsed.folderName }
+        };
+      }
+    }
+
     const ruleResult = self.tryRuleBasedGrouping(cleanCommand, allTabs);
     
     if (ruleResult) {
@@ -1186,6 +1232,7 @@ async function runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive
 }
 
 self.classifyCommand = classifyCommand;
+self.parseBookmarkAll = parseBookmarkAll;
 self.detectIntent = detectIntent;
 self.isAmbiguousIntent = isAmbiguousIntent;
 self.hasDomainPattern = hasDomainPattern;
@@ -1202,7 +1249,7 @@ self.setProgressTarget = setProgressTarget;
 // Node-side export so the pure routing logic can be unit-tested without chrome.
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    detectIntent, isAmbiguousIntent, hasDomainPattern,
+    detectIntent, isAmbiguousIntent, hasDomainPattern, classifyCommand, parseBookmarkAll,
     DOMAIN_PATTERN, INTENT_RULES, DESTRUCTIVE_INTENTS,
     toolForIntent, deriveGroupName, INTENT_TO_TOOL, titleCase
   };

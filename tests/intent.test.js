@@ -15,7 +15,7 @@ global.self = global;
 global.chrome = undefined;
 
 const {
-  detectIntent, isAmbiguousIntent, hasDomainPattern
+  detectIntent, isAmbiguousIntent, hasDomainPattern, classifyCommand, parseBookmarkAll
 } = require('../command-agent.js');
 
 // Mirror of the fixed sanitizeQuery in background.js. Kept in sync by the
@@ -96,6 +96,51 @@ const DOMAIN_CASES = [
   ['bump version to v1.2',         false]   // not a domain
 ];
 
+// classifyCommand is deliberately NARROW: the model-free syntactic fast path is
+// trusted ONLY for two shapes it can resolve deterministically and correctly --
+// (1) domain-scoped ("close all youtube.com tabs") and (2) all-tabs actions
+// ("pin all tabs", "bookmark all tabs to reading folder"). Everything else --
+// live-STATE / structural phrases (duplicates, audible, pinned, "sort by domain")
+// and topics ("cricket", "entertainment") -- MUST be 'semantic' here, so it is
+// left to the router->agent path (deterministic set algebra over live state) or
+// semantic search, never a keyword scorer faking a match on the word "audible".
+const CLASSIFY_CASES = [
+  // (1) domain-scoped -> syntactic
+  ['close all youtube.com tabs',   'syntactic'],
+  ['close youtube.com tabs',       'syntactic'],
+  ['group all github.com tabs',    'syntactic'],
+  // (2) all-tabs actions -> syntactic (incl. bookmark with a folder target)
+  ['pin all tabs',                 'syntactic'],
+  ['close all tabs',               'syntactic'],
+  ['reload all tabs',              'syntactic'],
+  ['bookmark all tabs',            'syntactic'],
+  ['bookmark all tabs to reading folder', 'syntactic'],
+  ['group all tabs together',      'syntactic'],
+  // structural / state -> NOT syntactic (router or semantic owns these)
+  ['close duplicate tabs',         'semantic'],
+  ['mute audible tabs',            'semantic'],
+  ['close pinned tabs',            'semantic'],
+  ['sort tabs by domain',          'semantic'],
+  ['unpin all',                    'semantic'],
+  // topics -> semantic (anchored all-tabs pattern must not swallow a topic)
+  ['group my cricket tabs',        'semantic'],
+  ['group all entertainment tabs', 'semantic'],
+  ['close all cricket tabs',       'semantic']
+];
+
+// parseBookmarkAll extracts the destination folder from the one all-tabs action
+// that carries a parameter. It selects "every tab" implicitly, so it must return
+// null for anything that is NOT an all-tabs bookmark.
+const BOOKMARK_ALL_CASES = [
+  ['bookmark all tabs to reading folder', 'reading'],
+  ['bookmark all tabs to reading',        'reading'],
+  ['bookmark all tabs to my work list',   'my work list'],
+  ['bookmark every tab to news',          'news'],
+  ['bookmark all tabs',                   'Saved Tabs'],   // default when unspecified
+  ['bookmark my cricket tabs',            null],           // not all-tabs
+  ['close all tabs',                      null]            // not a bookmark
+];
+
 let pass = 0, fail = 0;
 function ok(name, cond, detail) {
   if (cond) { pass++; console.log(`  ok: ${name}`); }
@@ -123,6 +168,19 @@ console.log('\n--- A3: ambiguity forces a preview ---');
 ok('"close or group these" is ambiguous', isAmbiguousIntent('close or group these'));
 ok('"group my cricket tabs" is not ambiguous', !isAmbiguousIntent('group my cricket tabs'));
 ok('"unpin and close the old tabs" is ambiguous', isAmbiguousIntent('unpin and close the old tabs'));
+
+console.log('\n--- syntactic fast path is narrow (domain + all-tabs only) ---');
+for (const [cmd, expected] of CLASSIFY_CASES) {
+  const got = classifyCommand(sanitizeQuery(cmd));
+  ok(`"${cmd}" -> ${expected}`, got === expected, got);
+}
+
+console.log('\n--- "bookmark all tabs to X folder" parses its destination ---');
+for (const [cmd, expected] of BOOKMARK_ALL_CASES) {
+  const parsed = parseBookmarkAll(sanitizeQuery(cmd));
+  const got = parsed ? parsed.folderName : null;
+  ok(`"${cmd}" -> folder:${JSON.stringify(expected)}`, got === expected, JSON.stringify(got));
+}
 
 console.log('\n--- sanitizer parity with background.js ---');
 {

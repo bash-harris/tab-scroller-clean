@@ -3292,7 +3292,8 @@
 
     const content = document.createElement("div");
     content.className = "ts-preview-content";
-    content.style.maxWidth = "620px";
+    content.style.maxWidth = "760px";
+    content.style.width = "92vw";
 
     const title = document.createElement("h3");
     title.className = "ts-preview-title";
@@ -3346,15 +3347,14 @@
 
       const tabList = document.createElement("div");
       tabList.className = "ts-preview-list";
-      tabList.style.maxHeight = "160px";
-      tabList.style.marginBottom = "0";
 
       const itemCheckboxes = [];
 
       b.tabIds.forEach(id => {
         const details = tabDetails[id] || { title: "Untitled Tab", favIconUrl: "" };
         const item = document.createElement("div");
-        item.className = "ts-preview-item";
+        item.className = "ts-preview-item checked-item";
+        item.title = details.title || "";
 
         const cb = document.createElement("input");
         cb.type = "checkbox";
@@ -3382,6 +3382,14 @@
         info.appendChild(it);
         item.appendChild(info);
 
+        cb.addEventListener("change", () => {
+          if (cb.checked) {
+            item.classList.add("checked-item");
+          } else {
+            item.classList.remove("checked-item");
+          }
+        });
+
         tabList.appendChild(item);
       });
 
@@ -3390,7 +3398,7 @@
 
       const updateCount = () => {
         const checked = itemCheckboxes.filter(c => c.checked).length;
-        countSpan.textContent = `${checked} tab${checked === 1 ? '' : 's'}`;
+        countSpan.textContent = `${checked} / ${itemCheckboxes.length} tab${itemCheckboxes.length === 1 ? '' : 's'}`;
       };
 
       itemCheckboxes.forEach(cb => cb.addEventListener("change", () => {
