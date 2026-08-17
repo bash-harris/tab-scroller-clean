@@ -70,6 +70,15 @@
   const OPEN_VERB = /\b(open|reopen|re-open|switch to|go to|take me to|bring up|pull up|jump to)\b/;
   const THE_TAB_WHERE = /\bthe (tab|page|one) (where|that|i)\b/;
 
+  // MULTI_GROUP -> "in 3 groups", "split into groups", "group into X, Y, Z", "categorize into".
+  const MULTI_GROUP = [
+    /\b(\d+\s*(?:main\s*)?groups?)\b/i,
+    /\b(multi(?:ple)?\s+groups?)\b/i,
+    /\b(split|divide|sort|categorize|organize|group)\s+(?:all\s+)?(?:my\s+)?(?:the\s+)?(?:[a-z0-9]+\s+)?tabs\s+in(?:to)?\s+\d+\b/i,
+    /\b(split|divide|sort|categorize|organize|group)\s+(?:all\s+)?(?:my\s+)?tabs\s+into\s+([a-z0-9\s,]+(?:and|&)[a-z0-9\s,]+)\b/i,
+    /\bin(?:to)?\s+\d+\s+(?:main\s+)?groups?\s*[:-]/i
+  ];
+
   function detectFindOpen(s) {
     if (/\bre-?open\b/.test(s)) return true;
     if (THE_TAB_WHERE.test(s) && OPEN_VERB.test(s)) return true;
@@ -84,16 +93,17 @@
   /**
    * Classify a raw command.
    * @returns {{complex: boolean, signals: string[]}} signals is a subset of
-   *   ['temporal','exception','count_rank','state','find_open'] in fixed order.
+   *   ['temporal','exception','count_rank','state','find_open','multi_group'] in fixed order.
    */
   function isComplexCommand(cmd) {
     const s = String(cmd || '').toLowerCase();
     const signals = [];
-    if (anyMatch(TEMPORAL, s))   signals.push('temporal');
-    if (anyMatch(EXCEPTION, s))  signals.push('exception');
-    if (anyMatch(COUNT_RANK, s)) signals.push('count_rank');
-    if (anyMatch(STATE, s))      signals.push('state');
-    if (detectFindOpen(s))       signals.push('find_open');
+    if (anyMatch(TEMPORAL, s))    signals.push('temporal');
+    if (anyMatch(EXCEPTION, s))   signals.push('exception');
+    if (anyMatch(COUNT_RANK, s))  signals.push('count_rank');
+    if (anyMatch(STATE, s))       signals.push('state');
+    if (detectFindOpen(s))        signals.push('find_open');
+    if (anyMatch(MULTI_GROUP, s)) signals.push('multi_group');
     return { complex: signals.length > 0, signals };
   }
 

@@ -20,8 +20,9 @@
 
 global.self = global; // recall-tabs.js self-fallback guard; harmless in node
 
-const { buildFilterPlan, validate } = require('../agent-planner.js');
+const { buildFilterPlan, validate, parseMultiGroupCommand } = require('../agent-planner.js');
 const { executePlan, extractRetrieval } = require('../agent-executor.js');
+const { isComplexCommand } = require('../agent-router.js');
 const { parseTimeRange } = require('../recall-tabs.js');
 
 const NOW = 1_000_000_000_000;
@@ -325,8 +326,33 @@ const CASES = [
     ok('inclusion precision: only high-confidence programming tabs (>= 0.55) are included', incCmp.equal, `got [${incCmp.got}] want [${incCmp.want}]`);
   }
 
+  console.log('\n--- MULTI-GROUP ROUTER & PLANNER ---');
+  {
+    const mgCmd = 'Make a group of all youtube tabs in 3 main groups - entertainment programming and other based on the content of the youtube video';
+    const routed = isComplexCommand(mgCmd);
+    ok('router flags multi-group command as complex', routed.complex);
+    ok('router includes multi_group signal', routed.signals.includes('multi_group'));
+
+    // Test offline regex extraction
+    const parsedRegex = await parseMultiGroupCommand(mgCmd, {});
+    ok('planner parses multi-group restrict', parsedRegex.restrict === 'youtube.com');
+    ok('planner extracts bucket names', parsedRegex.buckets.length >= 2);
+
+    // Test model-based extraction
+    const mockModel = async () => JSON.stringify({
+      restrict: 'youtube.com',
+      buckets: [
+        { name: 'Entertainment', characteristic: 'entertainment, music, movies' },
+        { name: 'Programming', characteristic: 'coding tutorials and dev videos' },
+        { name: 'Other', characteristic: 'miscellaneous youtube videos' }
+      ]
+    });
+    const parsedModel = await parseMultiGroupCommand(mgCmd, { callGemini: mockModel });
+    ok('model-based parse returns exact 3 buckets', parsedModel.buckets.length === 3 && parsedModel.buckets[0].name === 'Entertainment');
+  }
+
   console.log('\n' + '='.repeat(60));
-  console.log(`${fail === 0 ? 'PASS' : 'FAIL'}  agent golden set + fallback + self-correction + exclusion recall  (${pass} passed, ${fail} failed)`);
+  console.log(`${fail === 0 ? 'PASS' : 'FAIL'}  agent golden set + fallback + self-correction + exclusion recall + multi-group  (${pass} passed, ${fail} failed)`);
   console.log('='.repeat(60));
   process.exit(fail === 0 ? 0 : 1);
 })();

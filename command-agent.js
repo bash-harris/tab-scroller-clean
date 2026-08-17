@@ -954,6 +954,31 @@ async function runAgentPipeline(cleanCommand, windowId, signals = []) {
 
   const planOpts = { callGemini: geminiAdapter, callOllama: ollamaAdapter, signals };
 
+  // 4b. MULTI-GROUP BRANCH: User asked for multiple groups in one natural language prompt
+  if (signals.includes('multi_group') && typeof self.AgentPlanner.parseMultiGroupCommand === 'function') {
+    const mgParsed = await self.AgentPlanner.parseMultiGroupCommand(cleanCommand, planOpts);
+    if (mgParsed && Array.isArray(mgParsed.buckets) && mgParsed.buckets.length > 0 && typeof self.assignMultiGroupsCore === 'function') {
+      const res = await self.assignMultiGroupsCore({
+        windowId,
+        buckets: mgParsed.buckets,
+        restrict: mgParsed.restrict
+      });
+      if (res && res.success) {
+        return {
+          intent: 'group_multi',
+          tabIds: res.tabIds || [],
+          uncertain: [],
+          confidence: 0.95,
+          destructive: false,
+          path: 'agent',
+          action_params: {},
+          perTabReasons: {},
+          planSource: 'agent_multi_group'
+        };
+      }
+    }
+  }
+
   // 5. Plan -> execute -> (at most) ONE self-correction. The correction re-plans
   //    with a hint about WHY the first plan was unusable (topic matched 0, or a
   //    destructive plan had no narrowing filter), and is accepted only if it

@@ -406,8 +406,79 @@ Examples:
     };
   }
 
+  async function parseMultiGroupCommand(cleanCommand, { callGemini, callOllama } = {}) {
+    const system = `You extract multi-group target definitions and optional domain/search restrictions from a browser tab command.
+Return ONLY a valid JSON object:
+{
+  "restrict": "optional domain or filter keyword, e.g. youtube.com or github.com (or null)",
+  "buckets": [
+    { "name": "Group Name", "characteristic": "short description of tabs belonging in this group" }
+  ]
+}
+No markdown, no prose.`;
+
+    const prompt = `Command: "${cleanCommand}"`;
+
+    let text = null;
+    if (typeof callGemini === 'function') {
+      try {
+        const res = await callGemini(system, prompt);
+        text = (typeof res === 'string') ? res : (res && res.text);
+      } catch (e) {}
+    }
+    if (!text && typeof callOllama === 'function') {
+      try {
+        const res = await callOllama(system, prompt);
+        text = (typeof res === 'string') ? res : (res && res.text);
+      } catch (e) {}
+    }
+
+    if (text) {
+      try {
+        let clean = text.trim();
+        const m = clean.match(/\{[\s\S]*\}/);
+        if (m) clean = m[0];
+        const parsed = JSON.parse(clean);
+        if (parsed && Array.isArray(parsed.buckets) && parsed.buckets.length > 0) {
+          return {
+            restrict: parsed.restrict || null,
+            buckets: parsed.buckets.map(b => ({
+              name: String(b.name || 'Group').trim(),
+              characteristic: String(b.characteristic || b.name || '').trim()
+            }))
+          };
+        }
+      } catch (e) {}
+    }
+
+    // Regex fallback
+    let restrict = null;
+    if (/\byoutube\b/i.test(cleanCommand)) restrict = 'youtube.com';
+    else if (/\bgithub\b/i.test(cleanCommand)) restrict = 'github.com';
+    else if (/\brecipes?\b/i.test(cleanCommand)) restrict = 'recipe';
+
+    const groupMatch = cleanCommand.match(/groups?\s*[:-]\s*(.+)$/i) || cleanCommand.match(/into\s+(.+)$/i);
+    if (groupMatch) {
+      const raw = groupMatch[1].replace(/\b(based\s+on.*|other\s+based.*|videos?|tabs?)\b/gi, '').trim();
+      const parts = raw.split(/[,;&]|\s+and\s+|\s+/i)
+        .map(p => p.trim())
+        .filter(p => p.length > 1 && !['the', 'all', 'main', 'my', 'and', 'in', 'of', 'for'].includes(p.toLowerCase()));
+      if (parts.length > 0) {
+        return {
+          restrict,
+          buckets: parts.map(p => ({
+            name: p[0].toUpperCase() + p.slice(1),
+            characteristic: p
+          }))
+        };
+      }
+    }
+
+    return null;
+  }
+
   const AgentPlanner = {
-    buildFilterPlan, validate, buildRegexPlan, normalizeCommand, SYSTEM, INTENTS,
+    buildFilterPlan, validate, buildRegexPlan, parseMultiGroupCommand, normalizeCommand, SYSTEM, INTENTS,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = AgentPlanner;
   if (typeof self !== 'undefined') self.AgentPlanner = AgentPlanner;
