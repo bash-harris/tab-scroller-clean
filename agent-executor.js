@@ -106,6 +106,7 @@
       return t == null ? 0 : t;
     };
 
+    const tStart = Date.now();
     const cheapInclusive = []; // Array<Set<tabId>>
     const cheapExclusions = []; // Array<Set<tabId>>
     const topicFilters = [];
@@ -114,6 +115,7 @@
     let topicMatchedZero = false;
 
     // Phase A: Evaluate all cheap non-topic filters first (O(n) set operations, zero model calls)
+    const tPhaseA = Date.now();
     for (const f of (dsl.filters || [])) {
       if (f.type === 'topic') {
         topicFilters.push(f);
@@ -155,10 +157,13 @@
       ? cheapInclusive.reduce((acc, s) => intersect(acc, s))
       : new Set(universe);
     for (const ex of cheapExclusions) working = subtract(working, ex);
+    const durPhaseA = Date.now() - tPhaseA;
 
     // Phase B: Evaluate expensive topic filters ONLY over the pre-narrowed working scope
+    const tPhaseB = Date.now();
     const inclusiveTopics = topicFilters.filter(f => f.op !== 'is_not');
     const exclusionTopics = topicFilters.filter(f => f.op === 'is_not');
+    let topicNliPassesSaved = 0;
 
     // 1. Inclusive topics progressively narrow working set
     for (const f of inclusiveTopics) {
@@ -168,6 +173,7 @@
         break;
       }
       const scopedCands = (candidates || []).filter(c => working.has(c.tabId));
+      topicNliPassesSaved += (universe.size - scopedCands.length);
       const ids = new Set((await findByTopic(f.value, scopedCands, { exclude: false })) || []);
       const scoped = intersect(ids, working);
       if (scoped.size === 0) {
@@ -181,11 +187,15 @@
     for (const f of exclusionTopics) {
       if (working.size === 0) break;
       const scopedCands = (candidates || []).filter(c => working.has(c.tabId));
+      topicNliPassesSaved += (universe.size - scopedCands.length);
       const ids = new Set((await findByTopic(f.value, scopedCands, { exclude: true })) || []);
       const scoped = intersect(ids, working);
       working = subtract(working, scoped);
     }
+    const durPhaseB = Date.now() - tPhaseB;
 
+    // Phase C: Rank & Destructive protection
+    const tPhaseC = Date.now();
     // Rank: keep the N newest/oldest (protect them), act on the remainder.
     for (const rf of rankFilters) working = applyRank(working, rf, { liveTabs, recencyOf, dupGroupsSource });
 
@@ -195,6 +205,8 @@
       const active = liveTabs.find(t => t.active);
       if (active) working.delete(active.id);
     }
+    const durPhaseC = Date.now() - tPhaseC;
+    const durTotal = Date.now() - tStart;
 
     const tabIds = [...working];
     const reason = describePlan(dsl) || dsl.intent;
@@ -213,6 +225,21 @@
     const selectedAllDestructive = DESTRUCTIVE.has(dsl.intent) && !hasNarrowingFilter;
     const needsCorrection = topicMatchedZero || selectedAllDestructive;
     if (selectedAllDestructive) notes.push('destructive plan had no narrowing filter (would match all tabs)');
+
+    const timings = {
+      phaseA_cheap_ms: durPhaseA,
+      phaseB_topics_ms: durPhaseB,
+      phaseC_rank_ms: durPhaseC,
+      total_ms: durTotal,
+      passesSaved: topicNliPassesSaved
+    };
+
+    if (typeof console !== 'undefined' && console.log) {
+      console.log(
+        `[AgentExecutor] Plan executed in ${durTotal}ms (cheap: ${durPhaseA}ms, topics: ${durPhaseB}ms, rank: ${durPhaseC}ms). ` +
+        `Narrowed ${universe.size} -> ${tabIds.length} tabs. Passes saved: ${topicNliPassesSaved}`
+      );
+    }
 
     // Confidence: start from the planner's, penalise empty/uncertain outcomes.
     let confidence = Number.isFinite(dsl.confidence) ? dsl.confidence : 0.6;

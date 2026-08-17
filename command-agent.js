@@ -794,20 +794,35 @@ function reportProgress(stage, detail, pct) {
   } catch (e) { /* tab gone -- the command continues regardless */ }
 }
 
+function createTracer(command) {
+  const t0 = Date.now();
+  return {
+    step: (phase, message, data = {}) => {
+      const elapsed = Date.now() - t0;
+      const details = Object.entries(data)
+        .map(([k, v]) => `${k}=${typeof v === 'object' ? JSON.stringify(v) : v}`)
+        .join(' | ');
+      console.log(`⏱️ [PipelineTrace] [+${elapsed}ms] [${phase}] ${message}${details ? '  ➜  ' + details : ''}`);
+    },
+    done: (resultSummary = '') => {
+      const total = Date.now() - t0;
+      console.log(`🏁 [PipelineTrace] [Total: ${total}ms] ${resultSummary}`);
+    }
+  };
+}
+
 async function runCommandPipeline(userCommand, windowId) {
   if (self.ensureRagReady) {
     await self.ensureRagReady();
   }
   const cleanCommand = sanitizeQuery(userCommand);
-  console.log('[CommandAgent] Pipeline running for:', cleanCommand);
-  reportProgress('parse', 'Reading your command', 5);
+  const tracer = createTracer(cleanCommand);
+  tracer.step('Start', `Received command: "${cleanCommand}"`);
+  reportProgress('parse', 'Analyzing command…', 10);
 
   const classification = classifyCommand(cleanCommand);
-  console.log(`[CommandAgent] Classification: ${classification}`);
-
   const cmdLower = cleanCommand.toLowerCase();
   const intent = detectIntent(cmdLower);
-
   const isDestructive = DESTRUCTIVE_INTENTS.has(intent);
 
   // LAYER 0 ROUTER (deterministic, no model call). Temporal / exception /
@@ -821,14 +836,22 @@ async function runCommandPipeline(userCommand, windowId) {
   if (self.AgentRouter && self.AgentPlanner && self.AgentExecutor) {
     const routed = self.AgentRouter.isComplexCommand(cleanCommand);
     if (routed.complex) {
-      console.log(`[CommandAgent] Router -> AGENT path (signals: ${routed.signals.join(',')})`);
-      reportProgress('understand', 'Planning a multi-step command', 30);
+      tracer.step('Router', 'Routed to AGENT path', {
+        classification,
+        intent,
+        signals: routed.signals.join(', ')
+      });
+      reportProgress('understand', 'Planning action with AI…', 35);
       try {
-        const agentPlan = await runAgentPipeline(cleanCommand, windowId, routed.signals);
-        if (agentPlan) return agentPlan;
-        console.warn('[CommandAgent] Agent path returned null; using standard pipeline');
+        const agentPlan = await runAgentPipeline(cleanCommand, windowId, routed.signals, tracer);
+        if (agentPlan) {
+          tracer.done(`Agent plan completed with intent=${agentPlan.intent} (tabs: ${agentPlan.tabIds?.length || 0})`);
+          reportProgress('ready', 'Action ready', 100);
+          return agentPlan;
+        }
+        tracer.step('RouterFallback', 'Agent path returned null; falling back to standard pipeline');
       } catch (e) {
-        console.warn('[CommandAgent] Agent path threw; using standard pipeline:', e && e.message);
+        tracer.step('RouterFallback', 'Agent path threw error; falling back to standard pipeline', { error: e && e.message });
       }
     }
   }
@@ -847,7 +870,8 @@ async function runCommandPipeline(userCommand, windowId) {
   const domainMatch = hasDomainPattern(cmdLower);
 
   if (classification === 'syntactic') {
-    console.log('[CommandAgent] Syntactic fast path matched');
+    tracer.step('Router', 'Syntactic fast path chosen', { intent, classification });
+    reportProgress('retrieve', 'Scanning tabs…', 50);
 
     // Same all-windows scope as the semantic path: "close all youtube.com tabs"
     // must mean every window, not just the focused one. Grouping is the one
@@ -927,8 +951,8 @@ async function runCommandPipeline(userCommand, windowId) {
     }
   }
 
-  console.log('[CommandAgent] Semantic path chosen');
-  return await runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive, windowId);
+  tracer.step('Router', 'Semantic path chosen');
+  return await runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive, windowId, tracer);
 }
 
 // ===========================================================================
@@ -968,22 +992,21 @@ function makeFindByTopic(command, candidates) {
   };
 }
 
-async function runAgentPipeline(cleanCommand, windowId, signals = []) {
-  // 1. Topic-matching candidates: enriched cards carrying {tabId, embedding}.
-  //    Reuses the exact retrieval the semantic path uses (all windows, indexed
-  //    on demand), so topic filters see the same universe the reranker would.
-  const candidates = await retrieveCandidates(cleanCommand, windowId, null);
+async function runAgentPipeline(cleanCommand, windowId, signals = [], tracer = null) {
+  const logStep = (phase, msg, data) => tracer ? tracer.step(phase, msg, data) : console.log(`[AgentPipeline] [${phase}] ${msg}`);
 
-  // 2. Live tab universe in mapTab shape, for time / domain / state / duplicate
-  //    filters. All windows -- destructive bulk commands are not window-scoped.
+  // 1. Topic-matching candidates: enriched cards carrying {tabId, embedding}.
+  const t0 = Date.now();
+  const candidates = await retrieveCandidates(cleanCommand, windowId, null);
+  logStep('Candidates', `Retrieved ${candidates.length} enriched tab cards`, { durMs: Date.now() - t0 });
+
+  // 2. Live tab universe in mapTab shape, for time / domain / state / duplicate filters.
   const rawTabs = await chrome.tabs.query({});
   const liveTabs = rawTabs.map(self.mapTab);
+  logStep('LiveTabs', `Queried ${liveTabs.length} live tabs across windows`);
 
   // 3. Adapt the two providers to the planner's uniform
-  //    callModel(system, prompt, timeout) -> string contract. callGemini returns
-  //    text | "Error: ..." (the planner treats the error string as a failed
-  //    tier); callOllama returns {text} | throws (the planner catches the throw).
-  //    Failure chain Gemini -> Ollama -> regex is entirely inside buildFilterPlan.
+  //    callModel(system, prompt, timeout) -> string contract.
   const geminiAdapter = async (system, prompt) => await self.callGemini(prompt, system);
   const ollamaAdapter = async (system, prompt) => {
     const r = await self.callOllama({ prompt, systemInstruction: system, responseFormat: 'json', temperature: 0.1 });
@@ -1002,12 +1025,26 @@ async function runAgentPipeline(cleanCommand, windowId, signals = []) {
 
   // 4b. MULTI-GROUP BRANCH: User asked for multiple groups in one natural language prompt
   if (signals.includes('multi_group') && typeof self.AgentPlanner.parseMultiGroupCommand === 'function') {
+    reportProgress('plan', 'Extracting group categories with AI…', 45);
+    const tMg0 = Date.now();
     const mgParsed = await self.AgentPlanner.parseMultiGroupCommand(cleanCommand, planOpts);
+    logStep('MultiGroupParse', 'Parsed multi-group definitions', {
+      buckets: mgParsed?.buckets?.map(b => b.name).join(', '),
+      restrict: mgParsed?.restrict,
+      durMs: Date.now() - tMg0
+    });
+
     if (mgParsed && Array.isArray(mgParsed.buckets) && mgParsed.buckets.length > 0 && typeof self.assignMultiGroupsCore === 'function') {
+      reportProgress('execute', 'Sorting tabs into custom groups…', 70);
       const res = await self.assignMultiGroupsCore({
         windowId,
         buckets: mgParsed.buckets,
         restrict: mgParsed.restrict
+      });
+      logStep('MultiGroupAssign', 'Assignment result', {
+        success: res?.success,
+        assignedCount: res?.assignedCount,
+        bucketsCount: res?.bucketsCount
       });
       if (res && res.success) {
         return {
@@ -1025,20 +1062,37 @@ async function runAgentPipeline(cleanCommand, windowId, signals = []) {
     }
   }
 
-  // 5. Plan -> execute -> (at most) ONE self-correction. The correction re-plans
-  //    with a hint about WHY the first plan was unusable (topic matched 0, or a
-  //    destructive plan had no narrowing filter), and is accepted only if it
-  //    actually resolves the problem -- otherwise we keep the first plan and let
-  //    the action gate surface the empty result honestly (never act on match-all).
+  // 5. Plan -> execute -> (at most) ONE self-correction.
+  reportProgress('plan', 'Planning filters with AI…', 50);
+  const tPlan0 = Date.now();
   let plan = await self.AgentPlanner.buildFilterPlan(cleanCommand, planOpts);
+  logStep('Planner', `Plan built (${plan.source})`, {
+    intent: plan.intent,
+    filters: plan.filters?.map(f => `${f.type}:${f.op}:${f.value}`).join(', '),
+    confidence: plan.confidence,
+    durMs: Date.now() - tPlan0
+  });
+
+  reportProgress('execute', 'Applying tab filters…', 75);
   let exec = await self.AgentExecutor.executePlan(plan, candidates, execDeps);
-  console.log(`[AgentPipeline] plan(${plan.source}) intent=${plan.intent} -> ${exec.tabIds.length} tabs, needsCorrection=${exec.needsCorrection}`);
+  logStep('Executor', `Plan executed`, {
+    selectedTabs: exec.tabIds.length,
+    needsCorrection: exec.needsCorrection,
+    cheapDurMs: exec.timings?.phaseA_cheap_ms,
+    topicDurMs: exec.timings?.phaseB_topics_ms,
+    passesSaved: exec.timings?.passesSaved
+  });
 
   if (exec.needsCorrection) {
+    reportProgress('plan', 'Self-correcting filter plan…', 85);
     const correctionHint = (exec.notes && exec.notes.length) ? exec.notes.join('; ') : 'the plan matched 0 or all tabs';
+    logStep('SelfCorrection', 'Triggering re-plan', { hint: correctionHint });
     const plan2 = await self.AgentPlanner.buildFilterPlan(cleanCommand, { ...planOpts, correctionHint });
     const exec2 = await self.AgentExecutor.executePlan(plan2, candidates, execDeps);
-    console.log(`[AgentPipeline] self-correction plan(${plan2.source}) -> ${exec2.tabIds.length} tabs, needsCorrection=${exec2.needsCorrection}`);
+    logStep('SelfCorrectionResult', `Corrected plan (${plan2.source}) executed`, {
+      selectedTabs: exec2.tabIds.length,
+      needsCorrection: exec2.needsCorrection
+    });
     if (!exec2.needsCorrection) { plan = plan2; exec = exec2; }
   }
 
@@ -1145,12 +1199,16 @@ async function selectMatches(cleanCommand, candidates, settings) {
   return await reasonOverCandidates(cleanCommand, candidates);
 }
 
-async function runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive, windowId) {
+async function runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive, windowId, tracer = null) {
+  const logStep = (phase, msg, data) => tracer ? tracer.step(phase, msg, data) : console.log(`[SemanticPipeline] [${phase}] ${msg}`);
   const settings = await self.readAiSettings();
+
+  const tCand0 = Date.now();
   const candidates = await retrieveCandidates(cleanCommand, windowId, intent);
+  logStep('Candidates', `Retrieved ${candidates.length} candidates`, { durMs: Date.now() - tCand0 });
 
   if (candidates.length === 0) {
-    console.log('[CommandAgent] No candidates found, returning 0 match result');
+    logStep('Candidates', 'No candidates found, returning 0 match result');
     return {
       intent,
       tabIds: [],
@@ -1162,9 +1220,17 @@ async function runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive
     };
   }
 
-  console.log(`[CommandAgent] Sending ${candidates.length} candidates to ${settings.selectionEngine || 'nli'} (top scores: ${candidates.slice(0, 5).map(c => c.similarityScore?.toFixed(2)).join(', ')})`);
+  logStep('SelectMatches', `Sending ${candidates.length} candidates to ${settings.selectionEngine || 'nli'}`, {
+    topScores: candidates.slice(0, 5).map(c => c.similarityScore?.toFixed(2)).join(', ')
+  });
 
+  const tMatch0 = Date.now();
   const agentResult = await selectMatches(cleanCommand, candidates, settings);
+  logStep('SelectMatchesResult', `Selection completed`, {
+    mode: agentResult?.mode,
+    matches: agentResult?.matches?.length || 0,
+    durMs: Date.now() - tMatch0
+  });
   if (agentResult && agentResult.providerError) {
     throw new Error(`AI provider unavailable: ${agentResult.providerError}`);
   }
