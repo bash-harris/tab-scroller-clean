@@ -39,9 +39,14 @@
   }
 
   const Indexer = {
-    async indexTab(tab, extractedText) {
+    // precomputedEmbedding lets the offline sweep hand back the vector it already
+    // computed for the tab card (batched on the GPU) instead of forcing a second,
+    // per-tab WASM forward pass here. When omitted, behaviour is unchanged: embed
+    // the snippet inline. The pages store this writes to is only read by
+    // RecallTabs.search, so reusing the card's pseudo-doc vector is harmless.
+    async indexTab(tab, extractedText, precomputedEmbedding = null) {
       const snippet = extractedText || tab.title || '';
-      const embedding = await Embed.embed(snippet.substring(0, 1000));
+      const embedding = precomputedEmbedding || await Embed.embed(snippet.substring(0, 1000));
       const domain = (() => { try { return new URL(tab.url).hostname.replace(/^www\./, ''); } catch { return ''; } })();
 
       await TabDB.store({

@@ -230,7 +230,17 @@
   const shadow = host.attachShadow({ mode: "closed" });
 
   // --- Inject CSS ---
+  // Critical CSS, applied SYNCHRONOUSLY. content.css is fetched async below, so
+  // without this the host spends a frame as a default-flow <div> and its shadow
+  // children render *in the page* before snapping to the strip (the "elements
+  // leak onto the page on refresh" bug). Mirroring the :host positioning here —
+  // plus visibility:hidden — means the overlay is fixed-positioned and unpainted
+  // until the full sheet (which has no visibility rule) replaces this text.
+  const CRITICAL_CSS =
+    ":host{all:initial;display:block;position:fixed;top:0;left:0;right:0;" +
+    "width:100%;z-index:2147483647;pointer-events:none;visibility:hidden}";
   const style = document.createElement("style");
+  style.textContent = CRITICAL_CSS;
   const cssPromise = fetch(chrome.runtime.getURL("content.css"))
     .then((r) => r.text())
     .then((css) => {
@@ -239,6 +249,12 @@
       // against the host page and 404. getURL("") ends in "/", so the CSS keeps
       // the "fonts/..." path directly after the token.
       style.textContent = css.replace(/__TS_EXT__/g, chrome.runtime.getURL(""));
+    })
+    .catch(() => {
+      // A local extension resource fetch should never fail; if it somehow does,
+      // reveal a correctly-positioned (if unstyled) strip rather than leave the
+      // whole overlay invisible forever.
+      style.textContent = CRITICAL_CSS.replace(";visibility:hidden", "");
     });
   shadow.appendChild(style);
 
@@ -721,6 +737,9 @@
   // Keyboard navigation in popup
   let popupSelectedIndex = -1;
   searchPopupInput.addEventListener("keydown", (e) => {
+    // Strip search is open → contain every keystroke inside the shadow so the
+    // page beneath doesn't act on keys the user is typing into the search box.
+    e.stopPropagation();
     const results = searchPopupResults.querySelectorAll('.ts-search-popup-result');
     if (results.length === 0) return;
 
@@ -895,10 +914,8 @@
           callback(response);
         });
       } else {
-        // Fire-and-forget (e.g. SWITCH_TAB) — suppress unhandled lastError
-        chrome.runtime.sendMessage(msg, () => {
-          const _ = chrome.runtime.lastError;
-        });
+        // Fire-and-forget (e.g. SWITCH_TAB) — no response expected
+        chrome.runtime.sendMessage(msg);
       }
     } catch (e) {
       contextValid = false;
@@ -1519,40 +1536,44 @@
   });
 
   function handleKeyDown(e) {
-    // The AI command popup owns the keyboard while it is open. This global
-    // handler runs in the capture phase on window, so without this bail it would
-    // preventDefault() Enter (see the filteredTabs branch below) before the
-    // popup's own input listener ever sees it — the "Enter is intercepted" bug.
-    // Escape still reaches the popup's own handler because we don't stop it here.
-    if (aiPanelOpen) return;
+    // ── Keyboard scoping contract ──────────────────────────────────────────
+    //  CLOSED (no command UI visible): intercept NOTHING except the opener.
+    //         Enter, Delete, typing and the page's own shortcuts all pass
+    //         straight through — the extension is invisible to the keyboard.
+    //  OPEN   (strip search or AI popup visible): the extension owns the
+    //         keyboard. The focused <input>'s own listener stopPropagation()s
+    //         so the page beneath never sees the keystroke.
+    const uiOpen = aiPanelOpen || isSearchActive;
 
-    // Ctrl+K to search
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-      e.preventDefault();
-      startSearch();
-      return;
-    }
-
-    // Esc to close search
-    if (e.key === "Escape") {
-      if (isSearchActive) {
-        stopSearch();
+    if (!uiOpen) {
+      // The ONLY key consumed while closed is the opener (Ctrl/Cmd+K → strip
+      // search). Ctrl+Shift+K is the AI-popup opener, handled separately, so
+      // exclude Shift here to avoid firing both.
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        startSearch();
       }
       return;
     }
 
-    // Keyboard Nav (don't interfere if typing in search UNLESS it's enter/delete)
-    const navigating = ["Enter", "Delete", "Backspace"].includes(e.key);
-    if (!navigating && isSearchActive) return;
+    // The dedicated AI popup manages its own <input> (Enter / history / Esc);
+    // don't touch its keys here — its listener handles and contains them.
+    if (aiPanelOpen) return;
 
-    // AI commands must be checked BEFORE filteredTabs guard — when user types
-    // "> query", no tabs match the ">" character, causing early return otherwise.
+    // ── Strip search is open ───────────────────────────────────────────────
+    if (e.key === "Escape") {
+      stopSearch();
+      return;
+    }
+
+    // AI commands must be checked BEFORE the filteredTabs guard — when user
+    // types "> query", no tabs match ">" and we'd otherwise return early.
     if (e.key === "Enter" && searchHasFocus) {
       if (searchInput.value.length > 0) {
         e.preventDefault();
- 
+
         const commandText = searchInput.value.trim();
-                
+
         // Clear input and disable BEFORE sending to prevent repeat fires
         searchInput.value = "";
         searchInput.disabled = true;
@@ -1569,7 +1590,13 @@
           }
 
           if (response && response.success) {
-            if (typeof showToast !== 'undefined') showToast(response.message, "success");
+            // Retrieval results get a real, scrollable, clickable window rather
+            // than a one-line toast that truncates the match list.
+            if (response.kind === "recall_list" && Array.isArray(response.results) && response.results.length) {
+              showResultsPanel(response);
+            } else if (typeof showToast !== "undefined") {
+              showToast(response.message, "success");
+            }
           } else {
             if (typeof showToast !== 'undefined') showToast(response?.message || "Error", "error");
           }
@@ -1586,6 +1613,11 @@
         return;
       }
     }
+
+    // Let ordinary typing reach the search box; keep only the navigation keys
+    // (Enter / Delete / Backspace) for list control below.
+    const navigating = ["Enter", "Delete", "Backspace"].includes(e.key);
+    if (!navigating) return;
 
     const filteredTabs = tabs.filter(t => isTabMatch(t, searchQuery));
 
@@ -2230,6 +2262,26 @@
       showClarificationModal(msg);
     } else if (msg.type === "PREVIEW_PLAN") {
       (async () => {
+        if (msg.plan && msg.plan.intent === 'group_multi') {
+          const result = await showMultiGroupPreviewModal(msg);
+          if (result && result.buckets && result.buckets.length > 0) {
+            safeSendMessage({
+              type: "EXECUTE_PLAN",
+              planId: msg.planId,
+              buckets: result.buckets
+            }, (response) => {
+              if (response && response.success) {
+                if (typeof showToast !== 'undefined') showToast(response.message, "success");
+              } else {
+                if (typeof showToast !== 'undefined') showToast(response?.message || "Error applying groups", "error");
+              }
+            });
+          } else {
+            if (typeof showToast !== 'undefined') showToast("Multi-group cancelled", "info");
+          }
+          return;
+        }
+
         const checkedTabIds = await showPlanPreviewModal(msg);
         if (checkedTabIds && checkedTabIds.length > 0) {
           safeSendMessage({
@@ -2434,6 +2486,19 @@
       suggestionsEl.appendChild(item);
     });
 
+    const mgLauncher = document.createElement("div");
+    mgLauncher.className = "ts-multigroup-launcher";
+    const mgBtn = document.createElement("button");
+    mgBtn.className = "ts-multigroup-btn";
+    mgBtn.type = "button";
+    mgBtn.innerHTML = '✨ Organize into my groups…';
+    mgBtn.addEventListener("click", () => {
+      closePanel();
+      showMultiGroupSetupModal();
+    });
+    mgLauncher.appendChild(mgBtn);
+    suggestionsEl.parentNode.appendChild(mgLauncher);
+
     function openPanel() {
       anchorPanel();
       aiPanelOpen = true;
@@ -2500,6 +2565,10 @@
     });
 
     input.addEventListener("keydown", (e) => {
+      // Panel is open → the extension owns the keyboard. Contain every keystroke
+      // inside the shadow so the page's own shortcuts don't fire while typing a
+      // command. (Capture-phase handleKeyDown already bailed on aiPanelOpen.)
+      e.stopPropagation();
       if (e.key === "Enter") {
         e.preventDefault();
         const command = input.value.trim();
@@ -2641,7 +2710,13 @@
 
       if (response.success) {
         endAiProgress(true);
-        showToast(response.message, "success");
+        // Retrieval ("find/open") results get a real, scrollable, selectable
+        // window instead of a one-line toast that truncated the match list.
+        if (response.kind === "recall_list" && Array.isArray(response.results) && response.results.length) {
+          showResultsPanel(response);
+        } else {
+          showToast(response.message, "success");
+        }
 
         // Show analysis results if present
         if (response.analysis) {
@@ -2701,6 +2776,154 @@
     });
     
     overlay.onclick = closeBtn.onclick;
+  }
+
+  // ===== RETRIEVAL RESULTS WINDOW =====
+  // A proper, scrollable, selectable window for "find/open" results — replaces
+  // the single-line green toast that truncated the match list. Backed by the
+  // structured { kind:'recall_list', results:[{title,url,domain,similarity}] }
+  // payload from handleRecallTabs. Selected rows open via OPEN_RECALL_URLS.
+  let resultsPanelEl = null;
+  function showResultsPanel(data) {
+    const rows = Array.isArray(data.results) ? data.results : [];
+    if (!rows.length) {
+      if (typeof showToast !== "undefined") showToast(data.message || "No matching tabs.", "info");
+      return;
+    }
+
+    // Only one results window at a time.
+    if (resultsPanelEl) { resultsPanelEl.remove(); resultsPanelEl = null; }
+
+    const modal = document.createElement("div");
+    modal.className = "ts-analysis-modal ts-results-modal"; // reuse modal fade/scale
+
+    const overlay = document.createElement("div");
+    overlay.className = "ts-modal-overlay";
+    modal.appendChild(overlay);
+
+    const content = document.createElement("div");
+    content.className = "ts-modal-content ts-results-content";
+    content.tabIndex = -1; // focusable so Esc/Enter land here, not the popup behind
+
+    const title = document.createElement("h3");
+    const q = (data.query || "").trim();
+    title.textContent = q
+      ? `\u{1F50E} ${data.count || rows.length} tabs for “${q}”`
+      : `\u{1F50E} Found ${data.count || rows.length} tabs`;
+    content.appendChild(title);
+
+    if (data.narrowed) {
+      const note = document.createElement("div");
+      note.className = "ts-results-note";
+      note.textContent = `Showing the top ${rows.length}. Add a time range or more specific words to narrow further.`;
+      content.appendChild(note);
+    }
+
+    const list = document.createElement("div");
+    list.className = "ts-results-list";
+
+    rows.forEach((r) => {
+      const row = document.createElement("label"); // label → clicking row toggles cb
+      row.className = "ts-results-row";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.className = "ts-results-cb";
+      cb.checked = true;
+      cb.dataset.url = r.url || "";
+      row.appendChild(cb);
+
+      const main = document.createElement("div");
+      main.className = "ts-results-main";
+      const t = document.createElement("div");
+      t.className = "ts-results-title";
+      t.textContent = r.title || r.domain || r.url || "(untitled)"; // textContent: no injection
+      const d = document.createElement("div");
+      d.className = "ts-results-domain";
+      d.textContent = r.domain || "";
+      main.appendChild(t);
+      main.appendChild(d);
+      row.appendChild(main);
+
+      const score = document.createElement("div");
+      score.className = "ts-results-score";
+      score.textContent = Math.round((r.similarity || 0) * 100) + "%";
+      row.appendChild(score);
+
+      list.appendChild(row);
+    });
+    content.appendChild(list);
+
+    const footer = document.createElement("div");
+    footer.className = "ts-results-footer";
+
+    const hint = document.createElement("div");
+    hint.className = "ts-results-hint";
+    hint.textContent = "Tick tabs to open · Enter opens · Esc closes";
+    footer.appendChild(hint);
+
+    const btns = document.createElement("div");
+    btns.className = "ts-results-btns";
+
+    const closeBtn = document.createElement("button");
+    closeBtn.className = "ts-btn";
+    closeBtn.textContent = "Close";
+
+    const openBtn = document.createElement("button");
+    openBtn.className = "ts-btn ts-btn-primary";
+    openBtn.textContent = "Open selected";
+
+    btns.appendChild(closeBtn);
+    btns.appendChild(openBtn);
+    footer.appendChild(btns);
+    content.appendChild(footer);
+
+    modal.appendChild(content);
+    shadow.appendChild(modal);
+    resultsPanelEl = modal;
+
+    const close = () => {
+      modal.classList.remove("visible");
+      setTimeout(() => { modal.remove(); if (resultsPanelEl === modal) resultsPanelEl = null; }, 250);
+      // Hand focus back to the command box if the popup is still open.
+      if (aiPanelOpen && commandInputComponents && commandInputComponents.input) {
+        commandInputComponents.input.focus();
+      }
+    };
+
+    const openSelected = () => {
+      const urls = Array.from(list.querySelectorAll(".ts-results-cb"))
+        .filter((cb) => cb.checked)
+        .map((cb) => cb.dataset.url)
+        .filter(Boolean);
+      if (!urls.length) {
+        if (typeof showToast !== "undefined") showToast("No tabs selected.", "warning");
+        return;
+      }
+      safeSendMessage({ type: "OPEN_RECALL_URLS", urls }, (resp) => {
+        if (typeof showToast !== "undefined") {
+          showToast(`Opened ${resp && typeof resp.opened === "number" ? resp.opened : urls.length} tab(s).`, "success");
+        }
+      });
+      close();
+    };
+
+    overlay.onclick = close;
+    closeBtn.onclick = close;
+    openBtn.onclick = openSelected;
+
+    // Enter opens the ticked tabs, Esc closes. stopPropagation so these don't
+    // also reach (and close) the AI popup sitting behind this window.
+    content.addEventListener("keydown", (e) => {
+      e.stopPropagation();
+      if (e.key === "Escape") { e.preventDefault(); close(); }
+      else if (e.key === "Enter") { e.preventDefault(); openSelected(); }
+    });
+
+    requestAnimationFrame(() => {
+      modal.classList.add("visible");
+      content.focus();
+    });
   }
 
   // ===== COMMAND SUGGESTIONS =====
@@ -2910,6 +3133,374 @@
       confirmBtn.onclick = () => {
         const checkedIds = itemCheckboxes.filter(c => c.checked).map(c => Number(c.dataset.tabId));
         close(checkedIds);
+      };
+
+      cancelBtn.onclick = () => close(null);
+      overlay.onclick = () => close(null);
+    });
+  }
+
+  // ===== MULTI-GROUP SETUP MODAL =====
+  function showMultiGroupSetupModal() {
+    const modal = document.createElement("div");
+    modal.className = "ts-preview-modal";
+
+    const overlay = document.createElement("div");
+    overlay.className = "ts-preview-overlay";
+    modal.appendChild(overlay);
+
+    const content = document.createElement("div");
+    content.className = "ts-preview-content";
+    content.style.maxWidth = "560px";
+
+    const title = document.createElement("h3");
+    title.className = "ts-preview-title";
+    title.textContent = "Organize Tabs into Custom Groups";
+    content.appendChild(title);
+
+    const subtitle = document.createElement("div");
+    subtitle.className = "ts-preview-subtitle";
+    subtitle.textContent = "Define group names and characteristics. AI will sort open tabs into your groups.";
+    content.appendChild(subtitle);
+
+    const list = document.createElement("div");
+    list.className = "ts-mg-setup-list";
+
+    function createRow(name = "", char = "") {
+      const row = document.createElement("div");
+      row.className = "ts-mg-setup-row";
+
+      const nameInput = document.createElement("input");
+      nameInput.className = "ts-mg-input-name";
+      nameInput.placeholder = "Group Name (e.g. Coding)";
+      nameInput.value = name;
+
+      const charInput = document.createElement("input");
+      charInput.className = "ts-mg-input-char";
+      charInput.placeholder = "Characteristics (e.g. programming, dev tools)";
+      charInput.value = char;
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "ts-mg-row-del";
+      delBtn.innerHTML = "✕";
+      delBtn.title = "Remove group";
+      delBtn.onclick = () => {
+        if (list.children.length > 1) row.remove();
+      };
+
+      row.appendChild(nameInput);
+      row.appendChild(charInput);
+      row.appendChild(delBtn);
+      return row;
+    }
+
+    // Default initial 2 rows
+    list.appendChild(createRow("Coding", "programming, software development, repos"));
+    list.appendChild(createRow("Research", "articles, documentation, reading"));
+    content.appendChild(list);
+
+    const addBtn = document.createElement("button");
+    addBtn.className = "ts-mg-add-btn";
+    addBtn.textContent = "+ Add Group";
+    addBtn.onclick = () => {
+      if (list.children.length < 8) {
+        list.appendChild(createRow());
+      }
+    };
+    content.appendChild(addBtn);
+
+    const restrictDiv = document.createElement("div");
+    restrictDiv.className = "ts-mg-restrict-container";
+    const restrictLabel = document.createElement("label");
+    restrictLabel.className = "ts-mg-restrict-label";
+    restrictLabel.textContent = "Restrict to (optional domain or search term):";
+    const restrictInput = document.createElement("input");
+    restrictInput.className = "ts-mg-restrict-input";
+    restrictInput.placeholder = "e.g. youtube.com or github.com (leaves empty for all open tabs)";
+    restrictDiv.appendChild(restrictLabel);
+    restrictDiv.appendChild(restrictInput);
+    content.appendChild(restrictDiv);
+
+    const buttons = document.createElement("div");
+    buttons.className = "ts-preview-buttons";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.className = "ts-preview-btn ts-preview-btn-cancel";
+    cancelBtn.textContent = "Cancel";
+    buttons.appendChild(cancelBtn);
+
+    const assignBtn = document.createElement("button");
+    assignBtn.className = "ts-preview-btn ts-preview-btn-confirm";
+    assignBtn.textContent = "Assign with AI ✨";
+    buttons.appendChild(assignBtn);
+
+    content.appendChild(buttons);
+    modal.appendChild(content);
+    shadow.appendChild(modal);
+
+    requestAnimationFrame(() => modal.classList.add("visible"));
+
+    const close = () => {
+      modal.classList.remove("visible");
+      setTimeout(() => modal.remove(), 200);
+    };
+
+    cancelBtn.onclick = close;
+    overlay.onclick = close;
+
+    assignBtn.onclick = () => {
+      const rows = Array.from(list.querySelectorAll(".ts-mg-setup-row"));
+      const buckets = [];
+      for (const r of rows) {
+        const name = r.querySelector(".ts-mg-input-name").value.trim();
+        const characteristic = r.querySelector(".ts-mg-input-char").value.trim();
+        if (name) buckets.push({ name, characteristic });
+      }
+
+      if (buckets.length === 0) {
+        showToast("Please provide at least one group name.", "error");
+        return;
+      }
+
+      const restrict = restrictInput.value.trim();
+      assignBtn.disabled = true;
+      assignBtn.textContent = "Categorizing…";
+
+      safeSendMessage({
+        type: "AI_MULTIGROUP_ASSIGN",
+        buckets,
+        restrict: restrict || null
+      }, (resp) => {
+        close();
+        if (!resp || !resp.success) {
+          showToast(resp?.message || "Multi-group assignment failed.", "error");
+        } else {
+          showToast("AI categorized your tabs. Review preview below.", "info");
+        }
+      });
+    };
+  }
+
+  // ===== MULTI-GROUP PREVIEW MODAL =====
+  function showMultiGroupPreviewModal(data) {
+    const modal = document.createElement("div");
+    modal.className = "ts-preview-modal";
+
+    const overlay = document.createElement("div");
+    overlay.className = "ts-preview-overlay";
+    modal.appendChild(overlay);
+
+    const content = document.createElement("div");
+    content.className = "ts-preview-content";
+    content.style.maxWidth = "620px";
+
+    const title = document.createElement("h3");
+    title.className = "ts-preview-title";
+    title.textContent = "Preview Custom Groups";
+    content.appendChild(title);
+
+    const subtitle = document.createElement("div");
+    subtitle.className = "ts-preview-subtitle";
+    subtitle.textContent = "Review and edit group names, colors, or uncheck tabs before applying.";
+    content.appendChild(subtitle);
+
+    const container = document.createElement("div");
+    container.className = "ts-mg-preview-container";
+
+    const buckets = data.plan.buckets || [];
+    const tabDetails = data.tabDetails || {};
+    const unassignedIds = data.plan.unassigned || [];
+
+    const bucketRows = [];
+
+    const CHROME_COLORS = ['grey', 'blue', 'red', 'yellow', 'green', 'pink', 'purple', 'cyan', 'orange'];
+
+    buckets.forEach((b, bIdx) => {
+      const card = document.createElement("div");
+      card.className = "ts-mg-bucket-card";
+
+      const header = document.createElement("div");
+      header.className = "ts-mg-bucket-header";
+
+      const nameInput = document.createElement("input");
+      nameInput.className = "ts-mg-bucket-title-input";
+      nameInput.value = b.name;
+
+      const colorSelect = document.createElement("select");
+      colorSelect.className = "ts-mg-bucket-color-select";
+      CHROME_COLORS.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c[0].toUpperCase() + c.slice(1);
+        if (c === b.color) opt.selected = true;
+        colorSelect.appendChild(opt);
+      });
+
+      const countSpan = document.createElement("span");
+      countSpan.className = "ts-mg-bucket-count";
+
+      header.appendChild(nameInput);
+      header.appendChild(colorSelect);
+      header.appendChild(countSpan);
+      card.appendChild(header);
+
+      const tabList = document.createElement("div");
+      tabList.className = "ts-preview-list";
+      tabList.style.maxHeight = "160px";
+      tabList.style.marginBottom = "0";
+
+      const itemCheckboxes = [];
+
+      b.tabIds.forEach(id => {
+        const details = tabDetails[id] || { title: "Untitled Tab", favIconUrl: "" };
+        const item = document.createElement("div");
+        item.className = "ts-preview-item";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.className = "ts-preview-checkbox";
+        cb.checked = true;
+        cb.dataset.tabId = id;
+        item.appendChild(cb);
+        itemCheckboxes.push(cb);
+
+        if (details.favIconUrl) {
+          const img = document.createElement("img");
+          img.className = "ts-preview-favicon";
+          img.src = details.favIconUrl;
+          img.onerror = () => { img.replaceWith(makeFb(details)); };
+          item.appendChild(img);
+        } else {
+          item.appendChild(makeFb(details));
+        }
+
+        const info = document.createElement("div");
+        info.className = "ts-preview-item-info";
+        const it = document.createElement("span");
+        it.className = "ts-preview-item-title";
+        it.textContent = details.title;
+        info.appendChild(it);
+        item.appendChild(info);
+
+        tabList.appendChild(item);
+      });
+
+      card.appendChild(tabList);
+      container.appendChild(card);
+
+      const updateCount = () => {
+        const checked = itemCheckboxes.filter(c => c.checked).length;
+        countSpan.textContent = `${checked} tab${checked === 1 ? '' : 's'}`;
+      };
+
+      itemCheckboxes.forEach(cb => cb.addEventListener("change", () => {
+        updateCount();
+        updateConfirmButton();
+      }));
+      updateCount();
+
+      bucketRows.push({
+        getName: () => nameInput.value.trim() || b.name,
+        getColor: () => colorSelect.value,
+        getCheckedIds: () => itemCheckboxes.filter(c => c.checked).map(c => Number(c.dataset.tabId))
+      });
+    });
+
+    // Unassigned section
+    if (unassignedIds.length > 0) {
+      const unassignedDiv = document.createElement("div");
+      const unHeader = document.createElement("div");
+      unHeader.className = "ts-mg-unassigned-header";
+      unHeader.textContent = `Unassigned Tabs (${unassignedIds.length}) — won't be grouped ▾`;
+
+      const unList = document.createElement("div");
+      unList.className = "ts-mg-unassigned-list ts-preview-list";
+      unList.style.display = "none";
+
+      unassignedIds.forEach(id => {
+        const details = tabDetails[id] || { title: "Untitled Tab", favIconUrl: "" };
+        const item = document.createElement("div");
+        item.className = "ts-preview-item";
+
+        if (details.favIconUrl) {
+          const img = document.createElement("img");
+          img.className = "ts-preview-favicon";
+          img.src = details.favIconUrl;
+          img.onerror = () => { img.replaceWith(makeFb(details)); };
+          item.appendChild(img);
+        } else {
+          item.appendChild(makeFb(details));
+        }
+
+        const info = document.createElement("div");
+        info.className = "ts-preview-item-info";
+        const it = document.createElement("span");
+        it.className = "ts-preview-item-title";
+        it.textContent = details.title;
+        info.appendChild(it);
+        item.appendChild(info);
+        unList.appendChild(item);
+      });
+
+      unHeader.onclick = () => {
+        unList.style.display = unList.style.display === "none" ? "block" : "none";
+      };
+
+      unassignedDiv.appendChild(unHeader);
+      unassignedDiv.appendChild(unList);
+      container.appendChild(unassignedDiv);
+    }
+
+    content.appendChild(container);
+
+    const buttons = document.createElement("div");
+    buttons.className = "ts-preview-buttons";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.className = "ts-preview-btn ts-preview-btn-cancel";
+    cancelBtn.textContent = "Cancel";
+    buttons.appendChild(cancelBtn);
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.className = "ts-preview-btn ts-preview-btn-confirm";
+    buttons.appendChild(confirmBtn);
+
+    content.appendChild(buttons);
+    modal.appendChild(content);
+    shadow.appendChild(modal);
+
+    function updateConfirmButton() {
+      const validBuckets = bucketRows.filter(r => r.getCheckedIds().length >= 2).length;
+      confirmBtn.textContent = `Apply (${validBuckets} group${validBuckets === 1 ? '' : 's'})`;
+      confirmBtn.disabled = validBuckets === 0;
+      confirmBtn.style.opacity = validBuckets === 0 ? "0.5" : "1";
+    }
+
+    updateConfirmButton();
+
+    requestAnimationFrame(() => modal.classList.add("visible"));
+
+    function makeFb(details) {
+      const fb = document.createElement("div");
+      fb.className = "ts-preview-favicon";
+      fb.textContent = (details.title || "?")[0].toUpperCase();
+      return fb;
+    }
+
+    return new Promise((resolve) => {
+      const close = (result) => {
+        modal.classList.remove("visible");
+        setTimeout(() => modal.remove(), 200);
+        resolve(result);
+      };
+
+      confirmBtn.onclick = () => {
+        const finalBuckets = bucketRows.map(r => ({
+          name: r.getName(),
+          color: r.getColor(),
+          tabIds: r.getCheckedIds()
+        })).filter(b => b.tabIds.length >= 2);
+        close({ buckets: finalBuckets });
       };
 
       cancelBtn.onclick = () => close(null);

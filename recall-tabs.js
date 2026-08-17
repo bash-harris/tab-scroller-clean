@@ -8,24 +8,76 @@
     TabDB = self.TabDB;
   }
 
+  // parseTimeRange resolves a time expression to a single BOUNDARY timestamp (a
+  // "since" epoch-ms). Direction is the caller's concern: RecallTabs.search and
+  // the agent executor's "within" filter keep tabs with ts >= boundary; the
+  // executor's "older_than" filter keeps ts < boundary. Ranges are deliberately
+  // coarse, rolling windows (now - N) -- see the Limitations note in the plan;
+  // weekday / intra-day precision is not attempted here.
+  const MIN = 60000, HOUR = 3600000, DAY = 86400000, WEEK = 7 * 86400000;
+
   const TIME_RANGES = {
-    'today': () => Date.now() - 86400000,
-    'yesterday': () => Date.now() - 2 * 86400000,
-    'last_week': () => Date.now() - 7 * 86400000,
-    'anytime': () => 0,
-    'last_hour': () => Date.now() - 3600000,
+    'today':      (now) => now - DAY,
+    'yesterday':  (now) => now - 2 * DAY,
+    'this_week':  (now) => now - WEEK,
+    'last_week':  (now) => now - WEEK,
+    'this_month': (now) => now - 30 * DAY,
+    'last_month': (now) => now - 30 * DAY,
+    'last_hour':  (now) => now - HOUR,
+    'anytime':    () => 0,
   };
 
   const TIME_ALIASES = {
     'today': 'today', 'earlier today': 'today', 'this morning': 'today',
+    'this afternoon': 'today', 'this evening': 'today', 'tonight': 'today',
     'yesterday': 'yesterday', 'last night': 'yesterday',
-    'last_week': 'last_week', 'this week': 'today', 'this month': 'last_week',
-    'anytime': 'anytime', '': 'anytime', 'ever': 'anytime', 'all time': 'anytime',
+    'this week': 'this_week', 'this_week': 'this_week',
+    'last week': 'last_week', 'last_week': 'last_week',
+    'this month': 'this_month', 'this_month': 'this_month',
+    'last month': 'last_month', 'last_month': 'last_month',
+    'last hour': 'last_hour', 'last_hour': 'last_hour',
+    'past hour': 'last_hour', 'the last hour': 'last_hour', 'the past hour': 'last_hour',
+    'anytime': 'anytime', '': 'anytime', 'ever': 'anytime',
+    'all time': 'anytime', 'any time': 'anytime',
   };
 
-  function parseTimeRange(raw) {
-    const key = TIME_ALIASES[raw?.toLowerCase().trim()] || 'anytime';
-    return TIME_RANGES[key]();
+  const UNIT_MS = {
+    m: MIN, min: MIN, mins: MIN, minute: MIN, minutes: MIN,
+    h: HOUR, hr: HOUR, hrs: HOUR, hour: HOUR, hours: HOUR,
+    d: DAY, day: DAY, days: DAY,
+    w: WEEK, week: WEEK, weeks: WEEK,
+  };
+
+  // "3 days", "3_days", "3d", "72 hours", "30 min", "2 weeks ago" -> now - N*unit.
+  function parseNumericRange(s, now) {
+    const m = s.match(/(\d+)\s*[_ ]?\s*(minutes?|mins?|hours?|hrs?|days?|weeks?|m|h|d|w)\b/);
+    if (!m) return null;
+    const n = parseInt(m[1], 10);
+    const unit = UNIT_MS[m[2]];
+    if (!Number.isFinite(n) || !unit) return null;
+    return now - n * unit;
+  }
+
+  // now is injectable so the executor and its fixtures are not wall-clock bound.
+  function parseTimeRange(raw, now = Date.now()) {
+    const s = String(raw || '').toLowerCase().trim();
+    const numeric = parseNumericRange(s, now);
+    if (numeric !== null) return numeric;
+    const key = TIME_ALIASES[s] || TIME_ALIASES[s.replace(/_/g, ' ')] || 'anytime';
+    const fn = TIME_RANGES[key] || TIME_RANGES['anytime'];
+    return fn(now);
+  }
+
+  // Distinguishes "resolved to anytime because the user MEANT anytime" from
+  // "fell through to anytime because we couldn't parse it". The planner's
+  // validate() rejects any time filter whose value is unknown here, so an
+  // unparseable phrase ("last friday") triggers the fallback chain rather than
+  // silently becoming match-all -- the plan's "never guess a time" rule.
+  function isKnownTimeExpr(raw) {
+    const s = String(raw || '').toLowerCase().trim();
+    if (s === '') return true; // empty == anytime
+    if (parseNumericRange(s, 0) !== null) return true;
+    return !!(TIME_ALIASES[s] || TIME_ALIASES[s.replace(/_/g, ' ')]);
   }
 
   const RecallTabs = {
@@ -60,9 +112,11 @@
   };
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { RecallTabs };
+    module.exports = { RecallTabs, parseTimeRange, isKnownTimeExpr };
   }
   if (typeof self !== 'undefined') {
     self.RecallTabs = RecallTabs;
+    self.parseTimeRange = parseTimeRange;
+    self.isKnownTimeExpr = isKnownTimeExpr;
   }
 })();

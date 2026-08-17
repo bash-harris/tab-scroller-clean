@@ -15,7 +15,8 @@ const SUITES = [
   ['group-name',   'A4+A4b group titles + intent->tool mapping'],
   ['db-rekey',     'A5  tabCards urlHash re-key + v3->v4 migration'],
   ['enrich-math',  'pre-existing  tag/alias math'],
-  ['domain-priors','pre-existing  domain priors']
+  ['domain-priors','pre-existing  domain priors'],
+  ['agent',        'A6  bounded agent: planner validate + executor set-exact + fallback chain']
 ];
 
 let failed = [];

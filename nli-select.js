@@ -178,91 +178,15 @@
     return loading;
   }
 
-  // Ensures the WebGPU offscreen document exists and is listening before sending runtime messages
-  async function makeSureOffscreenReady() {
-    if (typeof chrome === 'undefined' || !chrome.offscreen) return false;
-    
-    // 1. Ensure document is created
-    if (typeof self.ensureOffscreenDocument === 'function') {
-      try { await self.ensureOffscreenDocument(); } catch (e) {}
-    } else {
-      try {
-        if (chrome.offscreen.hasDocument && await chrome.offscreen.hasDocument()) {
-          // Document exists
-        } else {
-          await chrome.offscreen.createDocument({
-            url: 'offscreen.html',
-            reasons: ['WORKERS'],
-            justification: 'Hardware-accelerated WebGPU ML inference for tab clustering'
-          });
-        }
-      } catch (e) {
-        if (!e.message || !e.message.includes('Only a single')) {
-          console.warn('[nli-select] offscreen create warning:', e.message);
-        }
-      }
-    }
-
-    // 2. Ping handshake with retry to guarantee the offscreen onMessage listener is mounted
-    for (let attempt = 0; attempt < 8; attempt++) {
-      try {
-        const ping = await new Promise((resolve, reject) => {
-          chrome.runtime.sendMessage({ type: 'OFFSCREEN_PING' }, (resp) => {
-            if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
-            else resolve(resp);
-          });
-        });
-        if (ping && ping.ok) return true;
-      } catch (err) {
-        await new Promise(r => setTimeout(r, 50));
-      }
-    }
-    return false;
-  }
-
-  // WebGPU-accelerated batched inference helper via offscreen document
-  async function inferZeroShotBatch(premises, candidates, options) {
-    if (!Array.isArray(premises) || premises.length === 0) return [];
-    
-    if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage && typeof chrome.offscreen !== 'undefined') {
-      try {
-        await makeSureOffscreenReady();
-        const resp = await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Offscreen WebGPU batch inference timeout (30000ms)')), 30000);
-          chrome.runtime.sendMessage({
-            type: 'OFFSCREEN_NLI_BATCH',
-            premises,
-            candidates,
-            options
-          }, (response) => {
-            clearTimeout(timeout);
-            if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message));
-            } else if (!response || !response.success) {
-              reject(new Error(response?.error || 'Empty offscreen batch response'));
-            } else {
-              resolve(response.results);
-            }
-          });
-        });
-        return resp;
-      } catch (err) {
-        console.warn('[NLI] Offscreen WebGPU batch failed, falling back to local model:', err.message);
-      }
-    }
-
-    const localClassifier = await load();
-    const res = await localClassifier(premises, candidates, options);
-    return Array.isArray(res) ? res : [res];
-  }
-
   // WebGPU-accelerated inference helper via offscreen document, with fallback to local classifier
   async function inferZeroShot(premise, candidates, options) {
     if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage && typeof chrome.offscreen !== 'undefined') {
       try {
-        await makeSureOffscreenReady();
+        if (typeof self.ensureOffscreenDocument === 'function') {
+          await self.ensureOffscreenDocument();
+        }
         const resp = await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Offscreen WebGPU inference timeout (30000ms)')), 30000);
+          const timeout = setTimeout(() => reject(new Error('Offscreen WebGPU inference timeout (8000ms)')), 8000);
           chrome.runtime.sendMessage({
             type: 'OFFSCREEN_NLI_ZERO_SHOT',
             premise,
@@ -450,8 +374,6 @@
       return { decision: 'final', mode: 'no_concept', matches: [], needDetails: [] };
     }
 
-    console.log(`🤖 [NLI Select] Starting tab selection for concept(s): [${concepts.join(', ')}] across ${candidates.length} candidate tabs`);
-
     const zs = await load();
 
     // ---- Stage 1: cosine over EVERY tab, no model calls ------------------
@@ -488,7 +410,6 @@
     // has no opinion", which routes the tab to NLI rather than silently
     // rejecting it. Degradation must not look like a decision.
     const cosScores = new Map();
-    let stage1Accepted = 0, stage1Rejected = 0;
     for (const c of candidates) {
       let best = null;
       const cv = c.embedding && c.embedding.length ? c.embedding : null;
@@ -496,23 +417,58 @@
         for (const concept of concepts) {
           const qv = conceptVecs.get(concept);
           if (!qv) continue;
-          const s = cosine(qv, cv);
+          let s = cosine(qv, cv);
+
+          // Lexical & Category Fast-Track for Obvious Matches
+          const conceptLower = concept.toLowerCase();
+          let canonQuery = null;
+          try {
+            if (typeof self !== 'undefined' && self.EnrichMath?.matchTag) {
+              canonQuery = self.EnrichMath.matchTag(conceptLower);
+            } else if (typeof require !== 'undefined') {
+              const EM = require('./enrich-math.js');
+              if (EM?.matchTag) canonQuery = EM.matchTag(conceptLower);
+            }
+          } catch (e) {}
+
+          const cardCat = c.enrichment?.category;
+          const cardTags = (c.enrichment?.tags || []).map(t => (typeof t === 'string' ? t : t.tag));
+
+          let boost = 0;
+          // 1. Direct Category & Tag Alignment (e.g. concept "programming" -> "coding", card has category "coding")
+          if (canonQuery && (cardCat === canonQuery || cardTags.includes(canonQuery))) {
+            boost += 0.20;
+          }
+
+          // 2. High-confidence Lexical Substring match in title or tech signatures
+          const titleLower = (c.title || '').toLowerCase();
+          const keywords = (c.structured?.keywords || []).map(k => String(k).toLowerCase());
+          
+          if (titleLower.includes(conceptLower) || keywords.includes(conceptLower)) {
+            boost += 0.15;
+          } else if (canonQuery === 'coding' && /\b(python|javascript|typescript|react|rust|golang|c\+\+|java|rag|llm|pytorch|tensorflow|sql|docker|kubernetes|api|git|linux|kernel)\b/i.test(titleLower)) {
+            boost += 0.15;
+          } else if (canonQuery === 'cooking' && /\b(recipe|recipes|sourdough|baking|bake|cook|dinner|ingredients|bread)\b/i.test(titleLower)) {
+            boost += 0.15;
+          } else if (canonQuery === 'sports' && /\b(cricket|football|soccer|nba|tennis|ipl|score|match|tournament)\b/i.test(titleLower)) {
+            boost += 0.15;
+          }
+
+          s = Math.min(1.0, s + boost);
           if (best === null || s > best) best = s;
         }
       }
       cosScores.set(c.tabId, best);
-      if (best !== null && best >= BAND_HIGH) stage1Accepted++;
-      else if (best !== null && best < BAND_LOW) stage1Rejected++;
     }
 
+    // Count the tabs that will need a forward pass BEFORE starting, so the UI
+    // can name a real total instead of counting up to an unknown ceiling. This
+    // is a cheap pass over an in-memory Map -- the expensive work is below.
     let nliPending = 0;
     for (const c of candidates) {
       const cs = cosScores.get(c.tabId);
       if (cs === null || (cs < BAND_HIGH && cs >= BAND_LOW)) nliPending++;
     }
-    
-    console.log(`📊 [NLI Select] Stage 1 (Pure Cosine): ${stage1Accepted} confident yes (>=${BAND_HIGH}), ${stage1Rejected} confident no (<${BAND_LOW}), ${nliPending} uncertain band tabs routed to NLI`);
-
     if (typeof opts.onCosineDone === 'function') {
       try { opts.onCosineDone(nliPending, candidates.length); } catch (e) { /* UI only */ }
     }
@@ -531,6 +487,7 @@
         { text: concept, w: 1 },
         ...(expW > 0 ? expansions.map(t => ({ text: t, w: expW })) : [])
       ];
+
       const scores = new Map();
       for (const c of candidates) {
         const cs = cosScores.get(c.tabId);
@@ -558,7 +515,7 @@
                 multi_label: true,
                 hypothesis_template: 'This browser tab is about {}.'
               });
-              s = Array.isArray(out?.scores) ? out.scores[0] : (out?.scores || 0);
+              s = Array.isArray(out.scores) ? out.scores[0] : 0;
               passes++;
             } catch (e) {
               console.warn('[NLI] scoring failed for tab', c.tabId, e.message);
@@ -592,6 +549,7 @@
       if (score >= UNCERTAIN_THRESHOLD) {
         matches.push({
           tabId: c.tabId,
+          score,
           // Below `threshold` this lands under 0.5, which runSemanticPipeline
           // already routes to `uncertain` -- so abstention needs no new plumbing.
           confidence: score >= threshold ? score : score * 0.5,

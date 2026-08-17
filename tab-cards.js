@@ -83,11 +83,26 @@ function normalizeUrl(url) {
   }
 }
 
-async function buildTabCard(tab, cachedCards) {
-  const isExcluded = !tab.url || 
-    tab.url.startsWith('chrome://') || 
-    tab.url.startsWith('edge://') || 
-    tab.url.startsWith('about:') || 
+// buildTabCard is split into two phases so the offline sweep can batch the
+// expensive embedding step across many tabs on the GPU:
+//
+//   prepareTabCard(tab, cachedCards)  -> everything up to (but excluding) the embed
+//   finalizeTabCard(prepared, vector) -> mathEnrich with the vector, store, evict
+//
+// prepareTabCard returns a discriminated result:
+//   { status: 'excluded', card }              already stored, no embed needed
+//   { status: 'cached',   card }              cache hit, already stored, no embed
+//   { status: 'needsEmbed', card, pseudoDoc, harvestTags, richData, savedCards }
+//                                             NOT yet stored; caller must embed
+//                                             pseudoDoc then call finalizeTabCard.
+//
+// Single-tab callers use the buildTabCard wrapper below, which embeds one
+// pseudoDoc inline (WASM) and finalizes — behaviour identical to the original.
+async function prepareTabCard(tab, cachedCards) {
+  const isExcluded = !tab.url ||
+    tab.url.startsWith('chrome://') ||
+    tab.url.startsWith('edge://') ||
+    tab.url.startsWith('about:') ||
     tab.url.startsWith('chrome-extension://');
 
   const normalized = normalizeUrl(tab.url);
@@ -123,7 +138,7 @@ async function buildTabCard(tab, cachedCards) {
       extractionLevel: 'minimal'
     };
     await self.TabDB.storeTabCard(card);
-    return card;
+    return { status: 'excluded', card };
   }
 
   // Batch callers pre-fetch the whole card list once and pass it in; scanning that
@@ -158,7 +173,7 @@ async function buildTabCard(tab, cachedCards) {
       extractedAt: Date.now()
     };
     await self.TabDB.storeTabCard(newCard);
-    return newCard;
+    return { status: 'cached', card: newCard };
   }
 
   const richData = await extractRichPageData(tab.id);
@@ -198,18 +213,33 @@ async function buildTabCard(tab, cachedCards) {
     extractionLevel: richData?.extractionLevel || 'minimal'
   };
 
-  // ---- Math enrichment (offline, no LLM) ----
+  // pseudoDoc is what gets embedded; harvestTags feed mathEnrich. Both are handed
+  // to finalizeTabCard so the caller only owns producing the vector.
   const pseudoDoc = (richData && richData.pseudoDoc) ||
     `${card.title || ''} ${card.title || ''} ${domain.split('.').slice(-2).join(' ')}`.trim().slice(0, 800);
   const harvestTags = (richData && richData.harvestTags) || [];
 
+  return { status: 'needsEmbed', card, pseudoDoc, harvestTags, richData, savedCards };
+}
+
+// Consume the embedding vector for a prepared card: run math enrichment, attach
+// the vector, persist, and evict. `embedding` may be a Float32Array, a plain
+// number[], or null (embedding unavailable) — matching the original inline path,
+// enrichment/embedding are only applied when EnrichMath + Embed are present and
+// the vector is non-empty.
+async function finalizeTabCard(prepared, embedding) {
+  const { card, pseudoDoc, harvestTags, richData, savedCards } = prepared;
+
+  // ---- Math enrichment (offline, no LLM) ----
   try {
     if (typeof self.EnrichMath !== 'undefined' && typeof self.Embed !== 'undefined') {
+      // Idempotent: first call embeds the topic vocab (WASM), later calls no-op.
+      // Must complete before mathEnrich, which scores against that vocab.
       await self.EnrichMath.initTopicVocab(self.Embed.embed.bind(self.Embed));
-      const v = await self.Embed.embed(pseudoDoc);
+      const v = embedding;
       if (v && v.length > 0) {
         card.embedding = new Float32Array(v);
-        const prior = typeof self.DomainPriors !== 'undefined' ? self.DomainPriors.applyPriors(tab.url) : null;
+        const prior = typeof self.DomainPriors !== 'undefined' ? self.DomainPriors.applyPriors(card.url) : null;
         card.enrichment = self.EnrichMath.mathEnrich(card.embedding, {
           harvestTags,
           keywordHints: (richData && richData.structured && richData.structured.keywords) || [],
@@ -253,6 +283,25 @@ async function buildTabCard(tab, cachedCards) {
   return card;
 }
 
+// Single-tab entry point. Prepares, embeds one pseudoDoc inline (WASM), finalizes.
+// Excluded / cache-hit cards are already stored by prepareTabCard and returned as-is.
+async function buildTabCard(tab, cachedCards) {
+  const prepared = await prepareTabCard(tab, cachedCards);
+  if (prepared.status !== 'needsEmbed') return prepared.card;
+
+  let embedding = null;
+  try {
+    if (typeof self.EnrichMath !== 'undefined' && typeof self.Embed !== 'undefined') {
+      embedding = await self.Embed.embed(prepared.pseudoDoc);
+    }
+  } catch (err) {
+    console.warn('[TabCards] embed failed:', err.message);
+  }
+  return finalizeTabCard(prepared, embedding);
+}
+
 self.sha256 = sha256;
 self.normalizeUrl = normalizeUrl;
+self.prepareTabCard = prepareTabCard;
+self.finalizeTabCard = finalizeTabCard;
 self.buildTabCard = buildTabCard;

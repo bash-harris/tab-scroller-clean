@@ -29,55 +29,19 @@ const SessionMemoryEngine = (() => {
   // --- Storage Helpers ---
   function storageGet(keys) {
     return new Promise((resolve) => {
-      try {
-        if (typeof chrome === 'undefined' || !chrome.storage?.local) {
-          resolve(typeof keys === 'object' && keys !== null ? { ...keys } : {});
-          return;
-        }
-        chrome.storage.local.get(keys, (items) => {
-          if (chrome.runtime.lastError || !items) {
-            resolve(typeof keys === 'object' && keys !== null ? { ...keys } : {});
-          } else {
-            resolve(items);
-          }
-        });
-      } catch (e) {
-        resolve(typeof keys === 'object' && keys !== null ? { ...keys } : {});
-      }
+      chrome.storage.local.get(keys, (items) => resolve(items));
     });
   }
 
   function storageSet(data) {
     return new Promise((resolve) => {
-      try {
-        if (typeof chrome === 'undefined' || !chrome.storage?.local) {
-          resolve();
-          return;
-        }
-        chrome.storage.local.set(data, () => {
-          const _ = chrome.runtime.lastError;
-          resolve();
-        });
-      } catch (e) {
-        resolve();
-      }
+      chrome.storage.local.set(data, () => resolve());
     });
   }
 
   function storageRemove(keys) {
     return new Promise((resolve) => {
-      try {
-        if (typeof chrome === 'undefined' || !chrome.storage?.local) {
-          resolve();
-          return;
-        }
-        chrome.storage.local.remove(keys, () => {
-          const _ = chrome.runtime.lastError;
-          resolve();
-        });
-      } catch (e) {
-        resolve();
-      }
+      chrome.storage.local.remove(keys, () => resolve());
     });
   }
 
@@ -379,6 +343,20 @@ const SessionMemoryEngine = (() => {
     return activeSession;
   }
 
+  // Per-tab timing for the agent's temporal filters. openedAt is when THIS
+  // browsing session first saw the tab opened (distinct from Chrome's
+  // lastAccessed = last focused). Returns nulls when the tab is unknown to the
+  // active session -- the executor treats an undated tab as never matching a
+  // time filter rather than guessing, so a missing session must not throw.
+  function getTabTiming(tabId) {
+    if (!activeSession || !Array.isArray(activeSession.tabs)) {
+      return { openedAt: null, closedAt: null };
+    }
+    const t = activeSession.tabs.find(x => x.tabId === tabId);
+    return t ? { openedAt: t.openedAt ?? null, closedAt: t.closedAt ?? null }
+             : { openedAt: null, closedAt: null };
+  }
+
   async function getSession(id) {
     if (activeSession && activeSession.id === id) {
       return activeSession;
@@ -610,6 +588,7 @@ Write a 2-3 sentence summary of what this browsing session was about. Be specifi
     getActiveSession,
     getSessionIndex,
     getSession,
+    getTabTiming,
     recordTabEvent,
     updateTabSnippet,
     markTabImportant,
@@ -621,3 +600,8 @@ Write a 2-3 sentence summary of what this browsing session was about. Be specifi
     isEnabled
   };
 })();
+
+// Expose on the worker global so agent layers (and node tests that stub it) can
+// reach the same singleton the rest of background.js uses by bare name.
+if (typeof self !== 'undefined') self.SessionMemoryEngine = SessionMemoryEngine;
+if (typeof module !== 'undefined' && module.exports) module.exports = { SessionMemoryEngine };

@@ -791,6 +791,29 @@ async function runCommandPipeline(userCommand, windowId) {
 
   const isDestructive = DESTRUCTIVE_INTENTS.has(intent);
 
+  // LAYER 0 ROUTER (deterministic, no model call). Temporal / exception /
+  // count-rank / state / find-and-open commands cannot be expressed as one fixed
+  // query, so they take the bounded tool-calling agent (Layers 1-2) instead of
+  // the syntactic/semantic split below. This is checked BEFORE the syntactic
+  // fast path on purpose: "close youtube.com tabs from yesterday" is both a
+  // domain (syntactic) and a temporal (agent) command, and the temporal
+  // constraint must win or the time filter is silently dropped. Any failure in
+  // the agent path falls through to the standard pipeline -- it never dead-ends.
+  if (self.AgentRouter && self.AgentPlanner && self.AgentExecutor) {
+    const routed = self.AgentRouter.isComplexCommand(cleanCommand);
+    if (routed.complex) {
+      console.log(`[CommandAgent] Router -> AGENT path (signals: ${routed.signals.join(',')})`);
+      reportProgress('understand', 'Planning a multi-step command', 30);
+      try {
+        const agentPlan = await runAgentPipeline(cleanCommand, windowId, routed.signals);
+        if (agentPlan) return agentPlan;
+        console.warn('[CommandAgent] Agent path returned null; using standard pipeline');
+      } catch (e) {
+        console.warn('[CommandAgent] Agent path threw; using standard pipeline:', e && e.message);
+      }
+    }
+  }
+
   // smartPreFilter is only trustworthy for STRUCTURAL commands (domains,
   // duplicates, pinning, muting, sorting...). Generic topic queries like
   // "group all tabs about entertainment" must fall through to semantic search —
@@ -860,6 +883,121 @@ async function runCommandPipeline(userCommand, windowId) {
 
   console.log('[CommandAgent] Semantic path chosen');
   return await runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive, windowId);
+}
+
+// ===========================================================================
+// BOUNDED TOOL-CALLING AGENT — pipeline entry (Layers 1-2 orchestration)
+//
+// Layer 1 (AgentPlanner) turns the typed command into a validated Filter Plan;
+// it NEVER sees tab content -- only the user's words -- which is the structural
+// anti-hallucination property. Layer 2 (AgentExecutor) resolves that plan to an
+// exact tab-id set by set algebra over a LIVE snapshot. The model proposes
+// filters; deterministic code disposes ids. Bounded to <=2 planner calls (one
+// initial + one self-correction) and no unbounded tool loop.
+// ===========================================================================
+
+// findByTopic adapts NliSelect (cosine + zero-shot entailment) into the boolean
+// membership test the executor's topic filter needs: given a topic label, which
+// candidate tabs are about it. Confidence >= 0.5 mirrors runSemanticPipeline's
+// matched/uncertain split (a non-finite confidence means a strong match there,
+// so it counts as a member here too).
+function makeFindByTopic(command, candidates) {
+  if (typeof self.Embed !== 'undefined' && self.NliSelect) {
+    try { self.NliSelect.setEmbedder(self.Embed.embed.bind(self.Embed)); } catch (e) { /* NLI falls back internally */ }
+  }
+  return async (topicValue, cands, opts = {}) => {
+    const list = (cands && cands.length) ? cands : candidates;
+    if (!self.NliSelect || !list.length || !topicValue) return [];
+    try {
+      const res = await self.NliSelect.select(String(topicValue), list, {});
+      const floor = opts.exclude ? 0.35 : 0.55; // recall for "except", precision for "is"
+      return (res.matches || [])
+        .filter(m => (Number.isFinite(m.score) ? m.score : Number(m.confidence)) >= floor)
+        .map(m => Number(m.tabId))
+        .filter(id => !Number.isNaN(id));
+    } catch (e) {
+      console.warn('[AgentPipeline] findByTopic failed:', e && e.message);
+      return [];
+    }
+  };
+}
+
+async function runAgentPipeline(cleanCommand, windowId, signals = []) {
+  // 1. Topic-matching candidates: enriched cards carrying {tabId, embedding}.
+  //    Reuses the exact retrieval the semantic path uses (all windows, indexed
+  //    on demand), so topic filters see the same universe the reranker would.
+  const candidates = await retrieveCandidates(cleanCommand, windowId, null);
+
+  // 2. Live tab universe in mapTab shape, for time / domain / state / duplicate
+  //    filters. All windows -- destructive bulk commands are not window-scoped.
+  const rawTabs = await chrome.tabs.query({});
+  const liveTabs = rawTabs.map(self.mapTab);
+
+  // 3. Adapt the two providers to the planner's uniform
+  //    callModel(system, prompt, timeout) -> string contract. callGemini returns
+  //    text | "Error: ..." (the planner treats the error string as a failed
+  //    tier); callOllama returns {text} | throws (the planner catches the throw).
+  //    Failure chain Gemini -> Ollama -> regex is entirely inside buildFilterPlan.
+  const geminiAdapter = async (system, prompt) => await self.callGemini(prompt, system);
+  const ollamaAdapter = async (system, prompt) => {
+    const r = await self.callOllama({ prompt, systemInstruction: system, responseFormat: 'json', temperature: 0.1 });
+    return r && r.text;
+  };
+
+  // 4. Dependencies the executor is pure over.
+  const findByTopic = makeFindByTopic(cleanCommand, candidates);
+  const getOpenedAt = (id) => {
+    try { return self.SessionMemoryEngine.getTabTiming(id).openedAt; }
+    catch (e) { return null; }
+  };
+  const execDeps = { liveTabs, candidates, findByTopic, getOpenedAt, parseTimeRange: self.parseTimeRange };
+
+  const planOpts = { callGemini: geminiAdapter, callOllama: ollamaAdapter, signals };
+
+  // 5. Plan -> execute -> (at most) ONE self-correction. The correction re-plans
+  //    with a hint about WHY the first plan was unusable (topic matched 0, or a
+  //    destructive plan had no narrowing filter), and is accepted only if it
+  //    actually resolves the problem -- otherwise we keep the first plan and let
+  //    the action gate surface the empty result honestly (never act on match-all).
+  let plan = await self.AgentPlanner.buildFilterPlan(cleanCommand, planOpts);
+  let exec = await self.AgentExecutor.executePlan(plan, candidates, execDeps);
+  console.log(`[AgentPipeline] plan(${plan.source}) intent=${plan.intent} -> ${exec.tabIds.length} tabs, needsCorrection=${exec.needsCorrection}`);
+
+  if (exec.needsCorrection) {
+    const correctionHint = (exec.notes && exec.notes.length) ? exec.notes.join('; ') : 'the plan matched 0 or all tabs';
+    const plan2 = await self.AgentPlanner.buildFilterPlan(cleanCommand, { ...planOpts, correctionHint });
+    const exec2 = await self.AgentExecutor.executePlan(plan2, candidates, execDeps);
+    console.log(`[AgentPipeline] self-correction plan(${plan2.source}) -> ${exec2.tabIds.length} tabs, needsCorrection=${exec2.needsCorrection}`);
+    if (!exec2.needsCorrection) { plan = plan2; exec = exec2; }
+  }
+
+  // 6. retrieve_open is a retrieval-and-open command, not set algebra: hand the
+  //    search payload up so AI_COMMAND can route it to handleRecallTabs (which
+  //    already opens/focuses). It carries no tabIds and is non-destructive.
+  if (plan.intent === 'retrieve_open') {
+    return {
+      intent: 'retrieve_open',
+      tabIds: [], perTabReasons: {}, uncertain: [],
+      confidence: exec.confidence, destructive: false,
+      path: 'agent',
+      retrieval: self.AgentExecutor.extractRetrieval(plan),
+      planSource: plan.source
+    };
+  }
+
+  // 7. Normalize into the SAME plan shape the action gate (Layer 3) consumes.
+  return {
+    intent: plan.intent,
+    tabIds: exec.tabIds,
+    perTabReasons: exec.perTabReasons,
+    uncertain: exec.uncertain || [],
+    confidence: exec.confidence,
+    destructive: exec.destructive,
+    path: 'agent',
+    action_params: exec.action_params || {},
+    reason: exec.reason,
+    planSource: plan.source
+  };
 }
 
 // Choose the selection engine.
