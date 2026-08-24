@@ -4,11 +4,17 @@
 // observed properties instead of re-deriving meaning at scoring time.
 //
 //   Facet.build(candidate) -> {
-//     media:    'none'|'video'|'audio'|'live'|'text'|'doc',
-//     commerce: 'none'|'storefront'|'listing'|'marketplace'|'deals'|'checkout',
-//     genre:    'news'|'sports'|'reference'|'forum'|'satire'|'weather'|'docs'|'tool'|null,
-//     content:  [trusted tags/category],      // conflicted tags removed
-//     conflicts:[{field, claimed, derived}]   // lying metadata, recorded
+//     media:      'none'|'video'|'audio'|'live'|'text'|'doc',
+//     commerce:   'none'|'storefront'|'listing'|'marketplace'|'deals'|'checkout',
+//     genre:      'news'|'sports'|'reference'|'forum'|'satire'|'weather'|'docs'|'tool'|null,
+//     topicGenre: 'entertainment'|'gaming'|'sports'|'travel'|null,  // WHAT it is about,
+//                 // orthogonal to media's HOW-it-plays: a podcast host is
+//                 // entertainment, twitch is gaming, redzone-style streams are
+//                 // sports -- so an entertainment-topic command cannot flood
+//                 // with every video-host page on the internet.
+//     podcast:    bool,  // podcast-family audio (host or tag says podcast)
+//     content:    [trusted tags/category],      // conflicted tags removed
+//     conflicts:  [{field, claimed, derived}]   // lying metadata, recorded
 //   }
 //
 // TRUST RULE: domain-derived facts beat self-declared tags. A tag claiming a
@@ -25,11 +31,27 @@
   const LIVE_TOKENS = ['/live', '/stream', 'livestream'];
   const NEWS_FAMILY = ['bbc', 'reuters', 'guardian', 'nytimes', 'bloomberg', 'cnn', 'apnews', 'nbcnews', 'news'];
   const SPORTS_FAMILY = ['espn', 'cricinfo', 'cricbuzz', 'iplt20', 'skysports', 'bleacher', 'fifa', 'nfl'];
+  // Sports carried by a generic streaming host, named by path ("redzone-live"):
+  // the host says nothing, the slug does.
+  const SPORTS_STREAM_HINTS = ['redzone', 'gamecast', 'playbyplay'];
+  // Gaming platforms: a live gaming stream is genre GAMING, never
+  // entertainment, no matter how video-like its media facet is.
+  const GAMING_FAMILY = ['twitch', 'steamcommunity', 'roblox', 'epicgames'];
+  // Subscription streaming services whose CATALOG is entertainment.
+  const STREAMING_ENTERTAINMENT_FAMILY = ['netflix', 'primevideo', 'hulu', 'hotstar', 'peacocktv', 'paramountplus', 'disneyplus'];
+  // Podcast hosts/publishers. Audio from this family is entertainment-grade
+  // topic material; other audio (music services) is not.
+  const PODCAST_FAMILY = ['podcast'];
+  // Flight/tracking services: aviation telemetry, never weather, even when
+  // their vocabulary borrows radar terms.
+  const AVIATION_FAMILY = ['flightradar', 'flightaware', 'flightstats', 'flightconnections'];
   const SATIRE_FAMILY = ['theonion', 'satire'];
   const FORUM_TOKENS = ['reddit', 'forums', '/r/'];
   const REFERENCE_TOKENS = ['wikipedia', 'wiki.'];
   const DOCS_HINTS = ['developer.', 'docs.', 'mdn', '/docs/', 'readthedocs'];
-  const WEATHER_TOKENS = ['weather', 'forecast', 'radar'];
+  // NOTE: no 'radar'. Flight trackers own that word; bbc weather already wins
+  // via host/path 'weather', and a Doppler-radar page wins via its own host.
+  const WEATHER_TOKENS = ['weather', 'forecast'];
   const COMMERCE_STORE = ['/dp/', '/product', '/itm/', '/p/', 'store.', '/store/', 'shop', 'flipkart', 'target.', 'walmart'];
   const COMMERCE_MARKET = ['craigslist', 'classifieds', 'marketplace', '/auctions', 'ebay'];
   const COMMERCE_DEALS = ['deals', 'offer', 'coupon', 'promo'];
@@ -46,8 +68,6 @@
     return list.some(f => t.host.includes(f) || t.raw.includes(f.replace(/^\//, '')) || (f.startsWith('/') && t.path.includes(f)));
   }
 
-  const GENRE_WORDS = new Set(['news', 'satire', 'weather']);
-
   function build(c) {
     const t = tokens(c && c.url);
     const titleLower = String((c && c.title) || '').toLowerCase();
@@ -57,15 +77,12 @@
       .filter(Boolean).map(s => String(s).toLowerCase());
     const tagSet = new Set(rawTags);
 
-    const conflicts = [];
-    const dropConflicted = (claimedGenre) => {
-      if (!GENRE_WORDS.has(claimedGenre)) return;
-      if (tagSet.has(claimedGenre)) conflicts.push({ field: 'genre', claimed: claimedGenre, source: 'tag' });
-    };
-
     // ---- genre (domain-derived first) ------------------------------------
+    const conflicts = [];
     let genre = null;
-    if (WEATHER_TOKENS.some(w => t.host.includes(w) || t.path.toLowerCase().includes(w))) genre = 'weather';
+    const isAviation = AVIATION_FAMILY.some(f => t.host.includes(f));
+    if (isAviation) genre = null;                   // flight telemetry, never weather
+    else if (WEATHER_TOKENS.some(w => t.host.includes(w) || t.path.toLowerCase().includes(w))) genre = 'weather';
     else if (SATIRE_FAMILY.some(f => t.host.includes(f))) genre = 'satire';
     else if (SPORTS_FAMILY.some(f => t.host.includes(f))) genre = 'sports';
     else if (NEWS_FAMILY.some(f => t.host.includes(f) || t.path.toLowerCase().includes('/news'))) genre = 'news';
@@ -111,10 +128,28 @@
       else if (cat === 'news') genre = 'news';      // category agrees with itself
     }
 
+    // ---- topicGenre: WHAT the page is about, structurally ------------------
+    // Derived ONLY from generic host/path families, never from self-declared
+    // tags. Orthogonal to media: this is what lets "entertainment" bind a
+    // podcast or Prime Video page WITHOUT every video-host tab on the pool
+    // flooding the same command (a cricket highlights stream is media-video
+    // and topic-sports; twitch is topic-gaming).
+    let topicGenre = null;
+    if (isAviation) topicGenre = 'travel';
+    else if (GAMING_FAMILY.some(f => t.host.includes(f))) topicGenre = 'gaming';
+    else if (SPORTS_FAMILY.some(f => t.host.includes(f)) ||
+             SPORTS_STREAM_HINTS.some(h => t.raw.includes(h))) topicGenre = 'sports';
+    else if (STREAMING_ENTERTAINMENT_FAMILY.some(f => t.host.includes(f))) topicGenre = 'entertainment';
+    else if (PODCAST_FAMILY.some(f => t.host.includes(f)) || rawTags.some(x => x === 'podcast')) topicGenre = 'entertainment';
+
+    const podcast = PODCAST_FAMILY.some(f => t.host.includes(f)) || rawTags.some(x => x === 'podcast');
+
     return {
       media,
       commerce,
       genre,
+      topicGenre,
+      podcast,
       content,
       category: cat,
       tags: trustedTags,

@@ -555,7 +555,7 @@
   // what lets a strongly-entailing product page into "shopping" (its
   // category IS shopping) while keeping a 0.99-entailing phone *review* out
   // (nothing about the review is literally "shopping").
-  function directEvidence(concepts, c, facetOf) {
+  function directEvidence(concepts, c, facetOf, cmdLower) {
     const titleLower = String(c.title || '').toLowerCase();
     const titleToks = titleLower.split(/[^a-z0-9]+/).filter(Boolean);
     const cat = String(c.enrichment?.category || '').toLowerCase();
@@ -571,7 +571,8 @@
         // Facet predicate: ingest-time understanding as direct evidence
         // ("video" -> media:video|live admits a Twitch stream with zero
         // lexical overlap; "shopping" -> commerce!=none admits a storefront).
-        const pred = facetPredicateFor(concept);
+        // Sense-gated: a negation/polysemy frame in the command silences it.
+        const pred = facetPredicateFor(concept, cmdLower);
         if (pred && typeof facetOf === 'function') {
           const f = facetOf(c);
           if (f && pred(f)) return true;
@@ -1107,7 +1108,7 @@
         let scopedMatches = null;
         if (effectiveScope.length && !scopeInvalid) {
           const scoredScope = await scoringPass(effectiveScope, q, stateKept, cmdLower, threshold, opts, facetOf,
-            { expansionChannel: makeExpansionChannel(q, effectiveScope, facetOf), idf });
+            { expansionChannel: makeExpansionChannel(q, effectiveScope, facetOf, cmdLower), idf });
           scopedMatches = scoredScope.matches;
           allowedIds = new Set(scopedMatches.map(m => m.tabId));
         }
@@ -1173,7 +1174,7 @@
     // every sibling-sport tab into every topic command (measured: the exact
     // failure that killed expansion weighting in the sweep above).
     
-  const expansionChannel = makeExpansionChannel(q, concepts, facetOf);
+  const expansionChannel = makeExpansionChannel(q, concepts, facetOf, cmdLower);
 
     // ---- Stage 1: cosine over EVERY tab, no model calls ------------------
     //
@@ -1435,7 +1436,7 @@
   // are broad ("sports", "finance") and an expansion hitting one dragged every
   // sibling-sport tab into every topic command (measured: the exact failure that
   // killed expansion weighting in bench/expansion-sweep.js).
-  function makeExpansionChannel(q, concepts, facetOf) {
+  function makeExpansionChannel(q, concepts, facetOf, cmdLower) {
     return function expansionChannel(c) {
       let best = 0;
       const titleLower = String(c.title || '').toLowerCase();
@@ -1444,9 +1445,10 @@
       const urlLower = String(c.url || '').toLowerCase();
       for (const concept of concepts) {
         // Facet elect: an ontology-mapped concept admits via ingest-time facet
-        // at the same grade as a structured-tag hit.
+        // at the same grade as a structured-tag hit. Sense-gated against the
+        // command's negation/polysemy frames.
         if (facetOf) {
-          const pred = facetPredicateFor(concept);
+          const pred = facetPredicateFor(concept, cmdLower);
           const f = facetOf(c);
           if (f && pred && pred(f)) best = Math.max(best, 0.70);
         }
@@ -1473,7 +1475,13 @@
   let Facet = null;
   try { Facet = require('./facet.js'); } catch {}
   const FACET_ONTOLOGY = [
-    { keys: ['entertainment', 'fun', 'movie', 'movies', 'tv'], test: f => f.genre === 'entertainment' || ['video', 'audio', 'live'].includes(f.media) },
+    // TOPIC-grouping commands ("entertainment tabs") bind through topicGenre
+    // -- NOT through the structural media facet. Media-video is shared by
+    // cricket highlights, phone reviews and gaming streams alike;
+    // entertainment means podcast-family audio or an entertainment-catalog
+    // service (netflix/primevideo -> Facet.build's topicGenre). Media-type
+    // commands ("mute/close X video tabs") keep the broad video/live test.
+    { keys: ['entertainment', 'fun', 'movie', 'movies', 'tv'], test: f => f.topicGenre === 'entertainment' || (f.media === 'audio' && f.podcast === true) },
     { keys: ['video', 'vidoe', 'videos', 'streaming', 'stream', 'streams', 'livestream', 'watch'], test: f => f.media === 'video' || f.media === 'live' },
     { keys: ['music', 'audio', 'song', 'songs', 'lofi', 'playlist', 'podcast', 'podcasts'], test: f => f.media === 'audio' },
     { keys: ['shopping', 'shop', 'store', 'stores', 'retail', 'commerce', 'deals', 'marketplace', 'ecommerce', 'auction', 'auctions'], test: f => f.commerce !== 'none' },
@@ -1481,10 +1489,74 @@
     { keys: ['weather', 'forecast', 'forecasts'], test: f => f.genre === 'weather' },
     { keys: ['docs', 'documentation', 'manual', 'manuals', 'pdf', 'document', 'documents'], test: f => f.media === 'doc' || f.genre === 'docs' },
   ];
-  function facetPredicateFor(text) {
+  // ---- SENSE GATE ---------------------------------------------------------
+  //
+  // A facet is a STRUCTURAL fact about a tab; a command word is a SENSE
+  // choice. When the command's own frame says the concept is not being used
+  // in its facet sense, the facet elect must stay silent and leave admission
+  // to the lexical/semantic channels. Two generic frames:
+  //
+  // (a) NEGATION/EXCEPTION: "don't close my docs" uses 'docs' inside a
+  //     negated destructive frame -- the facet-elect for docs-grade media
+  //     (an MDN reference page) must not fire on it. Detected when a negator
+  //     sits within ~50 chars BEFORE the concept occurrence. Desire-shaped
+  //     negations ("don't want any shopping tabs") are exempt: there the
+  //     category reading HOLDS.
+  // (b) POLYSEMY: a small table of everyday English words that name both a
+  //     browser-object sense and a literal business/world sense ("deals" =
+  //     shopping pages OR closing enterprise deals; "pin" = tab pinning OR
+  //     pinterest; "mute" = tab audio OR hardware buttons). When the command
+  //     shows the competing literal-sense collocation, the facet elect for
+  //     concepts carrying that token is suppressed ("closing enterprise
+  //     deals" must never admit a /products/deals storefront).
+  //
+  // Suppression touches ONLY facet-elect paths (facetPredicateFor call
+  // sites). Lexical tag/title evidence and NLI entailment are untouched --
+  // they carry their own identity gates.
+  const NEG_FRAME_RE = /\b(?:don[' ]?t|dont|do\s+not|except|apart\s+from|other\s+than|instead|rather\s+than)\b/i;
+  // "don't want any X tabs" declines nothing structural -- the category IS
+  // the referent. Exempt from negation suppression.
+  const DESIRE_NEG_RE = /\b(?:don[' ]?t|dont|do\s+not)\s+(?:want|wanna|wish|need)\b/i;
+  // Polysemous token -> competing literal-sense collocations in the command.
+  const POLYSEMY_SENSES = [
+    { word: /^deals?$/, frames: [/\bclos\w*[^.]{0,25}\bdeals?\b/i, /\bsales\b[^.]{0,25}\bdeals?\b/i, /\bdeals?\b[^.]{0,25}\bsales\b/i] },
+    { word: /^clos(?:e|es|ing|ed)$/, frames: [/\bsales\b/i, /\bdeals?\b/i] },
+    { word: /^pins?|pinning$/, frames: [/\bpinterest\b/i, /\brepin\w*/i, /\bsocial\s+media\b/i] },
+    { word: /^mutes?|muting$/, frames: [/\bhardware\b/i, /\bbuttons?\b/i, /\baudio\b/i] },
+    { word: /^watch(?:es|ing)?$/, frames: [/\bwristwatch/i, /\btimepiece\b/i] },
+  ];
+  function facetSenseBlocked(text, cmdStr) {
+    const cmdLower = String(cmdStr || '').toLowerCase();
+    if (!cmdLower) return false;
+    const toks = String(text || '').toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length >= 3);
+    if (!toks.length) return false;
+    // (a) negation/exception frame before a concept occurrence
+    if (!DESIRE_NEG_RE.test(cmdLower)) {
+      for (const tok of toks) {
+        const esc = tok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp('(^|[^a-z0-9])' + esc + '(?![a-z0-9])', 'g');
+        let m;
+        while ((m = re.exec(cmdLower)) !== null) {
+          const before = cmdLower.slice(Math.max(0, m.index - 50), m.index);
+          if (NEG_FRAME_RE.test(before)) return true;
+        }
+      }
+    }
+    // (b) polysemous token in its competing literal-sense frame
+    for (const p of POLYSEMY_SENSES) {
+      if (!toks.some(t => p.word.test(t))) continue;
+      if (p.frames.some(re => re.test(cmdLower))) return true;
+    }
+    return false;
+  }
+  function facetPredicateFor(text, cmdStr) {
     const w = String(text || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
     if (!w.length) return null;
-    for (const e of FACET_ONTOLOGY) if (e.keys.some(k => w.includes(k))) return e.test;
+    for (const e of FACET_ONTOLOGY) {
+      if (!e.keys.some(k => w.includes(k))) continue;
+      if (cmdStr !== undefined && facetSenseBlocked(text, cmdStr)) return null;
+      return e.test;
+    }
     return null;
   }
 
@@ -1588,7 +1660,7 @@
     }
 
     const expansionChannel = ctx.expansionChannel ||
-      (q.expansions && Object.keys(q.expansions).length ? makeExpansionChannel(q, concepts, facetOf) : (() => 0));
+      (q.expansions && Object.keys(q.expansions).length ? makeExpansionChannel(q, concepts, facetOf, cmdLower) : (() => 0));
 
     // Topic-shape gates, measured on the frozen pool:
     //   ambiguousTopic: when a large share of the universe weakly entails the
@@ -1636,7 +1708,7 @@
           sem = Math.max(0, sem - 0.5);
         }
 
-        const evidence = directEvidence([concept], c, facetOf);
+        const evidence = directEvidence([concept], c, facetOf, cmdLower);
         const catLower = String(c.enrichment?.category || '').toLowerCase();
         const canonCatHit = canons[ci] && catLower === canons[ci];
         // Strong identity: a card evidences a MULTI-TOKEN concept when at
@@ -1663,7 +1735,9 @@
         let strongTagViaTag = false;
         // Facet admission: an ontology-mapped concept satisfied by the tab's
         // ingest-time facet is identity-grade evidence, same as a literal tag.
-        const facetPred = facetPredicateFor(conceptLower);
+        // Sense-gated: negation/exception and polysemy frames in the command
+        // suppress the elect for that concept (lexical paths unaffected).
+        const facetPred = facetPredicateFor(conceptLower, cmdLower);
         const fObj = facetOf ? facetOf(c) : null;
         const facetHit = !!(facetPred && fObj && facetPred(fObj));
         if (conceptWords.length === 1) {
@@ -1949,7 +2023,10 @@
     ortStatus: () => ortStatus,
     // Test seam: lets a bench inject a fake classifier instead of downloading
     // 83MB, and lets tests assert how many forward passes were actually spent.
-    __setClassifierForTest(fn) { classifier = fn; loading = null; }
+    __setClassifierForTest(fn) { classifier = fn; loading = null; },
+    // Test seam: the sense-gated facet ontology lookup, so tests can assert
+    // suppression directly without running a scoring pass.
+    __facetPredicateForTest(text, cmd) { return facetPredicateFor(text, cmd); }
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = NliSelect;
   if (typeof self !== 'undefined') self.NliSelect = NliSelect;

@@ -54,5 +54,35 @@ const f = Facet.build(mk({ url: 'https://www.twitch.tv/x', audible: true }));
 check('isMedia helper', Facet.isMedia(f, ['video', 'live']));
 check('hasCommerce helper false on media tab', Facet.hasCommerce(f) === false);
 
+// topicGenre derivation (D1): WHAT a page is about, orthogonal to media.
+check('podcast host -> media audio', Facet.build(mk({ url: 'https://podcast-example.com/dtns-512' })).media === 'audio');
+check('podcast host -> topicGenre entertainment', Facet.build(mk({ url: 'https://podcast-example.com/dtns-512' })).topicGenre === 'entertainment');
+check('podcast tag on foreign host -> podcast flag', Facet.build(mk({ url: 'https://feeds.example.com/ep1', tags: ['podcast'] })).podcast === true);
+check('primevideo -> topicGenre entertainment', Facet.build(mk({ url: 'https://www.primevideo.com/detail/the-boys' })).topicGenre === 'entertainment');
+check('netflix -> topicGenre entertainment', Facet.build(mk({ url: 'https://www.netflix.com/watch/1' })).topicGenre === 'entertainment');
+check('twitch -> topicGenre gaming (NOT entertainment)', Facet.build(mk({ url: 'https://www.twitch.tv/shroud' })).topicGenre === 'gaming');
+check('redzone stream slug -> topicGenre sports', Facet.build(mk({ url: 'https://stream-example.com/redzone-live' })).topicGenre === 'sports');
+check('espn host -> topicGenre sports', Facet.build(mk({ url: 'https://www.espn.com/nba/game/lakers-celtics' })).topicGenre === 'sports');
+
+// weather derivation must not eat aviation radar vocabulary (D4)
+const fr = Facet.build(mk({ url: 'https://www.flightradar24.com/BAW178/3a8b9c', tags: ['aviation', 'radar'] }));
+check('flightradar24 -> NOT weather genre', fr.genre !== 'weather');
+check('flightradar24 -> topicGenre travel', fr.topicGenre === 'travel');
+check('bbc weather path still weather', Facet.build(mk({ url: 'https://www.bbc.com/weather/2643743' })).genre === 'weather');
+check('doppler radar page still weather via host', Facet.build(mk({ url: 'https://weather.com/radar/us/sf' })).genre === 'weather');
+
+// SENSE GATE (D2/D3): facet elect suppressed by command frames. Exercised
+// through the nli-select test seam so the gate is checked at its call sites'
+// exact entry point.
+const NliSelect = require('../nli-select.js');
+const predOf = NliSelect.__facetPredicateForTest;
+check('sense gate: "docs" elect fires normally', typeof predOf('docs', 'bookmark my docs tabs') === 'function');
+check('sense gate: negation frame suppresses docs facet', predOf('docs', "don t close my docs just pin them") === null);
+check('sense gate: exception frame suppresses docs facet', predOf('docs', 'everything except docs can be closed') === null);
+check('sense gate: desire-shaped negation does NOT suppress shopping', typeof predOf('shopping', 'don t want any shopping tabs open anymore') === 'function');
+check('sense gate: close-deals collocation suppresses commerce facet for deal concepts', predOf('enterprise deals', 'close the tab discussing closing enterprise deals') === null);
+check('sense gate: deals facet fine without competing frame', typeof predOf('amazon.co.uk deals', 'pin the amazon.co.uk deals page') === 'function');
+check('sense gate: video facet untouched by unrelated command', typeof predOf('video', 'mute al teh vidoe tabs') === 'function');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
