@@ -1,4 +1,4 @@
-﻿// nli-select.js
+// nli-select.js
 // Zero-shot tab selection by natural-language inference.
 //
 // WHY THIS EXISTS
@@ -555,7 +555,7 @@
   // what lets a strongly-entailing product page into "shopping" (its
   // category IS shopping) while keeping a 0.99-entailing phone *review* out
   // (nothing about the review is literally "shopping").
-  function directEvidence(concepts, c) {
+  function directEvidence(concepts, c, facetOf) {
     const titleLower = String(c.title || '').toLowerCase();
     const titleToks = titleLower.split(/[^a-z0-9]+/).filter(Boolean);
     const cat = String(c.enrichment?.category || '').toLowerCase();
@@ -568,6 +568,14 @@
         if (cat === tok) return true;
         if (tags.includes(tok)) return true;
         if (labels.some(l => l === tok || (tok.length >= 5 && l.length >= 5 && (l.includes(tok) || tok.includes(l))))) return true;
+        // Facet predicate: ingest-time understanding as direct evidence
+        // ("video" -> media:video|live admits a Twitch stream with zero
+        // lexical overlap; "shopping" -> commerce!=none admits a storefront).
+        const pred = facetPredicateFor(concept);
+        if (pred && typeof facetOf === 'function') {
+          const f = facetOf(c);
+          if (f && pred(f)) return true;
+        }
       }
     }
     return false;
@@ -796,6 +804,16 @@
     const cmdLower = cmdStr.toLowerCase();
     const C = self.ConceptCore || require('./concept-core.js');
     const det = C.parseCommand(cmd);
+
+    // Ingest-time facets (Tier 1.1), built lazily once per candidate.
+    const facetCache = new Map();
+    const facetOf = (c) => {
+      if (!Facet) return null;
+      if (!facetCache.has(c.tabId)) {
+        try { facetCache.set(c.tabId, Facet.build(c)); } catch { facetCache.set(c.tabId, null); }
+      }
+      return facetCache.get(c.tabId);
+    };
 
     // Instruction-shaped input is never a tab command. Abstain before any
     // parsing so a payload cannot masquerade as intent.
@@ -1088,8 +1106,8 @@
         let allowedIds = null;
         let scopedMatches = null;
         if (effectiveScope.length && !scopeInvalid) {
-          const scoredScope = await scoringPass(effectiveScope, q, stateKept, cmdLower, threshold, opts,
-            { expansionChannel: makeExpansionChannel(q, effectiveScope), idf });
+          const scoredScope = await scoringPass(effectiveScope, q, stateKept, cmdLower, threshold, opts, facetOf,
+            { expansionChannel: makeExpansionChannel(q, effectiveScope, facetOf), idf });
           scopedMatches = scoredScope.matches;
           allowedIds = new Set(scopedMatches.map(m => m.tabId));
         }
@@ -1154,7 +1172,8 @@
     // are broad ("sports", "finance") and an expansion hitting one dragged
     // every sibling-sport tab into every topic command (measured: the exact
     // failure that killed expansion weighting in the sweep above).
-    const expansionChannel = makeExpansionChannel(q, concepts);
+    
+  const expansionChannel = makeExpansionChannel(q, concepts, facetOf);
 
     // ---- Stage 1: cosine over EVERY tab, no model calls ------------------
     //
@@ -1264,7 +1283,7 @@
     // cost a forward pass. Measured at 1.9 passes/command versus 15 for scanning
     // everything, at identical set-exact.
 
-    const scored = await scoringPass(concepts, q, universe, cmdLower, threshold, opts, {
+    const scored = await scoringPass(concepts, q, universe, cmdLower, threshold, opts, facetOf, {
       expansionChannel, cosScores, conceptVecs, idf,
       nliScore(c, text) {
         return (async () => {
@@ -1416,7 +1435,7 @@
   // are broad ("sports", "finance") and an expansion hitting one dragged every
   // sibling-sport tab into every topic command (measured: the exact failure that
   // killed expansion weighting in bench/expansion-sweep.js).
-  function makeExpansionChannel(q, concepts) {
+  function makeExpansionChannel(q, concepts, facetOf) {
     return function expansionChannel(c) {
       let best = 0;
       const titleLower = String(c.title || '').toLowerCase();
@@ -1424,6 +1443,13 @@
       const tagList = rawTagsOf(c).map(t => String(t).toLowerCase());
       const urlLower = String(c.url || '').toLowerCase();
       for (const concept of concepts) {
+        // Facet elect: an ontology-mapped concept admits via ingest-time facet
+        // at the same grade as a structured-tag hit.
+        if (facetOf) {
+          const pred = facetPredicateFor(concept);
+          const f = facetOf(c);
+          if (f && pred && pred(f)) best = Math.max(best, 0.70);
+        }
         for (const term of (q.expansions && q.expansions[concept]) || []) {
           const t = String(term).toLowerCase();
           const tagHit = tagList.some(tag => tag === t || wordHit(t, tag));
@@ -1440,6 +1466,28 @@
   // cluster admit on moderate entailment -- an ashes fan-reaction thread at
   // 0.83 belongs in its sport cluster -- while a concept with no canonical
   // cluster never gains that path.
+  // FACET ONTOLOGY (Tier 1.1): concept vocabulary -> ingest-time facet
+  // predicate. Generic media/commerce/genre knowledge — the same families a
+  // human uses to sort tabs. Scoped to evidence channels, never to global
+  // enrichment re-tagging.
+  let Facet = null;
+  try { Facet = require('./facet.js'); } catch {}
+  const FACET_ONTOLOGY = [
+    { keys: ['entertainment', 'fun', 'movie', 'movies', 'tv'], test: f => f.genre === 'entertainment' || ['video', 'audio', 'live'].includes(f.media) },
+    { keys: ['video', 'vidoe', 'videos', 'streaming', 'stream', 'streams', 'livestream', 'watch'], test: f => f.media === 'video' || f.media === 'live' },
+    { keys: ['music', 'audio', 'song', 'songs', 'lofi', 'playlist', 'podcast', 'podcasts'], test: f => f.media === 'audio' },
+    { keys: ['shopping', 'shop', 'store', 'stores', 'retail', 'commerce', 'deals', 'marketplace', 'ecommerce', 'auction', 'auctions'], test: f => f.commerce !== 'none' },
+    { keys: ['news', 'journalism', 'newspaper'], test: f => f.genre === 'news' },
+    { keys: ['weather', 'forecast', 'forecasts'], test: f => f.genre === 'weather' },
+    { keys: ['docs', 'documentation', 'manual', 'manuals', 'pdf', 'document', 'documents'], test: f => f.media === 'doc' || f.genre === 'docs' },
+  ];
+  function facetPredicateFor(text) {
+    const w = String(text || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    if (!w.length) return null;
+    for (const e of FACET_ONTOLOGY) if (e.keys.some(k => w.includes(k))) return e.test;
+    return null;
+  }
+
   function canonOf(concept) {
     try {
       const EM = (typeof self !== 'undefined' && self.EnrichMath) ||
@@ -1474,7 +1522,7 @@
   // zero-shot NLI, resolved through the admission gates. Used by the plain
   // semantic path AND by concept-scoped exceptions, so both speak identical
   // admission rules.
-  async function scoringPass(conceptsIn, q, universe, cmdLower, threshold, opts, ctx = {}) {
+  async function scoringPass(conceptsIn, q, universe, cmdLower, threshold, opts, facetOf = null, ctx = {}) {
     void opts;
     const concepts = conceptsIn;
     let combine = q.combine === 'intersection' ? 'intersection' : 'union';
@@ -1540,7 +1588,7 @@
     }
 
     const expansionChannel = ctx.expansionChannel ||
-      (q.expansions && Object.keys(q.expansions).length ? makeExpansionChannel(q, concepts) : (() => 0));
+      (q.expansions && Object.keys(q.expansions).length ? makeExpansionChannel(q, concepts, facetOf) : (() => 0));
 
     // Topic-shape gates, measured on the frozen pool:
     //   ambiguousTopic: when a large share of the universe weakly entails the
@@ -1588,7 +1636,7 @@
           sem = Math.max(0, sem - 0.5);
         }
 
-        const evidence = directEvidence([concept], c);
+        const evidence = directEvidence([concept], c, facetOf);
         const catLower = String(c.enrichment?.category || '').toLowerCase();
         const canonCatHit = canons[ci] && catLower === canons[ci];
         // Strong identity: a card evidences a MULTI-TOKEN concept when at
@@ -1613,6 +1661,11 @@
         } catch {}
         let strongTag = false;
         let strongTagViaTag = false;
+        // Facet admission: an ontology-mapped concept satisfied by the tab's
+        // ingest-time facet is identity-grade evidence, same as a literal tag.
+        const facetPred = facetPredicateFor(conceptLower);
+        const fObj = facetOf ? facetOf(c) : null;
+        const facetHit = !!(facetPred && fObj && facetPred(fObj));
         if (conceptWords.length === 1) {
           // EXACT equality only: a "videos"-vs-"video" stem match would let
           // the tag "video" elect under the concept "videos", dragging a
@@ -1620,7 +1673,7 @@
           // through the same plural-only stem -- comparing the raw concept
           // against stemmed tags made every -s concept ("news", "deals")
           // silently unmatchable against its own literal tag.
-          strongTag = tagStems.includes(stem(conceptLower)) || catLower === conceptLower;
+          strongTag = tagStems.includes(stem(conceptLower)) || catLower === conceptLower || facetHit;
           strongTagViaTag = tagStems.includes(stem(conceptLower));
         } else if (conceptWords.length) {
           const hits = conceptWords.filter(tok =>
@@ -1628,7 +1681,7 @@
             titleToksAll.some(t => tokenRelated(t, tok)) ||
             pathToks.some(p => p === stem(tok)) ||
             labelArr.some(l => l === stem(tok)) ||
-            catLower === stem(tok)).length;
+            catLower === stem(tok)).length + (facetHit ? 1 : 0);
           strongTag = hits >= Math.min(2, conceptWords.length);
           strongTagViaTag = tagStems.filter(t => conceptWords.some(cw => stem(cw) === t)).length >= 1 &&
             hits >= Math.min(2, conceptWords.length);
