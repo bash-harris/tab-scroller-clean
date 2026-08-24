@@ -56,7 +56,16 @@
   // entail at .98-.997 precisely because they echo surface vocabulary. The
   // constant is kept at ULTRA so the rescue is inert; do not lower without
   // re-running golden + open-bookmark + v2 together.
-  const NEAR_ULTRA = ULTRA;
+    const NEAR_ULTRA = ULTRA;
+
+    // Deterministic command-shape operators (plan-ops.js): rest-partition,
+    // superlative extreme, meta-quote literal mode. Pure functions of the
+    // command text -- they run beside the veto stage or reduce an already
+    // scored match set, never re-score anything themselves.
+    let PlanOpsMod = null;
+    try { PlanOpsMod = require('./plan-ops.js'); } catch {}
+    const planOps = () => PlanOpsMod ||
+      (typeof self !== 'undefined' ? self.PlanOps : null);
 
   // Evidence-identity distinctiveness: a token carried by >= 35% of the pool
   // is generic vocabulary ("error", "page", "tab"), not naming. Generic tokens
@@ -834,6 +843,37 @@
       return { decision: 'final', mode: 'abstain_vague_command', matches: [], needDetails: [] };
     }
 
+    // OPERATOR 1 -- REST-PARTITION. A multi-group partition WITH a rest cue
+    // ("make three groups: X, Y, and the rest") grades against the
+    // ENTIRE selectable universe: named buckets plus complement cover every
+    // tab exactly once. Finite enumerations carry no rest cue and never
+    // expand. Runs after the veto, before any scoring.
+    {
+      const _ops = planOps();
+      const restPart = _ops ? _ops.tryRestPartition(cmdStr, candidates) : null;
+      if (restPart) return restPart;
+    }
+
+    // OPERATOR 3 -- META-QUOTE LITERAL MODE. "containing the word X" /
+    // "titled X" / "word X in their title" is a lexical title-token test,
+    // not a semantic question: word-boundary AND over the extracted tokens
+    // replaces scoring entirely (no NLI, no cosine, no facet elect).
+    {
+      const _ops = planOps();
+      const lit = _ops ? _ops.extractLiteralToken(cmdStr) : null;
+      if (lit && lit.tokens.length) {
+        const escT = t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const tokenRes = lit.tokens.map(t =>
+          new RegExp('(^|[^a-z0-9])' + escT(t) + '([^a-z0-9]|$)', 'i'));
+        const litMode = `Literal title match: ${lit.tokens.join(' + ')}`;
+        return {
+          decision: 'final', mode: litMode, needDetails: [],
+          matches: candidates.filter(c => tokenRes.every(re => re.test(String(c.title || ''))))
+            .map(c => ({ tabId: c.tabId, reason: litMode, confidence: 1.0 }))
+        };
+      }
+    }
+
     // The structured query, whether from the model or the deterministic parser.
     const q = opts.query || {
       concepts: det.concept ? [det.concept] : [],
@@ -857,6 +897,16 @@
     // one page the command names -- drop the window, keep the topic.
     if (timeQraw && /\b(the|that|my)\s+(tab|page|story|article|video|stream|guide|news)\s+(where|that|which|about|from)\b/i.test(cmdStr)) {
       timeQraw = null;
+    }
+    // OPERATOR 2 (early half) -- SUPERLATIVE EXTREME. A superlative
+    // determiner ("oldest unaccessed vacation tab") carries its own temporal
+    // semantics; a parser-invented relative window ("last hour") contradicts
+    // it and silently deletes the very tab the superlative ranks. Drop the
+    // window when the shape is present; the late half reduces matches to the
+    // extreme after normal scoring.
+    {
+      const _ops = planOps();
+      if (_ops && _ops.superlativeSpec(cmdStr)) timeQraw = null;
     }
     const timeQ = (timeQraw && timeQraw.value) ? timeQraw : null;
     // "from yesterday" is ambiguous between created-then and used-then;
@@ -1029,14 +1079,8 @@
         return allMatches(hits, 'Descriptive referent');
       }
     }
-    // A literal word-in-title query selects by raw title token.
-    const wordM = cmdStr.match(/\bword\s+([a-z0-9'-]+)\s+(?:in|within|inside)\s+(?:their\s+|the\s+|its\s+)?titles?\b/i) ||
-      cmdStr.match(/\btitles?\s+(?:that\s+|which\s+)?(?:contains?|includes?)\s+(?:the\s+)?word\s+([a-z0-9'-]+)\b/i);
-    if (wantsAll && wordM) {
-      const tok = wordM[1].toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const re = new RegExp('(^|[^a-z0-9])' + tok + 's?([^a-z0-9]|$)', 'i');
-      return allMatches(candidates.filter(c => re.test(String(c.title || ''))), 'Title token query');
-    }
+    // A literal word-in-title query is owned by OPERATOR 3 (plan-ops.js),
+    // which runs beside the veto stage before this point.
 
     // Select-all with an exclusion list is a COMPLEMENT, not everything. A
     // concept that survives alongside the exclusions scopes the complement
@@ -1341,6 +1385,27 @@
             .some(w => new RegExp('(^|[^a-z0-9])' + w + '([^a-z0-9]|$)', 'i').test(structText))));
       });
       if (!structuredIdentity) matches = [];
+    }
+
+    // OPERATOR 2 (late half) -- SUPERLATIVE EXTREME. Normal scoring elected
+    // the topic; the superlative determiner now picks ONE extreme by
+    // timestamp (asc = oldest family / MIN, desc = newest family / MAX;
+    // basis 'opened' vs 'accessed' read from the command). Zero matches fall
+    // through to the ordinary abstain below.
+    {
+      const _ops = planOps();
+      const supPick = _ops ? _ops.trySuperlative(cmdStr, matches, candidates) : null;
+      if (supPick) {
+        console.log(`[NLI] superlative: ${supPick.word} (${supPick.basis}) -> tab ${supPick.matches[0].tabId}`);
+        return {
+          decision: 'final',
+          mode: supPick.reason,
+          concepts,
+          combine: q.combine === 'intersection' ? 'intersection' : 'union',
+          matches: supPick.matches,
+          needDetails: []
+        };
+      }
     }
 
     matches.sort((a, b) => b.confidence - a.confidence);
