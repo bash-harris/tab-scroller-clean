@@ -58,14 +58,43 @@
     return now - n * unit;
   }
 
+  // Two-sided rolling window. Accepts "1 to 3 hours", the canonical planner form
+  // "1_to_3_hours", "1-3 hours", "between 1 and 3 hours ago". Returns
+  // { since, until } with since <= until: the LARGER number is the older (earlier)
+  // bound and becomes `since`; the SMALLER number is the more recent bound `until`.
+  // MUST be tried before parseNumericRange -- that matcher is non-anchored and would
+  // otherwise match the trailing "3 hours" and silently drop the lower bound.
+  function parseNumericWindow(s, now) {
+    const m = s.match(/(\d+)\s*[_ ]?(?:to|and|[-–—])[_ ]?\s*(\d+)\s*[_ ]?\s*(minutes?|mins?|hours?|hrs?|days?|weeks?|m|h|d|w)\b/);
+    if (!m) return null;
+    const a = parseInt(m[1], 10), b = parseInt(m[2], 10);
+    const unit = UNIT_MS[m[3]];
+    if (!Number.isFinite(a) || !Number.isFinite(b) || !unit) return null;
+    const lo = Math.min(a, b), hi = Math.max(a, b);
+    return { since: now - hi * unit, until: now - lo * unit };
+  }
+
   // now is injectable so the executor and its fixtures are not wall-clock bound.
   function parseTimeRange(raw, now = Date.now()) {
     const s = String(raw || '').toLowerCase().trim();
+    const win = parseNumericWindow(s, now);
+    if (win) return win.since; // widest single-sided reading of a two-sided phrase
     const numeric = parseNumericRange(s, now);
     if (numeric !== null) return numeric;
     const key = TIME_ALIASES[s] || TIME_ALIASES[s.replace(/_/g, ' ')] || 'anytime';
     const fn = TIME_RANGES[key] || TIME_RANGES['anytime'];
     return fn(now);
+  }
+
+  // Two-sided companion to parseTimeRange: always returns { since, until }.
+  // Single-sided expressions (and anything parseTimeRange understands) yield
+  // { since, until: now }; only the "between"/"N to M" forms produce a real upper
+  // bound. This is what the executor's op:'between' filter resolves against.
+  function parseTimeWindow(raw, now = Date.now()) {
+    const s = String(raw || '').toLowerCase().trim();
+    const win = parseNumericWindow(s, now);
+    if (win) return win;
+    return { since: parseTimeRange(s, now), until: now };
   }
 
   // Distinguishes "resolved to anytime because the user MEANT anytime" from
@@ -76,6 +105,7 @@
   function isKnownTimeExpr(raw) {
     const s = String(raw || '').toLowerCase().trim();
     if (s === '') return true; // empty == anytime
+    if (parseNumericWindow(s, 0) !== null) return true; // "1_to_3_hours" etc.
     if (parseNumericRange(s, 0) !== null) return true;
     return !!(TIME_ALIASES[s] || TIME_ALIASES[s.replace(/_/g, ' ')]);
   }
@@ -112,11 +142,12 @@
   };
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { RecallTabs, parseTimeRange, isKnownTimeExpr };
+    module.exports = { RecallTabs, parseTimeRange, parseTimeWindow, isKnownTimeExpr };
   }
   if (typeof self !== 'undefined') {
     self.RecallTabs = RecallTabs;
     self.parseTimeRange = parseTimeRange;
+    self.parseTimeWindow = parseTimeWindow;
     self.isKnownTimeExpr = isKnownTimeExpr;
   }
 })();

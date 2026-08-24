@@ -4,13 +4,37 @@
 (function () {
   "use strict";
 
-  // Prevent double injection
-  if (document.getElementById("tab-scroller-host")) return;
-
-  // Guard: Check if extension context is still valid
+  // Guard: Check if extension context is still valid for THIS instance.
   if (!chrome.runtime?.id) {
     console.warn('[TabScroller] Extension context invalidated, skipping initialization');
     return;
+  }
+
+  // Prevent double injection — but distinguish a LIVE owner from a STALE orphan.
+  //
+  // When the extension is reloaded, the previous content script's chrome.* bindings
+  // die, yet its DOM host (#tab-scroller-host) lingers in the page. Chrome then injects
+  // a fresh content script (via injectContentScriptIntoAllTabs), which used to bail here
+  // on the mere presence of that host — leaving the dead instance's empty strip on screen
+  // with no way to fetch tabs (no error, no tabs, nothing driving indexing). We now treat
+  // the host as "owned" only if it carries a recent heartbeat (written every 2s, gated on
+  // a live context — see below). A missing/stale heartbeat means the owner is gone, so we
+  // evict the orphan and take over.
+  {
+    const existingHost = document.getElementById("tab-scroller-host");
+    if (existingHost) {
+      const hb = Number(existingHost.dataset.tsHeartbeat || 0);
+      if (hb && (Date.now() - hb) < 6000) {
+        // A live instance already owns this frame — stand down.
+        return;
+      }
+      // Stale orphan from a reloaded/invalidated context — clear it and take over.
+      console.warn('[TabScroller] Evicting stale strip left by a previous extension context');
+      try { existingHost.remove(); } catch (e) {}
+      // Drop the leftover page-push <style> too, so we don't stack two copies.
+      // (literal kept in sync with STYLE_ID defined below.)
+      try { const s = document.getElementById('tab-scroller-page-push'); if (s) s.remove(); } catch (e) {}
+    }
   }
 
   // Guard wrapper for Chrome APIs
@@ -228,6 +252,16 @@
   const host = document.createElement("div");
   host.id = "tab-scroller-host";
   const shadow = host.attachShadow({ mode: "closed" });
+
+  // Heartbeat: mark this host as owned by a LIVE instance. The double-injection guard
+  // (top of file) reads this to tell a real owner from a stale orphan left by an extension
+  // reload. Gated on chrome.runtime?.id, so a dead context stops refreshing it — the stamp
+  // goes stale within ~6s and the next injected instance evicts this host and takes over.
+  host.dataset.tsHeartbeat = String(Date.now());
+  setInterval(() => {
+    if (!chrome.runtime?.id) return;
+    host.dataset.tsHeartbeat = String(Date.now());
+  }, 2000);
 
   // --- Inject CSS ---
   // Critical CSS, applied SYNCHRONOUSLY. content.css is fetched async below, so
@@ -1847,6 +1881,13 @@
   let undoAutoHideTimer = null;
 
   function showToast(message, type = 'info', duration = 4000) {
+    // Errors never ride the bottom strip anymore — they get the persistent
+    // ivory dialog (no auto-dismiss, user must Cancel / press Esc).
+    if (type === 'error') {
+      showErrorDialog(message);
+      return null;
+    }
+
     // Remove existing toast
     const existing = shadow.querySelector('.ts-toast');
     if (existing) existing.remove();
@@ -1869,11 +1910,8 @@
         toast.style.color = '#fff';
         toast.style.border = '1px solid rgba(34, 197, 94, 0.3)';
         break;
-      case 'error':
-        toast.style.background = 'rgba(239, 68, 68, 0.9)';
-        toast.style.color = '#fff';
-        toast.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-        break;
+      // NOTE: 'error' intentionally absent — errors are routed to the
+      // persistent ivory dialog above and never reach the bottom strip.
       case 'warning':
         toast.style.background = 'rgba(245, 158, 11, 0.9)';
         toast.style.color = '#fff';
@@ -1900,6 +1938,43 @@
     }, duration);
 
     return toast;
+  }
+
+  // ===== PERSISTENT IVORY ERROR DIALOG =====
+  // Centered ivory modal (UIDialogs.buildErrorDialog) that stays until the
+  // user clicks Cancel or presses Esc — no auto-dismiss timer. Only one is
+  // ever on screen: a new error replaces the previous dialog's content.
+  function showErrorDialog(message) {
+    const existing = shadow.querySelector(".ts-error-dialog");
+    if (existing) existing.remove();
+    const modal = UIDialogs.buildErrorDialog(String(message == null ? "" : message));
+    modal.style.opacity = "0";
+    shadow.appendChild(modal);
+    requestAnimationFrame(() => { modal.style.opacity = "1"; });
+    return modal;
+  }
+
+  // ===== OPEN-TABS PICKER (background matched N tabs for an open command) =====
+  // background.js answers ambiguous open commands with OPEN_TABS_PICKER +
+  // the live matches; show every option so the user can pick the right tab.
+  function showOpenTabsPicker(options) {
+    const existing = shadow.querySelector(".ts-picker-modal");
+    if (existing) existing.remove();
+    const list = Array.isArray(options) ? options : [];
+    if (list.length === 0) {
+      showToast("No matching tabs found.", "info");
+      return null;
+    }
+    const modal = UIDialogs.buildPickerModal(list, {
+      onPick: (tabId) => {
+        safeSendMessage({ type: "FOCUS_PICKED_TAB", tabId });
+      },
+      onCancel: () => {}
+    });
+    modal.style.opacity = "0";
+    shadow.appendChild(modal);
+    requestAnimationFrame(() => { modal.style.opacity = "1"; });
+    return modal;
   }
 
   // ===== CLARIFICATION MODAL (§5) =====
@@ -2260,6 +2335,10 @@
       undoAutoHideTimer = setTimeout(() => { undoBtn.style.display = "none"; }, 15000);
     } else if (msg.type === "CLARIFICATION_NEEDED") {
       showClarificationModal(msg);
+    } else if (msg.type === "OPEN_TABS_PICKER") {
+      // background matched several tabs for an open command — surface every
+      // option and let the user choose; the pick is sent back as FOCUS_PICKED_TAB.
+      showOpenTabsPicker(msg.options);
     } else if (msg.type === "PREVIEW_PLAN") {
       (async () => {
         if (msg.plan && msg.plan.intent === 'group_multi') {
@@ -2559,9 +2638,16 @@
     let commandHistory = [];
     let historyIndex = -1;
 
-    // Load history from storage
-    chrome.storage.local.get({ commandHistory: [] }, (items) => {
-      commandHistory = items.commandHistory || [];
+    // Load history from storage. Guarded: if the extension context has been
+    // invalidated (e.g. the unpacked extension was reloaded while this page
+    // stayed open), chrome.storage is undefined and an unguarded call here throws
+    // an uncaught TypeError that aborts the rest of createCommandInput -- which
+    // takes the tab strip down with it. safeChromeCall no-ops on a dead context.
+    safeChromeCall(() => {
+      chrome.storage.local.get({ commandHistory: [] }, (items) => {
+        if (chrome.runtime.lastError) return;
+        commandHistory = items.commandHistory || [];
+      });
     });
 
     input.addEventListener("keydown", (e) => {
@@ -2578,7 +2664,7 @@
           // Save to history
           commandHistory.unshift(command);
           if (commandHistory.length > 50) commandHistory.pop();
-          chrome.storage.local.set({ commandHistory });
+          safeChromeCall(() => chrome.storage.local.set({ commandHistory }));
           historyIndex = -1;
         }
       } else if (e.key === "ArrowUp") {
@@ -2963,7 +3049,8 @@
       unpin_tabs: "Unpin Tabs",
       mute_tabs: "Mute Tabs",
       unmute_tabs: "Unmute Tabs",
-      reload_tabs: "Reload Tabs"
+      reload_tabs: "Reload Tabs",
+      group_multi: "Organize into Groups"
     };
 
     const actionTitle = titleMap[data.plan.intent] || "Tab Action Plan";
@@ -3146,7 +3233,7 @@
     modal.className = "ts-preview-modal";
 
     const overlay = document.createElement("div");
-    overlay.className = "ts-preview-overlay";
+    overlay.className = "ts-modal-overlay";
     modal.appendChild(overlay);
 
     const content = document.createElement("div");
@@ -3287,7 +3374,7 @@
     modal.className = "ts-preview-modal";
 
     const overlay = document.createElement("div");
-    overlay.className = "ts-preview-overlay";
+    overlay.className = "ts-modal-overlay";
     modal.appendChild(overlay);
 
     const content = document.createElement("div");
@@ -3315,6 +3402,12 @@
     const bucketRows = [];
 
     const CHROME_COLORS = ['grey', 'blue', 'red', 'yellow', 'green', 'pink', 'purple', 'cyan', 'orange'];
+    // The real hue of each Chrome group color (mirrors the border-color in the
+    // .ts-group-<color> rules), used to tint the swatch dots.
+    const MG_SWATCH_HEX = {
+      grey: '#5f6368', blue: '#8ab4f8', red: '#f28b82', yellow: '#fdd663',
+      green: '#81c995', pink: '#ff8bcb', purple: '#d7aefb', cyan: '#78d9ec', orange: '#ffad70'
+    };
 
     buckets.forEach((b, bIdx) => {
       const card = document.createElement("div");
@@ -3327,21 +3420,44 @@
       nameInput.className = "ts-mg-bucket-title-input";
       nameInput.value = b.name;
 
-      const colorSelect = document.createElement("select");
-      colorSelect.className = "ts-mg-bucket-color-select";
+      // Color picker as swatches (replaces the old <select>): a row of the nine
+      // Chrome tab-group colors, each a clickable dot tinted with that group's
+      // real hue. The selected dot carries a ring; getColor returns its name.
+      // The value is always one of CHROME_COLORS, so the applied color is
+      // whitelisted by construction.
+      let selectedColor = CHROME_COLORS.includes(b.color) ? b.color : CHROME_COLORS[0];
+      const swatchRow = document.createElement("div");
+      swatchRow.className = "ts-mg-bucket-swatches";
+      swatchRow.setAttribute("role", "radiogroup");
+      swatchRow.setAttribute("aria-label", "Group color");
+      const swatchEls = [];
       CHROME_COLORS.forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = c;
-        opt.textContent = c[0].toUpperCase() + c.slice(1);
-        if (c === b.color) opt.selected = true;
-        colorSelect.appendChild(opt);
+        const sw = document.createElement("button");
+        sw.type = "button";
+        sw.className = "ts-mg-swatch" + (c === selectedColor ? " ts-mg-swatch-selected" : "");
+        sw.dataset.color = c;
+        sw.style.background = MG_SWATCH_HEX[c] || "#888";
+        sw.title = c[0].toUpperCase() + c.slice(1);
+        sw.setAttribute("role", "radio");
+        sw.setAttribute("aria-label", sw.title);
+        sw.setAttribute("aria-checked", c === selectedColor ? "true" : "false");
+        sw.addEventListener("click", () => {
+          selectedColor = c;
+          swatchEls.forEach(e => {
+            const on = e.dataset.color === c;
+            e.classList.toggle("ts-mg-swatch-selected", on);
+            e.setAttribute("aria-checked", on ? "true" : "false");
+          });
+        });
+        swatchEls.push(sw);
+        swatchRow.appendChild(sw);
       });
 
       const countSpan = document.createElement("span");
       countSpan.className = "ts-mg-bucket-count";
 
       header.appendChild(nameInput);
-      header.appendChild(colorSelect);
+      header.appendChild(swatchRow);
       header.appendChild(countSpan);
       card.appendChild(header);
 
@@ -3409,7 +3525,7 @@
 
       bucketRows.push({
         getName: () => nameInput.value.trim() || b.name,
-        getColor: () => colorSelect.value,
+        getColor: () => selectedColor,
         getCheckedIds: () => itemCheckboxes.filter(c => c.checked).map(c => Number(c.dataset.tabId))
       });
     });
@@ -3535,3 +3651,291 @@
     }, true);
   }
 })();
+
+// ===== UI DIALOG BUILDERS — BEGIN UIDIALOGS =====
+// Pure DOM builders for the open-tabs picker and the persistent ivory error
+// dialog. No chrome.* access and no closure state: everything is built from a
+// document (ambient, or hooks.document for tests), styled inline with Tab
+// Scroller's ivory theme tokens (--ts-bg-solid #fcf8f0 panel, --ts-accent
+// #9c7817 antique gold, --ts-hairline borders, warm near-black --ts-text),
+// and RETURNED to the caller to append. Function declarations hoist to script
+// scope, so the IIFE above can call these from its message/toast handlers.
+function tsUiDoc(hooks) {
+  return (hooks && hooks.document) || (typeof document !== "undefined" ? document : null);
+}
+
+function tsUiShell(doc, rootClass) {
+  const modal = doc.createElement("div");
+  modal.className = rootClass;
+  modal.style.cssText =
+    "position:fixed;top:0;left:0;width:100%;height:100%;display:flex;" +
+    "align-items:center;justify-content:center;z-index:2147483647;" +
+    "transition:opacity .2s ease;pointer-events:auto;" +
+    "font-family:'Inter','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,sans-serif;";
+  const overlay = doc.createElement("div");
+  overlay.className = "ts-modal-overlay";
+  overlay.style.cssText =
+    "position:absolute;top:0;left:0;width:100%;height:100%;" +
+    "background:rgba(30,24,12,.42);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);";
+  const panel = doc.createElement("div");
+  panel.style.cssText =
+    "position:relative;display:flex;flex-direction:column;" +
+    "background:var(--ts-bg-solid,#fcf8f0);color:var(--ts-text,#1b160e);" +
+    "border-radius:16px;padding:20px 22px;" +
+    "border:1px solid var(--ts-border,rgba(156,120,23,.22));" +
+    "box-shadow:0 16px 44px rgba(58,44,12,.18);";
+  modal.appendChild(overlay);
+  modal.appendChild(panel);
+  return { modal, overlay, panel };
+}
+
+function tsUiGoldRule(doc) {
+  const rule = doc.createElement("div");
+  rule.style.cssText =
+    "height:2px;border-radius:2px;margin:8px 0 12px;flex:none;" +
+    "background:linear-gradient(90deg,var(--ts-accent,#9c7817)," +
+    "var(--ts-accent-glow,rgba(156,120,23,.3)));";
+  return rule;
+}
+
+function tsUiButton(doc, variant) {
+  const btn = doc.createElement("button");
+  btn.type = "button";
+  btn.textContent = "Cancel";
+  if (variant === "solid") {
+    btn.style.cssText =
+      "padding:8px 20px;border:none;border-radius:10px;cursor:pointer;" +
+      "font-size:13px;font-weight:600;letter-spacing:.2px;" +
+      "background:var(--ts-accent,#9c7817);color:#fcf8f0;";
+    btn.addEventListener("mouseenter", () => { btn.style.background = "var(--ts-accent-dim,#7d5f10)"; });
+    btn.addEventListener("mouseleave", () => { btn.style.background = "var(--ts-accent,#9c7817)"; });
+  } else {
+    btn.style.cssText =
+      "padding:8px 18px;border-radius:10px;cursor:pointer;font-size:13px;" +
+      "border:1px solid var(--ts-hairline,rgba(33,28,20,.09));" +
+      "background:var(--ts-bg-solid,#fcf8f0);color:var(--ts-text-muted,#6b6150);";
+    btn.addEventListener("mouseenter", () => {
+      btn.style.borderColor = "var(--ts-accent-dim,#7d5f10)";
+      btn.style.color = "var(--ts-accent-dim,#7d5f10)";
+    });
+    btn.addEventListener("mouseleave", () => {
+      btn.style.borderColor = "var(--ts-hairline,rgba(33,28,20,.09))";
+      btn.style.color = "var(--ts-text-muted,#6b6150)";
+    });
+  }
+  return btn;
+}
+
+function tsUiFaviconFallback(doc) {
+  const fb = doc.createElement("div");
+  fb.textContent = "\u2750"; // generic tab glyph — shown when no favicon loads
+  fb.style.cssText =
+    "width:20px;height:20px;flex:none;display:flex;align-items:center;" +
+    "justify-content:center;font-size:11px;line-height:1;" +
+    "color:var(--ts-accent,#9c7817);border-radius:4px;" +
+    "border:1px solid var(--ts-hairline,rgba(33,28,20,.09));" +
+    "background:var(--ts-fill,rgba(33,28,20,.04));";
+  return fb;
+}
+
+// Open-tabs picker: lists EVERY matching tab (favicon, title, host).
+// hooks: { onPick(tabId, option), onCancel(), document }. Returns modal root.
+function tsBuildPickerModal(options, hooks) {
+  const opts = Array.isArray(options) ? options : [];
+  const doc = tsUiDoc(hooks);
+  if (!doc || typeof doc.createElement !== "function") {
+    throw new Error("tsBuildPickerModal requires a document");
+  }
+
+  const { modal, overlay, panel } = tsUiShell(doc, "ts-picker-modal");
+  panel.style.width = "min(560px,92vw)";
+  panel.style.maxHeight = "80vh";
+
+  let closed = false;
+  let onKey = null;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    if (onKey) doc.removeEventListener("keydown", onKey);
+    modal.remove();
+  };
+  const cancel = () => {
+    if (!closed && typeof hooks.onCancel === "function") hooks.onCancel();
+    close();
+  };
+
+  const header = doc.createElement("h3");
+  header.className = "ts-picker-title";
+  header.textContent =
+    `${opts.length} matching tab${opts.length === 1 ? "" : "s"} — pick one to open`;
+  header.style.cssText =
+    "margin:0;flex:none;font-family:'TS Playfair','Playfair Display',Georgia," +
+    "'Times New Roman',serif;font-size:17px;font-weight:600;letter-spacing:.3px;" +
+    "color:var(--ts-text,#1b160e);";
+  panel.appendChild(header);
+  panel.appendChild(tsUiGoldRule(doc));
+
+  const list = doc.createElement("div");
+  list.className = "ts-picker-list";
+  list.style.cssText =
+    "overflow-y:auto;max-height:60vh;margin-bottom:14px;border-radius:10px;" +
+    "border:1px solid var(--ts-hairline,rgba(33,28,20,.09));" +
+    "background:var(--ts-bg-raise,#fdfaf2);";
+
+  opts.forEach((option, index) => {
+    const row = doc.createElement("div");
+    row.className = "ts-picker-row";
+    row.setAttribute("role", "button");
+    row.dataset.tabId = option && option.id != null ? String(option.id) : "";
+    row.style.cssText =
+      "display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer;" +
+      "transition:background .15s ease;color:var(--ts-text,#1b160e);" +
+      (index < opts.length - 1
+        ? "border-bottom:1px solid var(--ts-hairline,rgba(33,28,20,.09));"
+        : "");
+    row.addEventListener("mouseenter", () => { row.style.background = "var(--ts-fill,rgba(33,28,20,.04))"; });
+    row.addEventListener("mouseleave", () => { row.style.background = ""; });
+
+    const favUrl = option && option.favIconUrl;
+    if (favUrl) {
+      const img = doc.createElement("img");
+      img.className = "ts-picker-favicon";
+      img.alt = "";
+      img.src = favUrl;
+      img.style.cssText = "width:20px;height:20px;flex:none;border-radius:4px;object-fit:cover;";
+      img.onerror = () => { img.replaceWith(tsUiFaviconFallback(doc)); };
+      row.appendChild(img);
+    } else {
+      row.appendChild(tsUiFaviconFallback(doc));
+    }
+
+    const col = doc.createElement("div");
+    col.style.cssText = "flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;";
+    const titleEl = doc.createElement("span");
+    titleEl.className = "ts-picker-row-title";
+    titleEl.textContent = (option && option.title) || "Untitled tab";
+    titleEl.style.cssText =
+      "font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
+    col.appendChild(titleEl);
+    const hostEl = doc.createElement("span");
+    hostEl.className = "ts-picker-row-host";
+    hostEl.textContent = tsExtractHost(option && option.url) ||
+      ((option && option.url) ? String(option.url).slice(0, 60) : "");
+    hostEl.style.cssText =
+      "font-size:11px;color:var(--ts-text-muted,#6b6150);" +
+      "white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
+    col.appendChild(hostEl);
+    row.appendChild(col);
+
+    row.addEventListener("click", () => {
+      try {
+        if (typeof hooks.onPick === "function") hooks.onPick(option.id, option);
+      } finally {
+        close();
+      }
+    });
+    list.appendChild(row);
+  });
+
+  panel.appendChild(list);
+
+  const footer = doc.createElement("div");
+  footer.style.cssText = "display:flex;justify-content:flex-end;flex:none;";
+  const cancelBtn = tsUiButton(doc, "ghost");
+  cancelBtn.addEventListener("click", cancel);
+  footer.appendChild(cancelBtn);
+  panel.appendChild(footer);
+
+  overlay.addEventListener("click", cancel);
+  onKey = (e) => {
+    if (e.key === "Escape") { e.preventDefault(); cancel(); }
+  };
+  doc.addEventListener("keydown", onKey);
+
+  return modal;
+}
+
+// Persistent ivory error dialog: gold accent, "Something went wrong" header,
+// message body, one Cancel button. NO auto-dismiss timer anywhere.
+// hooks: { onCancel(), document }. Returns modal root.
+function tsBuildErrorDialog(message, hooks) {
+  const doc = tsUiDoc(hooks);
+  if (!doc || typeof doc.createElement !== "function") {
+    throw new Error("tsBuildErrorDialog requires a document");
+  }
+
+  const { modal, panel } = tsUiShell(doc, "ts-error-dialog");
+  panel.style.width = "min(420px,92vw)";
+
+  const icon = doc.createElement("div");
+  icon.textContent = "!";
+  icon.style.cssText =
+    "width:34px;height:34px;flex:none;display:flex;align-items:center;" +
+    "justify-content:center;margin-bottom:10px;border-radius:50%;" +
+    "font-size:18px;font-weight:700;" +
+    "border:1.5px solid var(--ts-accent,#9c7817);color:var(--ts-accent,#9c7817);";
+  panel.appendChild(icon);
+
+  const title = doc.createElement("h3");
+  title.className = "ts-error-dialog-title";
+  title.textContent = "Something went wrong";
+  title.style.cssText =
+    "margin:0;flex:none;font-family:'TS Playfair','Playfair Display',Georgia," +
+    "'Times New Roman',serif;font-size:18px;font-weight:600;letter-spacing:.3px;" +
+    "color:var(--ts-text,#1b160e);";
+  panel.appendChild(title);
+  panel.appendChild(tsUiGoldRule(doc));
+
+  const body = doc.createElement("p");
+  body.className = "ts-error-dialog-message";
+  body.textContent = message == null ? "" : String(message);
+  body.style.cssText =
+    "margin:0 0 16px;font-size:13px;line-height:1.55;white-space:pre-wrap;" +
+    "word-break:break-word;color:var(--ts-text,#1b160e);";
+  panel.appendChild(body);
+
+  const footer = doc.createElement("div");
+  footer.style.cssText = "display:flex;justify-content:flex-end;flex:none;";
+  const cancelBtn = tsUiButton(doc, "solid");
+  footer.appendChild(cancelBtn);
+  panel.appendChild(footer);
+
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    if (onKey) doc.removeEventListener("keydown", onKey);
+    modal.remove();
+  };
+  const cancel = () => {
+    if (!closed && typeof hooks.onCancel === "function") hooks.onCancel();
+    close();
+  };
+  cancelBtn.addEventListener("click", cancel);
+  const onKey = (e) => {
+    if (e.key === "Escape") { e.preventDefault(); cancel(); }
+  };
+  doc.addEventListener("keydown", onKey);
+
+  return modal;
+}
+
+function tsExtractHost(url) {
+  try {
+    return new URL(url).hostname || "";
+  } catch (e) {
+    return "";
+  }
+}
+
+const UIDialogs = Object.freeze({
+  buildPickerModal: tsBuildPickerModal,
+  buildErrorDialog: tsBuildErrorDialog,
+});
+
+// Node-side export so the dialog builders can be tested without Chrome APIs
+// (same pattern as command-agent.js).
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = UIDialogs;
+}
+// ===== UI DIALOG BUILDERS — END UIDIALOGS =====

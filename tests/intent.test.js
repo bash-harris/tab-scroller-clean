@@ -15,7 +15,8 @@ global.self = global;
 global.chrome = undefined;
 
 const {
-  detectIntent, isAmbiguousIntent, hasDomainPattern, classifyCommand, parseBookmarkAll
+  detectIntent, isAmbiguousIntent, hasDomainPattern, classifyCommand, parseBookmarkAll,
+  resolveDomainScopes, isDomainScopeCommand
 } = require('../command-agent.js');
 
 // Mirror of the fixed sanitizeQuery in background.js. Kept in sync by the
@@ -84,7 +85,17 @@ const INTENT_CASES = [
 
   // --- no explicit verb: default to the least destructive action ---
   ['my cricket tabs',                        'group_tabs'],
-  ['everything about machine learning',      'group_tabs']
+  ['everything about machine learning',      'group_tabs'],
+
+  // --- open/focus verbs: surface already-open tabs, not a content search ---
+  // Regression: these verbs were missing from INTENT_RULES, so opens only
+  // worked via the flaky LLM-planner path and answered "No matching tabs".
+  ['open my cricket tabs',                   'open_tabs'],
+  ['show me travel pages',                   'open_tabs'],
+  ['focus work tabs',                        'open_tabs'],
+  // "find" is a SEARCH verb: must stay search_and_switch even with the
+  // open_tabs rule sitting earlier in the ladder.
+  ['find my cricket pages',                  'search_and_switch']
 ];
 
 const DOMAIN_CASES = [
@@ -153,6 +164,16 @@ for (const [cmd, expected] of INTENT_CASES) {
   const got = detectIntent(sanitizeQuery(cmd).toLowerCase());
   ok(`"${cmd}" -> ${expected}`, got === expected, got);
   if (legacyDetectIntent(legacySanitizeQuery(cmd).toLowerCase()) === expected) legacyCorrect++;
+}
+
+console.log('\n--- domain fast path accepts open verbs (scope shape guard) ---');
+{
+  const scopes = resolveDomainScopes('open all amazon tabs');
+  ok('resolveDomainScopes("open all amazon tabs") resolves hosts',
+    !!scopes && scopes.flat().includes('amazon.com'), JSON.stringify(scopes));
+  ok('isDomainScopeCommand("open all amazon tabs") === true',
+    isDomainScopeCommand('open all amazon tabs') === true,
+    String(isDomainScopeCommand('open all amazon tabs')));
 }
 
 console.log('\n--- A2: domain pattern survives sanitization ---');

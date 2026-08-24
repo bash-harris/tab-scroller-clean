@@ -18,6 +18,280 @@ function hasDomainPattern(text) {
   return DOMAIN_PATTERN.test(String(text || '').toLowerCase());
 }
 
+// ===========================================================================
+// DOMAIN-SCOPE FAST PATH
+//
+// "group all amazon tabs" is a metadata predicate, not a similarity problem:
+// domain membership over the live tab list is fully deterministic, so routing
+// it through embeddings + NLI returns an arbitrary SUBSET of the matching tabs.
+// This block resolves such commands to exact tab-id sets with no model call.
+//
+// It can never select a look-alike host. Matching compares REGISTRABLE domains
+// (see registrable()), so docs.google.com.attacker-spoof.org lands on
+// attacker-spoof.org and can never satisfy a google scope, while genuine
+// subdomains (docs.google.com, music.youtube.com, smile.amazon.com) collapse
+// onto their true root and match.
+// ===========================================================================
+
+// Canonical host families per bare brand word. Regional storefronts ride along
+// with 'amazon'; the youtube family includes its shortener so both spellings
+// resolve; twitter carries both apex names.
+const BRAND_HOSTS = {
+  amazon:        ['amazon.com', 'amazon.in', 'amazon.co.uk', 'amazon.de'],
+  youtube:       ['youtube.com', 'youtu.be'],
+  github:        ['github.com'],
+  reddit:        ['reddit.com'],
+  netflix:       ['netflix.com'],
+  spotify:       ['spotify.com'],
+  twitter:       ['twitter.com', 'x.com'],
+  facebook:      ['facebook.com'],
+  instagram:     ['instagram.com'],
+  linkedin:      ['linkedin.com'],
+  gmail:         ['mail.google.com'],
+  google:        ['google.com'],
+  ebay:          ['ebay.com'],
+  flipkart:      ['flipkart.com'],
+  stackoverflow: ['stackoverflow.com'],
+  wikipedia:     ['wikipedia.org'],
+  primevideo:    ['primevideo.com']
+};
+
+// Service words that name ONE Google surface. When one appears, any generic
+// google/gmail contribution narrows to that exact subdomain instead of stacking
+// on top ("bookmark my google docs tabs" files the docs tabs, not every Google
+// tab).
+const HOST_SERVICE_NARROWERS = {
+  docs:      ['docs.google.com'],
+  document:  ['docs.google.com'],
+  documents: ['docs.google.com'],
+  drive:     ['drive.google.com'],
+  mail:      ['mail.google.com'],
+  email:     ['mail.google.com'],
+  maps:      ['maps.google.com'],
+  sheets:    ['sheets.google.com'],
+  slides:    ['slides.google.com'],
+  meet:      ['meet.google.com']
+};
+
+// Multi-label suffixes treated as ONE unit by registrable(), so
+// www.amazon.co.uk collapses to amazon.co.uk rather than co.uk.
+const SECOND_LEVEL_SUFFIXES = new Set([
+  'co.uk', 'org.uk', 'gov.uk', 'ac.uk', 'com.au', 'co.in', 'co.jp'
+]);
+
+// Registrable domain = last two labels, with common second-level suffixes
+// counted as one label pair. This is the unit scope matching compares.
+function registrable(host) {
+  const labels = String(host || '').toLowerCase()
+    .replace(/^\.+/, '').replace(/\.+$/, '')
+    .split('.').filter(Boolean);
+  if (!labels.length) return '';
+  if (labels.length <= 2) return labels.join('.');
+  const lastTwo = labels.slice(-2).join('.');
+  if (SECOND_LEVEL_SUFFIXES.has(lastTwo)) return labels.slice(-3).join('.');
+  return lastTwo;
+}
+
+// Scope host H matches candidate C iff they share a registrable domain, or C
+// literally lives under H's registrable domain. A spoof chain fails both:
+// its registrable root is the attacker's, not the impersonated brand's.
+function hostMatchesScope(candidateHost, scopeHost) {
+  const cr = registrable(candidateHost);
+  const sr = registrable(scopeHost);
+  return !!cr && !!sr && (cr === sr || candidateHost.endsWith('.' + sr));
+}
+
+// A typed-out host token: two or more dot-separated labels.
+const HOST_LIKE_RE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/;
+
+// Structural noise inside a domain-scope command: determiners, quantifiers,
+// prepositions, politeness, container nouns. Anything NOT covered here and not
+// resolvable below is an unaccounted content word -> defer (see below).
+const SCOPE_STOPWORD_RE =
+  /^(the|a|an|my|me|our|your|his|her|their|its|this|that|these|those|all|every|each|some|any|both|of|in|on|at|to|from|into|onto|and|or|with|for|by|about|please|now|just|only|even|still|already|also|too|up|out|again|then|tab|tabs|window|windows|browser|browsers|page|pages|site|sites|url|urls|open|opened|active|current|existing)$/i;
+
+// Trailing filler that carries no set information wherever it appears.
+const SCOPE_TAILWORD_RE = /^(together|please|now|up)$/i;
+
+// Veracity adjectives assert "the true X, not a look-alike". Registrable-domain
+// matching already enforces exactly that constraint structurally -- a spoofed
+// host can never enter the plan -- so these adjectives are satisfied by the
+// mechanism itself and must not push the command to the fuzzy path, where the
+// look-alike could sneak back in through similarity scoring.
+const SCOPE_VERACITY_RE =
+  /^(genuine|real|actual|legitimate|legit|authentic|official|original|true|proper)$/i;
+
+// Head nouns that REFER to the scoped properties themselves rather than adding
+// content criteria: "google services" means the Google domains, not a topic.
+const SCOPE_SITE_NOUN_RE =
+  /^(services?|products?|apps?|sites?|websites?|properties|tools?|accounts?)$/i;
+
+// Action verbs that may introduce a scoped bulk command: the bulk family AND
+// the retrieval family -- scoping "show me my gmail tabs" is the same
+// deterministic metadata predicate as closing them; only downstream handling
+// differs.
+const SCOPE_ACTION_RE =
+  /\b(close|closes|closing|shut|kill|quit|group|groups|grouping|grouped|pin|pins|pinned|pinning|unpin|unpins|unpinned|unpinning|mute|mutes|muted|muting|unmute|unmutes|unmuted|unmuting|reload|reloads|reloading|refresh|refreshes|refreshing|bookmark|bookmarks|bookmarked|bookmarking|save|saves|saved|saving|sort|sorts|sorted|sorting|open|opens|opened|opening|show|shows|showing|focus|focuses|focusing|reveal|reveals|revealing|highlight|highlights|highlighting)\b/i;
+// Two-token verbs cannot live in the word-boundary regex above.
+const SCOPE_PHRASE_ACTION_RE = /\b(bring|pull)\s+up\b/i;
+// Retrieval-only verbs: when the intent ladder finds no bulk verb, these map
+// the fast-path plan to open_tabs (an OPEN_TABS_PICKER downstream).
+const SCOPE_RETRIEVE_VERB_RE =
+  /\b(open|opens|opening|show|showing|focus|reveal|highlight)\b/i;
+
+// Shape guard part 1: the command terminates in the plural noun the predicate
+// scopes over. Anchored at $, so trailing qualifiers ("...from yesterday",
+// "...except the book one") break the shape and stay with the agent router.
+const ENDS_WITH_TABS_RE = /\b(?:tabs?|pages?|sites?|services?|apps?)\s*$/i;
+// Shape guard part 2: "... all tabs on <host>" phrasing, host anchored at end.
+const ALL_TABS_ON_RE = /\ball\s+tabs?\s+on\s+[a-z0-9.-]+\.[a-z]{2,}\s*$/i;
+
+// True iff the command has BOTH an action verb and a bulk-scoped shape. This is
+// the gate; resolveDomainScopes is the resolution. Either failing keeps the
+// command on the model-driven paths.
+function isDomainScopeCommand(cmdLower) {
+  const text = String(cmdLower || '').toLowerCase().trim();
+  if (!text) return false;
+  if (!SCOPE_ACTION_RE.test(text) && !SCOPE_PHRASE_ACTION_RE.test(text)) return false;
+  return ENDS_WITH_TABS_RE.test(text) || ALL_TABS_ON_RE.test(text);
+}
+
+// Resolve a command's words into domain scopes: an array of host arrays, one
+// entry per distinct target set. Returns null whenever ANY word is unaccounted
+// for -- a leftover qualifier ("travel", "old", "important") means the set the
+// user wants cannot be expressed as pure domain membership, so the semantic
+// path owns the command. Deferral is deliberately strict: in production the
+// complex-command router already intercepted temporal/exception compounds, but
+// this guard must stand on its own because nothing else re-checks.
+//
+// Precedence rules encoded here:
+//   - A dotted token ("youtube.com") resolves to EXACTLY itself. It is never
+//     expanded to a brand family, and the brand fragment inside it never adds
+//     a duplicate scope ("youtube" inside "youtube.com" stays silent).
+//   - Bare brand words resolve to their full host family ("amazon" ->
+//     regional storefronts), and multiple brands union into separate scopes.
+//   - A service narrower replaces the generic google/gmail family.
+function resolveDomainScopes(cmdLower) {
+  const text = String(cmdLower || '').toLowerCase();
+  const tokens = text.replace(/[^a-z0-9.-]+/g, ' ').split(/\s+/).filter(Boolean);
+  if (!tokens.length) return null;
+
+  const brandKeys = Object.keys(BRAND_HOSTS);
+  const dotted = [];
+  const brands = new Set();
+  const narrowers = [];
+
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i];
+    // Two-token retrieval verbs: consume the pair.
+    if ((tok === 'bring' || tok === 'pull') && tokens[i + 1] === 'up') { i++; continue; }
+    if (HOST_LIKE_RE.test(tok)) {
+      if (!dotted.includes(tok)) dotted.push(tok);
+      continue;
+    }
+    if (Object.prototype.hasOwnProperty.call(HOST_SERVICE_NARROWERS, tok)) {
+      if (!narrowers.includes(tok)) narrowers.push(tok);
+      continue;
+    }
+    if (brandKeys.indexOf(tok) !== -1) { brands.add(tok); continue; }
+    if (SCOPE_TAILWORD_RE.test(tok)) continue;
+    if (SCOPE_VERACITY_RE.test(tok)) continue;
+    if (SCOPE_SITE_NOUN_RE.test(tok)) continue;
+    if (SCOPE_STOPWORD_RE.test(tok)) continue;
+    if (SCOPE_ACTION_RE.test(tok)) continue;
+    // Unaccounted content word: a topic or qualifier the metadata predicate
+    // cannot express. Defer the whole command.
+    return null;
+  }
+
+  const scopes = [];
+  const seen = new Set();
+  const pushScope = (hosts) => {
+    const key = hosts.join('|');
+    if (!seen.has(key)) { seen.add(key); scopes.push(hosts); }
+  };
+
+  for (const h of dotted) pushScope([h]);
+
+  if (narrowers.length) {
+    const hosts = [];
+    for (const w of narrowers) {
+      for (const h of HOST_SERVICE_NARROWERS[w]) {
+        if (!hosts.includes(h)) hosts.push(h);
+      }
+    }
+    pushScope(hosts);
+    // The narrowed surface REPLACES the generic family, never widens it.
+    brands.delete('google');
+    brands.delete('gmail');
+  }
+
+  for (const b of brandKeys) {
+    if (brands.has(b)) pushScope(BRAND_HOSTS[b].slice());
+  }
+
+  return scopes.length ? scopes : null;
+}
+
+// Execute a resolved scope plan against the LIVE tab list. All windows, same
+// scope as the semantic path -- "close all youtube.com tabs" means every
+// window. Browser-internal pages can never match a web host but are skipped
+// explicitly so a malformed URL can never slip through as a false positive.
+// Zero matches returns null: an honest abstain that lets the pipeline fall
+// through, never a fabricated empty success.
+async function executeDomainScopePlan(scopes, intent, isDestructive) {
+  const scopeHosts = [];
+  for (const grp of (scopes || [])) {
+    for (const h of (grp || [])) {
+      if (h && !scopeHosts.includes(h)) scopeHosts.push(h);
+    }
+  }
+  if (!scopeHosts.length) return null;
+
+  let allTabs = [];
+  try {
+    allTabs = await chrome.tabs.query({});
+  } catch (e) {
+    return null;
+  }
+
+  const regs = scopeHosts.map(h => registrable(h));
+  const tabIds = [];
+  const perTabReasons = {};
+  for (const tab of allTabs) {
+    const url = String((tab && tab.url) || '');
+    if (!url) continue;
+    if (/^(chrome:\/\/|edge:\/\/|about:|chrome-extension:\/\/)/i.test(url)) continue;
+    let host = '';
+    try {
+      host = new URL(url).hostname.toLowerCase();
+    } catch (e) { continue; }
+    if (!host) continue;
+    let hitIdx = -1;
+    for (let i = 0; i < scopeHosts.length; i++) {
+      if (hostMatchesScope(host, scopeHosts[i])) { hitIdx = i; break; }
+    }
+    if (hitIdx === -1) continue;
+    tabIds.push(tab.id);
+    perTabReasons[tab.id] =
+      `Domain scope: ${scopeHosts[hitIdx]} (registrable ${regs[hitIdx]})`;
+  }
+
+  if (!tabIds.length) return null;
+
+  return {
+    intent,
+    tabIds,
+    perTabReasons,
+    uncertain: [],
+    confidence: 1.0,
+    destructive: !!isDestructive,
+    path: 'syntactic-domain',
+    action_params: {}
+  };
+}
+
+
 // Intent -> (tool, args) mapping.
 //
 // There is no unpin_tabs / unmute_tabs handler: handlePinTabs and handleMuteTabs
@@ -130,6 +404,10 @@ const INTENT_RULES = [
   { intent: 'pin_tabs',         re: /\bpin(s|ned|ning)?\b/ },
   { intent: 'mute_tabs',        re: /\b(mute(s|d|ing)?|silence|turn\s+(the\s+)?sound\s+off)\b/ },
   { intent: 'reload_tabs',      re: /\b(reload|refresh)(s|ed|ing)?\b/ },
+  // Open/focus verbs surface ALREADY-open tabs rather than running a content
+  // search; "find"/"search" stay search_and_switch below because this rule
+  // simply does not match them.
+  { intent: 'open_tabs',        re: /\b(open(s|ed|ing)?|show(s|ing|n)?|focus(es|ed|ing)?|reveal(s|ed|ing)?|highlight(s|ed|ing)?|(bring|pull)\s+up)\b/ },
   { intent: 'search_and_switch', re: /\b(search|find|go\s+to|switch\s+to|jump\s+to|take\s+me\s+to)\b/ },
   { intent: 'sort_tabs',        re: /\b(sort|order|arrange|reorder)(s|ed|ing)?\b/ },
   { intent: 'group_tabs',       re: /\b(group|cluster|organi[sz]e|collect|gather|bundle|tidy)(s|ed|ing)?\b/ }
@@ -856,6 +1134,34 @@ async function runCommandPipeline(userCommand, windowId) {
     }
   }
 
+  // DOMAIN FAST PATH: a resolved domain scope plus a bulk-scoped shape is a
+  // pure metadata predicate -- execute it with no model call. Runs AFTER the
+  // complex-command gate above (so temporal/exception compounds keep their
+  // constraints) and BEFORE the syntactic classification branch. Zero matches
+  // falls through as an honest abstain.
+  const domainScopes = resolveDomainScopes(cmdLower);
+  if (domainScopes && isDomainScopeCommand(cmdLower)) {
+    tracer.step('Router', 'Domain fast path chosen', {
+      intent,
+      scopes: domainScopes.map(s => s.join('+')).join(', ')
+    });
+    reportProgress('retrieve', 'Matching domains…', 45);
+    // Retrieval-only phrasing ("show me my gmail tabs") maps to open_tabs when
+    // the intent ladder found no bulk verb anywhere in the command; background
+    // serves open_tabs plans as an OPEN_TABS_PICKER on any path.
+    const bulkVerbed = INTENT_RULES.some(r => r.re.test(cmdLower));
+    const scopeIntent = (!bulkVerbed && SCOPE_RETRIEVE_VERB_RE.test(cmdLower))
+      ? 'open_tabs' : intent;
+    const scopePlan = await executeDomainScopePlan(
+      domainScopes, scopeIntent, DESTRUCTIVE_INTENTS.has(scopeIntent));
+    if (scopePlan) {
+      tracer.done(`Domain fast path: ${scopePlan.tabIds.length} tab(s) via [${domainScopes.map(s => s.join('+')).join(', ')}]`);
+      reportProgress('ready', 'Action ready', 100);
+      return scopePlan;
+    }
+    tracer.step('DomainFastPath', 'No tabs matched the scopes; falling through');
+  }
+
   // smartPreFilter is only trustworthy for STRUCTURAL commands (domains,
   // duplicates, pinning, muting, sorting...). Generic topic queries like
   // "group all tabs about entertainment" must fall through to semantic search —
@@ -1036,10 +1342,49 @@ async function runAgentPipeline(cleanCommand, windowId, signals = [], tracer = n
 
     if (mgParsed && Array.isArray(mgParsed.buckets) && mgParsed.buckets.length > 0 && typeof self.assignMultiGroupsCore === 'function') {
       reportProgress('execute', 'Sorting tabs into custom groups…', 70);
+
+      // Time window BEFORE the NLI. If the command names a range ("...from the
+      // last hour", "...opened between 2 and 5 days ago"), resolve it to the set
+      // of tab ids that fall inside the window and hand that to the assigner, so
+      // the on-device classifier only ever scores tabs that already passed the
+      // time filter -- never the full window. No time phrase => allowTabIds stays
+      // null and every eligible tab is considered.
+      let allowTabIds = null;
+      const tf = (self.AgentPlanner && typeof self.AgentPlanner.detectTimeFilter === 'function')
+        ? self.AgentPlanner.detectTimeFilter(cleanCommand) : null;
+      if (tf && tf.value && typeof self.parseTimeWindow === 'function') {
+        const basis = (tf.opts && tf.opts.basis) || 'accessed';
+        const now = Date.now();
+        let since = 0, until = now;
+        if (tf.op === 'older_than') {
+          until = self.parseTimeRange ? self.parseTimeRange(tf.value, now) : now;
+          since = 0;
+        } else {
+          const w = self.parseTimeWindow(tf.value, now);
+          since = w.since; until = w.until;
+        }
+        const tabById = new Map(liveTabs.map(t => [t.id, t]));
+        const tsOf = (id) => {
+          const t = tabById.get(id);
+          const accessed = t && Number.isFinite(t.lastAccessed) ? t.lastAccessed : null;
+          const opened = Number.isFinite(getOpenedAt(id)) ? getOpenedAt(id) : null;
+          const chain = basis === 'opened' ? [opened, accessed] : [accessed, opened];
+          for (const v of chain) if (v != null) return v;
+          return null;
+        };
+        allowTabIds = liveTabs
+          .filter(t => { const ts = tsOf(t.id); return ts != null && ts >= since && ts < until; })
+          .map(t => t.id);
+        logStep('MultiGroupTime', 'Resolved time window before NLI', {
+          op: tf.op, value: tf.value, basis, matched: allowTabIds.length
+        });
+      }
+
       const res = await self.assignMultiGroupsCore({
         windowId,
         buckets: mgParsed.buckets,
-        restrict: mgParsed.restrict
+        restrict: mgParsed.restrict,
+        allowTabIds
       });
       logStep('MultiGroupAssign', 'Assignment result', {
         success: res?.success,
@@ -1068,7 +1413,13 @@ async function runAgentPipeline(cleanCommand, windowId, signals = [], tracer = n
   let plan = await self.AgentPlanner.buildFilterPlan(cleanCommand, planOpts);
   logStep('Planner', `Plan built (${plan.source})`, {
     intent: plan.intent,
-    filters: plan.filters?.map(f => `${f.type}:${f.op}:${f.value}`).join(', '),
+    // Read the V2 tree the executor actually consumes (plan.where), NOT a flat
+    // plan.filters — the current planner never emits `filters`, so logging that
+    // masked a stale-cache plan whose `where` was empty (it selected all tabs).
+    filters: [
+      ...((plan.where && plan.where.all) || []).map(f => `${f.field}:${f.op}:${f.value}`),
+      ...((plan.where && plan.where.none) || []).map(f => `not ${f.field}:${f.op}:${f.value}`)
+    ].join(', ') || '(none)',
     confidence: plan.confidence,
     durMs: Date.now() - tPlan0
   });
@@ -1082,6 +1433,28 @@ async function runAgentPipeline(cleanCommand, windowId, signals = [], tracer = n
     topicDurMs: exec.timings?.phaseB_topics_ms,
     passesSaved: exec.timings?.passesSaved
   });
+
+  const contract_violations = plan instanceof Error && plan.missing ? plan.missing : [];
+  const exception_effect = {
+      before: candidates.length, // or the size before phase B, but executor doesn't export it
+      after: exec.tabIds.length
+  };
+  
+  // Track telemetry that catches polarity loss
+  try {
+    if (self.Telemetry) {
+        self.Telemetry.log('plan_built', {
+           signals_detected: signals,
+           predicates_emitted: { 
+               include: plan && plan.where && plan.where.all ? plan.where.all.length : 0, 
+               exclude: plan && plan.where && plan.where.none ? plan.where.none.length : 0 
+           },
+           contract_violations,
+           exclusion_effect: exception_effect
+        });
+    }
+  } catch(e) {}
+
 
   if (exec.needsCorrection) {
     reportProgress('plan', 'Self-correcting filter plan…', 85);
@@ -1311,12 +1684,21 @@ self.retrieveCandidates = retrieveCandidates;
 self.reasonOverCandidates = reasonOverCandidates;
 self.runCommandPipeline = runCommandPipeline;
 self.setProgressTarget = setProgressTarget;
+// Domain fast path (additive; existing keys untouched).
+self.BRAND_HOSTS = BRAND_HOSTS;
+self.HOST_SERVICE_NARROWERS = HOST_SERVICE_NARROWERS;
+self.registrable = registrable;
+self.resolveDomainScopes = resolveDomainScopes;
+self.isDomainScopeCommand = isDomainScopeCommand;
+self.executeDomainScopePlan = executeDomainScopePlan;
 
 // Node-side export so the pure routing logic can be unit-tested without chrome.
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     detectIntent, isAmbiguousIntent, hasDomainPattern, classifyCommand, parseBookmarkAll,
     DOMAIN_PATTERN, INTENT_RULES, DESTRUCTIVE_INTENTS,
-    toolForIntent, deriveGroupName, INTENT_TO_TOOL, titleCase
+    toolForIntent, deriveGroupName, INTENT_TO_TOOL, titleCase,
+    BRAND_HOSTS, HOST_SERVICE_NARROWERS, registrable,
+    resolveDomainScopes, isDomainScopeCommand, executeDomainScopePlan
   };
 }

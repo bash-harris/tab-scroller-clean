@@ -70,6 +70,14 @@
   const OPEN_VERB = /\b(open|reopen|re-open|switch to|go to|take me to|bring up|pull up|jump to)\b/;
   const THE_TAB_WHERE = /\bthe (tab|page|one) (where|that|i)\b/;
 
+  // FOCUS OPEN -> activate/highlight tabs that are ALREADY open, picked by a
+  // filter ("open the programming tabs", "focus my youtube tabs", "show me the
+  // shopping tabs"). Distinct from find_open (content recall of a possibly-closed
+  // tab): here a focus verb is followed within a short span by the PLURAL noun
+  // "tabs", so "open the tab where I read X" (singular) stays with find_open and
+  // "open youtube.com" (navigation, no "tabs") never trips it.
+  const FOCUS_OPEN = /\b(open|focus|reveal|highlight|bring up|pull up|show me)\b[^.?!]{0,40}\btabs\b/;
+
   // MULTI_GROUP -> "in 3 groups", "split into groups", "group into X, Y, Z", "categorize into".
   const MULTI_GROUP = [
     /\b(\d+\s*(?:main\s*)?groups?)\b/i,
@@ -93,7 +101,7 @@
   /**
    * Classify a raw command.
    * @returns {{complex: boolean, signals: string[]}} signals is a subset of
-   *   ['temporal','exception','count_rank','state','find_open','multi_group'] in fixed order.
+   *   ['temporal','exception','count_rank','state','find_open','focus_open','multi_group'] in fixed order.
    */
   function isComplexCommand(cmd) {
     const s = String(cmd || '').toLowerCase();
@@ -103,6 +111,7 @@
     if (anyMatch(COUNT_RANK, s))  signals.push('count_rank');
     if (anyMatch(STATE, s))       signals.push('state');
     if (detectFindOpen(s))        signals.push('find_open');
+    if (FOCUS_OPEN.test(s))       signals.push('focus_open');
     if (anyMatch(MULTI_GROUP, s)) signals.push('multi_group');
     return { complex: signals.length > 0, signals };
   }

@@ -117,11 +117,35 @@
     const QUANTIFIED = /\b(all|every|everything|each)\b/i;
     const quantifiedEmpty = !concept && !domains.length && QUANTIFIED.test(cmd);
 
+    // "a sound action over every tab": the words before the quantifier are
+    // verbage ("turn off the sound"), not a topic filter, when everything
+    // AFTER the quantifier reduces to bare tab-words. The universe -- not the
+    // verbage -- is the target. A real topic after the quantifier ("all
+    // youtube tabs") keeps this false.
+    let suffixUniversal = false;
+    if (!isSelectAll && !quantifiedEmpty && !domains.length) {
+      const m = cmd.match(QUANTIFIED);
+      if (m) {
+        const reduced = cmd.slice(m.index + m[0].length)
+          .split(/[^a-z0-9']+/i).filter(Boolean)
+          .filter(w => !FILLER.has(w.toLowerCase()))
+          .join(' ');
+        suffixUniversal = reduced === '' || /^(tabs?|things|stuff)$/.test(reduced);
+      }
+    }
+
+    // "a bare unmute command": no quantifier anywhere, but an action verb plus a
+    // word that all strips to filler while tabs are still named -- the
+    // window itself is the target. Requiring the verb keeps a bare fragment
+    // ("my cricket tabs") from reading as everything.
+    const bareUniverse = !concept && !domains.length && found.length > 0 &&
+      /\b(tabs?|everything)\b/i.test(cmd);
+
     return {
       action: action || 'search_and_switch',
       concept,
       domains,
-      isSelectAll: isSelectAll || quantifiedEmpty,
+      isSelectAll: isSelectAll || quantifiedEmpty || suffixUniversal || bareUniverse,
       ambiguous,
       requiresConfirmation: action === 'close_tabs'
     };

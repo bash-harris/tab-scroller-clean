@@ -2597,15 +2597,36 @@
   outline: none;
 }
 
-.ts-mg-bucket-color-select {
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--ts-border);
-  background: var(--ts-bg);
-  color: var(--ts-text);
-  font-size: 12px;
-  font-weight: 600;
+.ts-mg-bucket-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.ts-mg-swatch {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
   cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.ts-mg-swatch:hover {
+  transform: scale(1.12);
+}
+
+.ts-mg-swatch:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ts-bg), 0 0 0 4px var(--ts-accent);
+}
+
+.ts-mg-swatch-selected {
+  border-color: var(--ts-text);
+  box-shadow: 0 0 0 2px var(--ts-bg), 0 0 0 4px var(--ts-accent);
 }
 
 .ts-mg-bucket-count {
