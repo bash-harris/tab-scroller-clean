@@ -44,7 +44,11 @@ const INTERNAL_IDS = new Set([47, 48]);
 // invalidates ONLY the stale entries (incremental reparse) instead of nuking
 // the whole cache and costing 15-25 minutes of fresh Ollama parses.
 const crypto = require('crypto');
+const Listwise = require(path.join(__dirname, '..', 'listwise.js'));
 const PROMPT_HASH = crypto.createHash('sha256').update(LlmQuery.SYSTEM).digest('hex').slice(0, 10);
+// Listwise verdicts get their own stamp (same pattern): an adjudication-prompt
+// edit invalidates only the '::lw' entries.
+const LW_PROMPT_HASH = crypto.createHash('sha256').update(Listwise.SYSTEM_PROMPT).digest('hex').slice(0, 10);
 function loadParseCache() {
   try {
     const raw = JSON.parse(fs.readFileSync(PARSE_CACHE, 'utf8'));
@@ -89,6 +93,28 @@ async function ollamaParse(cmd) {
       options: { temperature: 0, seed: 42, num_predict: 300 }
     }),
     signal: AbortSignal.timeout(90000)
+  });
+  const data = await res.json();
+  return data.response;
+}
+
+// Listwise adjudication channel (Tier 1.3). Same endpoint/model/options as
+// ollamaParse -- format:'json' KEPT because listwise wants JSON -- with a
+// tighter budget: the reply is one small object, not a parse schema.
+async function ollamaChat(system, user) {
+  const res = await fetch('http://localhost:11434/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'qwen2.5:latest',
+      system,
+      prompt: user,
+      stream: false,
+      format: 'json',
+      keep_alive: '30m',
+      options: { temperature: 0, seed: 42, num_predict: 200 }
+    }),
+    signal: AbortSignal.timeout(60000)
   });
   const data = await res.json();
   return data.response;
@@ -251,9 +277,26 @@ function bucketUnion(c, selectableIds) {
       if (!parsed) parsed = { intent: 'group_tabs', concepts: [], combine: 'union', expansions: {}, domains: [], confidence: 0.5, source: 'fallback' };
       msLlm += Date.now() - t0;
 
-      // --- Stage 3: cosine bands + zero-shot NLI ---
+      // --- Stage 3: cosine bands + zero-shot NLI (+ listwise cascade) ---
+      // callModel is cache-aware: listwise verdicts bank under key
+      // cmd+'::lw' with the adjudication PROMPT_HASH stamp, so a rerun never
+      // repays a settled comparative pick. The enabled flag is explicit --
+      // without it nli-select keeps today's byte-identical path.
       const tn = Date.now();
-      const res = await NliSelect.select(c.command, candidates, { query: parsed });
+      const lwKey = c.command + '::lw';
+      const callModel = async (system, user) => {
+        const hit = !fresh ? parseCache[lwKey] : null;
+        if (hit && hit.p === LW_PROMPT_HASH && typeof hit.reply === 'string') return hit.reply;
+        const reply = await ollamaChat(system, user);
+        parseCache[lwKey] = { reply, _t: Date.now(), p: LW_PROMPT_HASH };
+        saveParseCache(parseCache);
+        return reply;
+      };
+      const res = await NliSelect.select(c.command, candidates, {
+        query: parsed,
+        callModel,
+        listwise: { enabled: true }
+      });
       msNli += Date.now() - tn;
       source = source === 'llm' && parsed.source !== 'llm' ? parsed.source : source;
       sourceCounts[source] = (sourceCounts[source] || 0) + 1;
@@ -342,6 +385,9 @@ function bucketUnion(c, selectableIds) {
   ];
   gates.forEach(([l, ok]) => console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${l}`));
   console.log(`  GATES: ${gates.every(g => g[1]) ? 'ALL GREEN' : 'NOT MET'}`);
+
+  const lws = NliSelect.listwiseStats();
+  console.log(`  [listwise] escalated ${lws.escalated} times (${lws.adjudicated} adjudicated)`);
 
   console.log(`\n  failures (${failures.length}):`);
   for (const f of failures.slice(0, 40)) {

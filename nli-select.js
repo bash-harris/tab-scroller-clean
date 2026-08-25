@@ -67,6 +67,20 @@
     const planOps = () => PlanOpsMod ||
       (typeof self !== 'undefined' ? self.PlanOps : null);
 
+    // Tier 1.3 -- LISTWISE ADJUDICATION module, resolved lazily like planOps
+    // so load order never matters. Absence is a supported state: without it
+    // (or without an explicit opts.callModel + opts.listwise.enabled) the
+    // cascade is unreachable and today's pointwise path runs byte-identical.
+    let ListwiseMod = null;
+    try { ListwiseMod = require('./listwise.js'); } catch {}
+    const listwiseMod = () => ListwiseMod ||
+      (typeof self !== 'undefined' ? self.Listwise : null);
+
+    // Cascade telemetry, read by benches via NliSelect.listwiseStats().
+    //   escalated  = trigger conditions met and a model call was attempted
+    //   adjudicated= the verdict rebuilt the match set
+    const listwiseStats = { escalated: 0, adjudicated: 0 };
+
   // Evidence-identity distinctiveness: a token carried by >= 35% of the pool
   // is generic vocabulary ("error", "page", "tab"), not naming. Generic tokens
   // contribute ZERO identity evidence -- only distinctive tokens can bind a
@@ -1449,6 +1463,95 @@
       }
     }
 
+    // ---- LISTWISE ADJUDICATION CASCADE (Tier 1.3) -------------------------
+    //
+    // Pointwise NLI answers "does this tab, alone, entail the concept?" -- but
+    // the gold label often encodes a COMPARATIVE judgment ("which ONE"). When
+    // the surviving set is small and top-1 vs top-2 is nearly tied, absolute
+    // entailment cannot separate them; escalate ONCE to an injected model that
+    // sees ALL tied candidates in one compact table and returns chosen id(s).
+    //
+    // Gate (deliberately narrow -- only low-separation commands pay it):
+    //   * requires BOTH opts.callModel AND opts.listwise.enabled === true.
+    //     No ambient model: without the explicit flag escalation is
+    //     unreachable and behavior stays byte-identical to today.
+    //   * sits AFTER scoring/margins/filters on the scored semantic path
+    //     only -- veto / select-all / complement / qualifier-only paths all
+    //     returned earlier, so they can never escalate.
+    //   * matches.length in [2..12], margin(top1,top2) < LISTWISE_MARGIN,
+    //     >= 1 concept. Margin default is MEASURED, not the naive 0.15: the
+    //     remaining precision craters sit at 0.24-0.29 (a decoy that
+    //     out-scores gold, or trails it widely) -- at 0.15 the cascade can
+    //     never see them. NLI_LW_MARGIN env overrides for sweeps.
+    //   * SINGULAR-REFERENT SHAPE GUARD: the comparative judgment this
+    //     cascade resolves is "which ONE". Broad CLASS commands ("my cricket
+    //     tabs", "all news", "the video ones") name whole categories -- their
+    //     tight margins are normal cluster behavior, not referent ambiguity.
+    //     Measured across two prompt variants, adjudicating class commands
+    //     under-selected true members. Two-sided generic shape test:
+    //       POSITIVE: a determiner + singular page-type head noun
+    //         ("the tab where...", "that guide", "my markets portal").
+    //       NEGATIVE: quantity words / plural nouns anywhere ("all", "every",
+    //         "tabs", "pages", "stuff", "ones") veto the escalation, so
+    //         unknown class phrasings fail safe to today's pointwise result.
+    //     Both lists are structural English morphology -- no benchmark
+    //     strings, no tab ids, no domain topics.
+    // A null/failure verdict keeps the pointwise result untouched; rebuilt
+    // matches inherit their previous confidence with a '[listwise] ' reason
+    // prefix so downstream telemetry can see who decided.
+    const LISTWISE_SINGULAR_RE =
+      /\b(?:the|that|this|my|a|an)\s+(?:[a-z0-9'’-]+\s+){0,6}(?:tabs?|pages?|articles?|stories?|videos?|posts?|docs?|documents?|guides?|recipes?|repos?|streams?|sites?|files?|notes?|emails?|messages?|sheets?|reports?|forms?|charts?|maps?|dashboards?|portals?|logins?|viewers?|editors?|players?|tools?|apps?|websites?|blogs?|threads?|reviews?|tutorials?|demos?|homepages?|pdfs?|tickets?|issues?|wikis?|calendars?|inboxes?|playlists?|albums?|tracks?|games?|scores?|tables?|graphs?|decks?|slides?|boards?|cards?|profiles?|accounts?)\b/i;
+    const LISTWISE_CLASS_CUE_RE =
+      /\b(?:all|every|each|both|everything)\b|\b(?:tabs|pages|videos|articles|stories|documents|guides|docs|files|sites|streams|emails|notes|sheets|spreadsheets|reports|messages|posts|images|photos|links|bookmarks|ones|stuff|stuf|things|buckets|groups|categories)\b/i;
+    const LISTWISE_MARGIN = Number(process.env.NLI_LW_MARGIN) || 0.30;
+    if (process.env.NLI_DEBUG_LW &&
+        typeof opts.callModel === 'function' && opts.listwise && opts.listwise.enabled === true) {
+      console.log('[LWDBG]', JSON.stringify({
+        cmd: cmdStr, n: matches.length,
+        top: matches.slice(0, 6).map(m => [m.tabId, Number(m.confidence.toFixed(3))]),
+        margin: matches.length >= 2 ? Number((matches[0].confidence - matches[1].confidence).toFixed(3)) : null,
+        sing: LISTWISE_SINGULAR_RE.test(cmdStr), cls: LISTWISE_CLASS_CUE_RE.test(cmdLower),
+        concepts: q.concepts
+      }));
+    }
+    if (
+      typeof opts.callModel === 'function' &&
+      opts.listwise && opts.listwise.enabled === true &&
+      listwiseMod() && typeof listwiseMod().adjudicate === 'function' &&
+      matches.length >= 2 && matches.length <= 12 &&
+      (Number(matches[0].confidence || 0) - Number(matches[1].confidence || 0)) < LISTWISE_MARGIN &&
+      Array.isArray(q.concepts) && q.concepts.length >= 1 &&
+      LISTWISE_SINGULAR_RE.test(cmdStr) &&
+      !LISTWISE_CLASS_CUE_RE.test(cmdLower)
+    ) {
+      listwiseStats.escalated++;
+      try {
+        const rows = matches.map(m => {
+          const card = universe.find(x => x.tabId === m.tabId) ||
+            candidates.find(x => x.tabId === m.tabId) || {};
+          return { tabId: m.tabId, title: card.title || '', host: hostOf(card.url || card.domain || '') };
+        });
+        const adj = await listwiseMod().adjudicate({
+          command: cmdStr,
+          candidates: rows,
+          callModel: opts.callModel,
+          maxRows: opts.listwise.maxRows
+        });
+        if (adj && Array.isArray(adj.ids) && adj.ids.length) {
+          const prevById = new Map(matches.map(m => [m.tabId, m]));
+          const rebuilt = [];
+          for (const id of adj.ids) {
+            const m = prevById.get(id);
+            if (m && !rebuilt.includes(m)) rebuilt.push(m);
+          }
+          if (rebuilt.length) {
+            matches = rebuilt.map(m => ({ ...m, reason: '[listwise] ' + m.reason }));
+            listwiseStats.adjudicated++;
+          }
+        }
+      } catch { /* any cascade failure keeps the pointwise result */ }
+    }
+
     // Dual-intent commands (two verbs joined by an alternation) are genuinely
     // ambiguous about the ACTION even when the target set is crisp. The same
     // honesty rule covers MULTI-TOPIC unions that resolve to a handful of
@@ -2091,7 +2194,10 @@
     __setClassifierForTest(fn) { classifier = fn; loading = null; },
     // Test seam: the sense-gated facet ontology lookup, so tests can assert
     // suppression directly without running a scoring pass.
-    __facetPredicateForTest(text, cmd) { return facetPredicateFor(text, cmd); }
+    __facetPredicateForTest(text, cmd) { return facetPredicateFor(text, cmd); },
+    // Tier 1.3 telemetry: how many commands hit the listwise cascade and how
+    // many verdicts actually rebuilt the match set.
+    listwiseStats() { return { ...listwiseStats }; }
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = NliSelect;
   if (typeof self !== 'undefined') self.NliSelect = NliSelect;

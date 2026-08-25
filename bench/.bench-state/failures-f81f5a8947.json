@@ -1,12 +1,11 @@
 {
- "generatedAt": "2026-08-24T23:34:37.650Z",
+ "generatedAt": "2026-08-25T00:46:48.996Z",
  "dataFile": "golden-set.jsonl",
  "failures": [
   "GS-026",
   "GS-038",
   "GS-040",
   "GS-042",
-  "GS-054",
   "GS-061",
   "GS-068",
   "GS-073",
