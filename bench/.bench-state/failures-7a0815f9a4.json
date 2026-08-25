@@ -1,9 +1,10 @@
 {
- "generatedAt": "2026-08-25T00:48:54.028Z",
+ "generatedAt": "2026-08-25T12:54:57.627Z",
  "dataFile": "golden-set-v2.jsonl",
  "failures": [
   "GZ-006",
   "GZ-009",
+  "GZ-034",
   "GZ-062",
   "GZ-063",
   "GZ-064",

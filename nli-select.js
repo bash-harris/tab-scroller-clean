@@ -88,6 +88,18 @@
   // is unaffected (see the INCLUDE_FLOOR admission path).
   const GENERIC_DF_SHARE = 0.35;
 
+  // URL-taxonomy head nouns: tokens that name a DOCUMENT FORMAT or SITE
+  // GENRE, never a topic ("/document/", "/docs/" is how Google Drive spells
+  // its own product, on every tab it hosts). In a frozen pool their document
+  // frequency can sit far below the generic threshold while still being pure
+  // genre vocabulary, so the df census alone cannot see it (measured:
+  // "documents" at 4% pool df elected two Google-Docs roadmap tabs under a
+  // cryptocurrency command). Inside a MULTI-token concept's strongTag hit
+  // count these contribute ZERO -- the real content tokens must carry the
+  // identity on their own. Single-token concepts are untouched: there the
+  // exact tag/category equality branch already demands the whole concept.
+  const GENRE_IDENTITY_TOKENS = new Set(['document', 'doc']);
+
   // Exclude-side semantic depth: a paraphrased exclusion ("the interview ones",
   // a video tab with no literal "video" token) still resolves through the same
   // NLI machinery, but at a HIGHER floor than include and only when three
@@ -1884,11 +1896,12 @@
         // scam" on a free-gift-cards scam page: in. "fantasy football" on a
         // plain Premier-League table: out -- one shared word is not
         // identity). Single-token concepts keep exact tag/category equality.
-        // Token floor 3, matching directEvidence's own minimum: filtering
-        // short technical tokens demoted any two-word concept with a short
-        // head noun into the single-token whole-string-equality branch,
-        // where its tag-hit tab could never enter the match set.
-        const conceptWords = conceptLower.split(/[^a-z0-9]+/).filter(w => w.length >= 3);
+        // Token floor 2 (was 3): short technical tokens ("ai" in "ai
+        // models") are real vocabulary, but they are admitted ONLY through
+        // exact stem equality against the card's own tags or category --
+        // no prefix morphology, no title fuzzy matching -- so "ai" can elect
+        // an ai-tagged tab while never riding an unrelated title token.
+        const conceptWords = conceptLower.split(/[^a-z0-9]+/).filter(w => w.length >= 2);
         const tagStems = rawTagsOf(c).map(t => stem(String(t).toLowerCase()));
         const titleToksAll = String(c.title || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
         const labelArr = hostLabels(c);
@@ -1918,12 +1931,25 @@
           strongTag = tagStems.includes(stem(conceptLower)) || catLower === conceptLower || facetHit;
           strongTagViaTag = tagStems.includes(stem(conceptLower));
         } else if (conceptWords.length) {
-          const hits = conceptWords.filter(tok =>
-            tagStems.includes(stem(tok)) ||
-            titleToksAll.some(t => tokenRelated(t, tok)) ||
-            pathToks.some(p => p === stem(tok)) ||
-            labelArr.some(l => l === stem(tok)) ||
-            catLower === stem(tok)).length + (facetHit ? 1 : 0);
+          const hits = conceptWords.filter(tok => {
+            const sTok = stem(tok);
+            // Short-token admission (floor-2 complement): exact stem
+            // equality against tags/category ONLY -- precise enough that a
+            // 2-char token can never fake a hit off shared morphology.
+            if (tok.length < 3) {
+              return tagStems.includes(sTok) || catLower === sTok;
+            }
+            // Generic-token evidence discount: pool-wide df above the
+            // generic threshold, or an out-and-out genre head noun, counts
+            // ZERO toward strongTag hits -- "documents" in "cryptocurrency
+            // tax documents" is Google-Docs URL taxonomy, not evidence.
+            if (!isDistinct(tok, ctx.idf) || GENRE_IDENTITY_TOKENS.has(sTok)) return false;
+            return tagStems.includes(sTok) ||
+              titleToksAll.some(t => tokenRelated(t, tok)) ||
+              pathToks.some(p => p === stem(tok)) ||
+              labelArr.some(l => l === stem(tok)) ||
+              catLower === stem(tok);
+          }).length + (facetHit ? 1 : 0);
           strongTag = hits >= Math.min(2, conceptWords.length);
           strongTagViaTag = tagStems.filter(t => conceptWords.some(cw => stem(cw) === t)).length >= 1 &&
             hits >= Math.min(2, conceptWords.length);

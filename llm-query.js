@@ -154,11 +154,213 @@ Examples:
     'search_and_switch'
   ]);
 
+  // ---- SPAN-COVERAGE INVARIANT (M1) ---------------------------------------
+  //
+  // A parse has DRIFTED when content words the user typed never made it into
+  // any field the selector reads. The classic shape: "fresh ground coffee
+  // beans" truncated to concepts ["coffee"] -- the qualifiers that were
+  // supposed to constrain the topic silently vanished, and the selector then
+  // matched the broad term alone.
+  //
+  // coverage() tokenizes the command's CONTENT words (>3 chars, minus filler,
+  // action verbs, and time cues -- vocabulary below is generic English plus
+  // this domain's verbs, never benchmark text) and checks each against every
+  // span channel the parse exposes: concepts, expansions, domains, state[],
+  // exclude[]. Matching is stemmed-prefix so plural/gerund forms cover.
+  const COV_STOPWORDS = new Set([
+    'please', 'some', 'just', 'only', 'also', 'then', 'than', 'that', 'this',
+    'these', 'those', 'them', 'they', 'their', 'there', 'here', 'what',
+    'which', 'where', 'when', 'will', 'would', 'shall', 'should', 'could',
+    'must', 'might', 'have', 'has', 'had', 'been', 'being', 'were', 'does',
+    'done', 'doing', 'very', 'quite', 'really', 'want', 'wants', 'wanted',
+    'need', 'needs', 'needed', 'like', 'likes', 'thing', 'things', 'stuff',
+    'ones', 'into', 'onto', 'upon', 'about', 'above', 'below', 'over',
+    'under', 'again', 'once', 'more', 'most', 'much', 'many', 'lots', 'kind',
+    'kinda', 'sorta', 'every', 'everything', 'anything', 'something',
+    'nothing', 'each', 'either', 'neither', 'because', 'while', 'until',
+    'unless', 'whether', 'though', 'although', 'except', 'apart', 'other',
+    'than', 'instead', 'page', 'pages', 'tab', 'tabs', 'link', 'links',
+    'site', 'sites', 'website', 'websites', 'url', 'urls', 'address',
+    'addresses', 'window', 'windows', 'browser', 'browsers', 'folder',
+    'folders', 'name', 'names', 'named', 'from', 'with', 'without',
+    'toward', 'towards', 'whichever', 'whatever', 'whoever', 'whenever',
+    'wherever', 'right', 'still', 'already', 'around', 'away', 'back',
+    'down', 'current', 'currently',
+    // Relative-clause / meta-quote markers: they INTRODUCE content ("the tab
+    // containing X"), they are not content themselves. The descriptive-
+    // referent machinery downstream owns these shapes.
+    'containing', 'contains', 'titled', 'saying', 'telling', 'explaining',
+    'discussing', 'displaying', 'displayed', 'claiming', 'complaining',
+    'mentioning', 'mentioned', 'involving', 'featuring', 'carrying',
+    // Judgment fillers the selector cannot act on anyway.
+    'items', 'genuine', 'real', 'actual', 'legit', 'valid', 'important',
+    // Page-noun class the parser itself strips ("page, story"): counting them
+    // as content manufactured false drift on every "... article/story/post"
+    // command.
+    'article', 'articles', 'story', 'stories', 'post', 'posts', 'episode',
+    'episodes'
+  ]);
+  // Short core filler, unreachable by the >3-char token floor but needed as
+  // fuzzy targets so a TYPO of a filler ("alll") is recognized as filler too
+  // rather than as mysterious content.
+  const COV_CORE_FILLER = [
+    'all', 'and', 'the', 'my', 'your', 'our', 'his', 'her', 'its', 'you',
+    'for', 'now', 'new', 'old', 'top', 'two', 'both', 'any', 'get', 'got',
+    'not', 'but', 'out', 'off'
+  ];
+  const COV_INTENT_VERBS = new Set([
+    'open', 'opens', 'opened', 'opening', 'close', 'closes', 'closed',
+    'closing', 'group', 'groups', 'grouped', 'grouping', 'bookmark',
+    'bookmarks', 'bookmarked', 'bookmarking', 'pin', 'pins', 'pinning',
+    'unpin', 'unpins', 'unpinning', 'mute', 'mutes', 'muting', 'unmute',
+    'unmutes', 'unmuting', 'reload',
+    'reloads', 'reloaded', 'reloading', 'refresh', 'refreshes', 'refreshed',
+    'refreshing', 'sort', 'sorts', 'sorted', 'sorting', 'organize',
+    'organizes', 'organized', 'organizing', 'organise', 'organised',
+    'organising', 'arrange', 'arranged', 'arranging', 'archive', 'archives',
+    'archived', 'archiving', 'save', 'saves', 'saved', 'saving', 'switch',
+    'switches', 'switched', 'switching', 'search', 'searches', 'searched',
+    'searching', 'show', 'shows', 'showed', 'showing', 'reveal', 'reveals',
+    'revealed', 'revealing', 'highlight', 'highlights', 'highlighted',
+    'highlighting', 'find', 'finds', 'finding', 'gather', 'gathered',
+    'gathering', 'collect', 'collected', 'collecting', 'file', 'filed',
+    'filing', 'dump', 'dumped', 'dumping', 'wipe', 'wiped', 'wiping',
+    'clear', 'cleared', 'clearing', 'clean', 'cleaned', 'cleaning',
+    'silence', 'silenced', 'silencing', 'kill', 'killed', 'killing',
+    'split', 'splitting', 'divide', 'divides', 'divided', 'dividing',
+    'partition', 'partitioned', 'partitioning', 'separate', 'separated',
+    'separating'
+  ]);
+  // Note: the state ENUMS (pinned/unpinned/muted/unmuted/audible/duplicate)
+  // deliberately stay OUT of the verb set -- they are live tab properties the
+  // parse must account for in state[], so they count as content.
+  // ("pinning" stays a verb; it names the action, not the property.)
+  const COV_TIME_CUES = new Set([
+    'today', 'tomorrow', 'yesterday', 'week', 'weeks', 'hour', 'hours',
+    'day', 'days', 'minute', 'minutes', 'month', 'months', 'year', 'years',
+    'morning', 'afternoon', 'evening', 'night', 'earlier', 'later',
+    'recent', 'recently', 'past', 'last', 'since', 'during', 'ago',
+    'within', 'older', 'oldest', 'newer', 'newest'
+  ]);
+
+  // Content tokens only: the words whose presence a faithful parse must
+  // account for somewhere. A token that is itself a near-miss spelling of a
+  // filler/verb/cue ("alll", "cloes") is filler too -- fixing typos is the
+  // parser's whole job, so the command's own typo must not masquerade as an
+  // uncovered content span.
+  const COV_ALL_FILLER = [
+    ...COV_STOPWORDS, ...COV_INTENT_VERBS, ...COV_TIME_CUES, ...COV_CORE_FILLER
+  ];
+  function isFillerLike(w) {
+    if (COV_STOPWORDS.has(w) || COV_INTENT_VERBS.has(w) || COV_TIME_CUES.has(w)) return true;
+    if (w.length < 4) return true;
+    for (const v of COV_ALL_FILLER) if (nearWord(v, w)) return true;
+    return false;
+  }
+  function contentTokens(cmdText) {
+    return String(cmdText || '').toLowerCase().split(/[^a-z0-9]+/)
+      .filter(w => w.length > 3 && !/^\d+$/.test(w) && !isFillerLike(w));
+  }
+
+  // Light plural-only stem, mirroring nli-select's identity stemmer: never
+  // collapses across morphemes, so "news" stays "news".
+  function stemLite(w) {
+    let s = String(w || '').toLowerCase();
+    if (s.length >= 5 && /ies$/.test(s)) return s.slice(0, -3) + 'y';
+    if (s.length >= 5 && /(sses|shes|ches|xes)$/.test(s)) return s.slice(0, -2);
+    if (s.length >= 4 && /s$/.test(s) && !/ss$/.test(s)) return s.slice(0, -1);
+    return s;
+  }
+
+  function tokCovered(tok, hayWords) {
+    const t = stemLite(tok);
+    for (const h of hayWords) {
+      const hs = stemLite(h);
+      if (!t || !hs) continue;
+      if (hs === t) return true;
+      // Stemmed prefix match either direction ("read" evidences "reading"),
+      // floored at 4 chars so short tokens cannot ride unrelated prefixes.
+      if (t.length >= 4 && hs.startsWith(t)) return true;
+      if (hs.length >= 4 && t.startsWith(hs)) return true;
+      // Typo rescue parity with literalDomains: the parser FIXES spelling, so
+      // the command's misspelling counts as covered by its own correction.
+      if (Math.min(hs.length, t.length) >= 4 && nearWord(hs, t)) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Span-coverage invariant. Returns {covered, uncovered, ratio} where every
+   * content token of cmdText is accounted against the parse's spans.
+   */
+  function coverage(cmdText, parsed) {
+    const p = parsed || {};
+    const hay = [];
+    for (const c of Array.isArray(p.concepts) ? p.concepts : []) hay.push(...String(c).split(/[^a-z0-9]+/));
+    for (const terms of Object.values(p.expansions || {})) {
+      if (Array.isArray(terms)) for (const t of terms) hay.push(...String(t).split(/[^a-z0-9]+/));
+    }
+    for (const d of Array.isArray(p.domains) ? p.domains : []) hay.push(...String(d).split(/[^a-z0-9]+/));
+    for (const arr of [p.state, p.exclude]) {
+      for (const x of Array.isArray(arr) ? arr : []) hay.push(...String(x).split(/[^a-z0-9]+/));
+    }
+    const hayWords = hay.map(w => String(w || '').toLowerCase()).filter(Boolean);
+    const covered = [], uncovered = [];
+    for (const tok of contentTokens(cmdText)) {
+      (tokCovered(tok, hayWords) ? covered : uncovered).push(tok);
+    }
+    const total = covered.length + uncovered.length;
+    return { covered, uncovered, ratio: total ? covered.length / total : 1 };
+  }
+
   // Qualifier vocabularies. Mirrors the planner's time DSL (agent-planner.js:
   // today/yesterday/this_week/last_week/last_hour or N_unit) so both paths
   // speak the same language downstream.
   const TIME_ENUMS = new Set(['last_hour', 'today', 'yesterday', 'this_week', 'last_week']);
   const STATE_ENUMS = ['pinned', 'unpinned', 'audible', 'muted', 'duplicate'];
+
+  // ---- GRAMMAR-TIGHTENED DECODE (M3, REVERTED) ----------------------------
+  //
+  // M3 tried constraining Ollama decoding to this JSON-Schema object. It
+  // regressed golden-set-v2 (GZ-022, GZ-073) with only speculative robustness
+  // upside, so decode reverted to bare `format:'json'` (see defaultCallModel
+  // and golden-bench-real's ollamaParse). The schema is kept defined + exported
+  // so M3 can be re-enabled by one line if a later round justifies it; it is
+  // NOT currently used to decode.
+  const JSON_SCHEMA = {
+    type: 'object',
+    properties: {
+      intent: {
+        type: 'string',
+        enum: [...INTENTS]
+      },
+      concepts: { type: 'array', items: { type: 'string' }, maxItems: 4 },
+      combine: { type: 'string', enum: ['union', 'intersection'] },
+      expansions: {
+        type: 'object',
+        additionalProperties: { type: 'array', items: { type: 'string' }, maxItems: 4 }
+      },
+      domains: { type: 'array', items: { type: 'string' }, maxItems: 4 },
+      selectAll: { type: 'boolean' },
+      exclude: { type: 'array', items: { type: 'string' }, maxItems: 4 },
+      time: {
+        type: ['object', 'null'],
+        properties: {
+          basis: { type: 'string', enum: ['opened', 'accessed'] },
+          op: { type: 'string', enum: ['within', 'older_than'] },
+          value: { type: 'string' }
+        }
+      },
+      state: {
+        type: 'array',
+        items: { type: 'string', enum: STATE_ENUMS },
+        maxItems: 3
+      },
+      confidence: { type: 'number', minimum: 0, maximum: 1 }
+    },
+    required: ['intent', 'concepts', 'combine', 'expansions', 'domains',
+      'selectAll', 'exclude', 'time', 'state', 'confidence']
+  };
 
   // The model's output is untrusted: it can omit fields, invent an intent, or
   // return the wrong types. Validate into a known shape or reject outright --
@@ -237,7 +439,7 @@ Examples:
   }
 
   // True when a and b are the same word up to a single edit (substitution,
-  // insertion, deletion, or transposition-adjacent). Bounded two-pointer.
+  // insertion, deletion, transposition-adjacent). Bounded two-pointer.
   function withinOneEdit(a, b) {
     if (a === b) return true;
     if (Math.abs(a.length - b.length) > 1) return false;
@@ -250,6 +452,21 @@ Examples:
       else { i++; j++; }
     }
     return edits + (a.length - i) + (b.length - j) <= 1;
+  }
+
+  // withinOneEdit plus the one shape its two-pointer cannot see: a single
+  // ADJACENT TRANSPOSITION ("cloes" ~ "close"), which is two substitutions
+  // to that walk but one typo to a human keyboard.
+  function nearWord(a, b) {
+    if (withinOneEdit(a, b)) return true;
+    if (a.length === b.length && a.length >= 4) {
+      let i = 0;
+      while (i < a.length && a[i] === b[i]) i++;
+      if (i < a.length - 1 &&
+          a[i] === b[i + 1] && a[i + 1] === b[i] &&
+          a.slice(i + 2) === b.slice(i + 2)) return true;
+    }
+    return false;
   }
 
   // The model's domains are untrusted: it hallucinated cricbuzz.com for a
@@ -318,10 +535,287 @@ Examples:
     } catch { /* cache is an optimisation, never a requirement */ }
   }
 
+  // ---- SELF-CONSISTENCY REPARSE (M2) --------------------------------------
+  //
+  // The coverage gate (M1) flags drift; this is the repair. K additional
+  // parses at temperature 0.7 vote on intent; concepts, exclusions, and
+  // domains ACCUMULATE across the votes on top of the first parse (a pure
+  // union -- nothing the first parse read is dropped unless it covered
+  // nothing), while time/state stay head-bound scope facts. The merged
+  // reading replaces the first parse when it is a strict coverage x
+  // confidence improvement OR a pure superset of it. Parse-time only: the
+  // SYSTEM prompt is untouched.
+  const SC_K = 3;
+  const SC_TEMPERATURE = 0.7;
+  const SC_SEED_BASE = 1000;
+  const SC_SEED_STEP = 17;
+
+  // A qualifier phrase that CONTAINS a sibling concept ("organic coffee
+  // beans" vs "coffee") supersedes it. Keeping both makes the broad term
+  // orphan-select exactly the tabs the qualifier was meant to constrain --
+  // the sampled union must narrow to the most specific span.
+  function containsWholeWords(outer, inner) {
+    const o = String(outer || '').toLowerCase();
+    const i = String(inner || '').toLowerCase();
+    if (o === i || o.length <= i.length) return false;
+    const words = i.split(/[^a-z0-9]+/).filter(Boolean);
+    return words.length > 0 && words.every(w =>
+      new RegExp('(^|[^a-z0-9])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-z0-9]|$)').test(o));
+  }
+
+  function dedupeSubsumed(concepts) {
+    const out = [];
+    for (const c of concepts) {
+      const subsumed = concepts.some(o => o !== c && containsWholeWords(o, c));
+      if (!subsumed && !out.includes(c)) out.push(c);
+    }
+    return out;
+  }
+
+  async function selfConsistency(cmd, callModel, original, origCov) {
+    const prompt = `Command: "${cmd}"`;
+    const jobs = [];
+    for (let k = 0; k < SC_K; k++) {
+      jobs.push(callModel(SYSTEM, prompt, TIMEOUT_MS, {
+        temperature: SC_TEMPERATURE,
+        seed: SC_SEED_BASE + k * SC_SEED_STEP
+      }));
+    }
+    const settled = await Promise.allSettled(jobs);
+    const samples = [];
+    for (const r of settled) {
+      if (r.status !== 'fulfilled') continue;
+      try {
+        const m = String(r.value || '').match(/\{[\s\S]*\}/);
+        const v = m ? validate(JSON.parse(m[0])) : null;
+        if (v) samples.push(v);
+      } catch { /* an unparseable sample is simply not a vote */ }
+    }
+    if (!samples.length) return original;
+
+    // MODAL intent: count wins, mean confidence breaks ties, then
+    // lexicographic so the result never depends on object key order.
+    const tally = new Map();
+    for (const s of samples) {
+      const e = tally.get(s.intent) || { n: 0, confSum: 0 };
+      e.n += 1;
+      e.confSum += s.confidence;
+      tally.set(s.intent, e);
+    }
+    const modalIntent = [...tally.entries()].sort((a, b) =>
+      b[1].n - a[1].n || b[1].confSum - a[1].confSum || (a[0] < b[0] ? -1 : 1)
+    )[0][0];
+    const modalSamples = samples.filter(s => s.intent === modalIntent)
+      .sort((a, b) => b.confidence - a.confidence);
+    const head = modalSamples[0];
+
+    // UNION POLICY (R5 repair): the samples ADD readings, they never replace
+    // the first parse's. The original-parse concepts come FIRST so the cap
+    // cannot evict them, then every distinct sampled concept joins. An
+    // original reading with ZERO coverage has proven itself worthless and
+    // steps aside for the sampled union alone. Sibling qualifier phrases
+    // still supersede subsumed heads (dedupeSubsumed), and validate()'s cap
+    // is re-applied after the merge.
+    let uConcepts = [];
+    if (origCov.ratio > 0) {
+      for (const c of original.concepts) if (!uConcepts.includes(c)) uConcepts.push(c);
+    }
+    for (const s of samples) {
+      for (const c of s.concepts) if (!uConcepts.includes(c)) uConcepts.push(c);
+    }
+    uConcepts = dedupeSubsumed(uConcepts).slice(0, 4);
+
+    // Exclusions ACCUMULATE across the coherent (modal-intent) samples
+    // instead of collapsing to one sample's head: a survivor phrase one
+    // sample binds as "google docs" and another as "google.com" must yield
+    // BOTH exclusion tokens -- the resolver, not the merger, decides which
+    // binding carries evidence. Original tokens stay first so the cap keeps
+    // them. Domains union the same way: a sample that corrects a guessed TLD
+    // ("wikipedia.com" -> "wikipedia.org") must not lose the vote to the
+    // first reading; hallucination guards run downstream either way.
+    const uExclude = original.exclude.slice();
+    for (const s of modalSamples) {
+      for (const x of s.exclude) if (!uExclude.includes(x)) uExclude.push(x);
+    }
+    uExclude.splice(4);
+    const uDomains = original.domains.slice();
+    for (const s of modalSamples) {
+      for (const d of s.domains) if (!uDomains.includes(d)) uDomains.push(d);
+    }
+    uDomains.splice(4);
+
+    // Expansion union keyed by exact concept string; orphaned keys are dead
+    // weight downstream (the expansion channel reads expansions[concept]).
+    const uExp = {};
+    for (const s of samples) {
+      for (const [k, terms] of Object.entries(s.expansions)) {
+        uExp[k] = [...new Set([...(uExp[k] || []), ...terms])].slice(0, 4);
+      }
+    }
+    const expansions = {};
+    for (const c of uConcepts) if (uExp[c]) expansions[c] = uExp[c];
+
+    // Singular fields come from the head: the highest-confidence sample that
+    // carries the modal intent. time/state are scope facts,
+    // not votes -- they must come from ONE coherent reading, never merged.
+    const merged = {
+      intent: modalIntent,
+      concepts: uConcepts,
+      combine: head.combine,
+      expansions,
+      domains: uDomains,
+      // Universe claims are preserved asymmetrically: if the first parse
+      // acted on every tab, a sampled topic must not silently NARROW the
+      // action ("bookmark all tabs to the reading folder" -- the folder is a
+      // destination, not a topic). Keeping the claim is safe in the other
+      // direction too: downstream complement/exclusion machinery still scopes
+      // and subtracts survivors when the command names them.
+      selectAll: original.selectAll === true || head.selectAll === true,
+      exclude: uExclude,
+      time: head.time,
+      state: head.state.slice(),
+      confidence: Math.max(...modalSamples.map(s => s.confidence)),
+      source: 'llm'
+    };
+
+    const mcov = coverage(cmd, merged);
+    merged._coverage = mcov.ratio;
+    merged._needsReparse = mcov.ratio < 0.6 && merged.confidence < 0.8;
+
+    const origScore = origCov.ratio * original.confidence;
+    const scScore = mcov.ratio * merged.confidence;
+    // Two acceptance routes:
+    //   REPAIR -- the product must improve AND coverage itself must strictly
+    //   gain. Confidence alone is the model grading its own homework --
+    //   letting it override an equal-coverage first parse churned correct
+    //   concept phrases (measured: "satire news article" -> "satire news"
+    //   lost the category binding and a passing case). The union exists to
+    //   REPAIR drift, not to re-roll the dice.
+    //   SUPERSET -- a merge that PRESERVES every original span (concepts,
+    //   domains, exclusions) while only ADDING sampled readings can never
+    //   narrow the first parse; coverage cannot drop and downstream evidence
+    //   gates decide which reading actually elects members. Rejecting these
+    //   would discard exactly the corrective votes (a restored survivor
+    //   token, a fixed TLD) the sampling was bought for.
+    const supersetMerge =
+      mcov.ratio >= origCov.ratio &&
+      original.concepts.every(c => uConcepts.includes(c)) &&
+      original.domains.every(d => uDomains.includes(d)) &&
+      original.exclude.every(x => uExclude.includes(x));
+    if ((mcov.ratio > origCov.ratio && scScore > origScore) || supersetMerge) {
+      merged._sc = true;
+      return merged;
+    }
+    original._sc = true; // sampling ran; the first parse still won
+    return original;
+  }
+
+  /**
+   * One decode pass: call -> validate -> coverage gate -> conditional
+   * self-consistency resample. Shared by parse() (production, cache-wrapped)
+   * and by bench adapters that own their caching.
+   *
+   * opts.forceSample: true always resamples; 'auto' resamples whenever the
+   * first parse shows any drift signal (imperfect coverage or low
+   * confidence); falsy keeps the M1 gate only.
+   *
+   * callModel(system, prompt, timeout, sampleOpts) -> string.
+   */
+  async function decode(cmd, callModel, opts = {}) {
+    let parsed = null;
+    try {
+      const text = await callModel(SYSTEM, `Command: "${cmd}"`, TIMEOUT_MS);
+      const m = String(text || '').match(/\{[\s\S]*\}/);
+      if (m) parsed = validate(JSON.parse(m[0]));
+    } catch (e) {
+      console.warn('[LlmQuery] parse failed, using deterministic parser:', e.message);
+    }
+    if (!parsed) return null;
+
+    const cov = coverage(cmd, parsed);
+    parsed._coverage = cov.ratio;
+    parsed._needsReparse = cov.ratio < 0.6 && parsed.confidence < 0.8;
+
+    // SCOPE-RISK resample signals: shapes where the first parse had to GUESS
+    // a detail the samples can confirm or correct, and where a wrong guess
+    // silently breaks the command downstream --
+    //   guessed TLD: the command names the brand but not the dotted host
+    //   ("wikipedia" -> "wikipedia.com"); one wrong character empties the
+    //   selector's domain stage.
+    //   compound exclusion: multi-token survivor phrases ("google docs")
+    //   bind lexically only when their exact words appear; a sample that
+    //   reduces the same survivor to its site token ("google.com") is the
+    //   binding the complement actually needs.
+    const normCmd = normalizeCommand(cmd);
+    const guessedTld = Array.isArray(parsed.domains) && parsed.domains.some(d => {
+      const bare = String(d || '').toLowerCase().replace(/^www\./, '');
+      return bare.includes('.') && !normCmd.includes(bare);
+    });
+    const compoundExclude = Array.isArray(parsed.exclude) &&
+      parsed.exclude.some(x => String(x).trim().split(/[^a-z0-9]+/).filter(Boolean).length > 1);
+
+    const wantSample = parsed._needsReparse ||
+      opts.forceSample === true ||
+      (opts.forceSample === 'auto' &&
+        (cov.ratio < 1 || parsed.confidence < 0.8 || guessedTld || compoundExclude));
+    if (wantSample && typeof callModel === 'function') {
+      try {
+        parsed = await selfConsistency(cmd, callModel, parsed, cov);
+      } catch { /* any sampling failure keeps the first parse */ }
+    }
+    return parsed;
+  }
+
+  /**
+   * Deterministic post-guards every decoded parse must pass, wherever it was
+   * produced (parse()'s own path or a bench adapter): hallucinated domains
+   * die, open_tabs without an open-family verb downgrades, and select-all
+   * detection returns to the regex that owns it. Exported so callers outside
+   * this module reproduce production's exact reconciliation.
+   */
+  function reconcile(cmd, parsed) {
+    if (!parsed) return parsed;
+
+    // Hallucination guard: a domain the command never named must not reach the
+    // selector (see literalDomains).
+    parsed.domains = literalDomains(parsed.domains, cmd);
+
+    // open_tabs over-trigger guard: with open_tabs in the vocabulary the model
+    // sometimes tags any "pages/tabs" command as open_tabs even when no
+    // open-family verb is present ("u know those cricket pages" -> close/set
+    // semantics). The verb test mirrors INTENT_RULES in command-agent.js; when
+    // it fails, the deterministic ladder's reading (search_and_switch) stands.
+    if (parsed.intent === 'open_tabs' &&
+        !/\b(open|opening|show|showing|focus|focusing|reveal|highlight)\b|\b(bring\s+up|pull\s+up)\b/i.test(cmd)) {
+      parsed.intent = 'search_and_switch';
+    }
+
+    // The deterministic parser owns select-all detection: it is a reliable
+    // regex, and the model has no reason to be better at it. This also repairs
+    // a sampled union whose topic-shaped merge narrowed away a genuine
+    // universe claim ("bookmark all tabs to the reading folder": the folder
+    // destination is not a topic).
+    const C = (typeof self !== 'undefined' && self.ConceptCore) || require('./concept-core.js');
+    const detP = C.parseCommand(cmd);
+    parsed.isSelectAll = detP.isSelectAll;
+
+    // Bare-universe forms concept-core's quantifier regexes miss (a bare
+    // unmute command, a sound action over every tab). Every word strips to
+    // filler -- no topic left -- yet tabs are named, so the universe IS the
+    // target. A verb is required so a bare fragment cannot read as everything.
+    if (!parsed.isSelectAll && !detP.concept && !detP.domains.length &&
+        /\b(tabs?|everything)\b/i.test(cmd) &&
+        C.INTENT_VERBS.some(([v]) => new RegExp(`(^|[^a-z])${v}(?![a-z])`, 'i').test(cmd))) {
+      parsed.isSelectAll = true;
+    }
+    return parsed;
+  }
+
   /**
    * Parse a command into a structured query.
    *
-   * opts.callModel  async (system, prompt) -> string   (injected; testable in node)
+   * opts.callModel  async (system, prompt, timeout, sampleOpts) -> string
+   *                 (injected; testable in node)
    * opts.noCache    skip the cache (bench runs)
    *
    * Always resolves. On any failure returns the deterministic parse with
@@ -359,44 +853,14 @@ Examples:
     const callModel = opts.callModel || defaultCallModel;
     let parsed = null;
     try {
-      const text = await callModel(SYSTEM, `Command: "${cmd}"`, TIMEOUT_MS);
-      const m = String(text || '').match(/\{[\s\S]*\}/);
-      if (m) parsed = validate(JSON.parse(m[0]));
+      parsed = await decode(cmd, callModel, opts);
     } catch (e) {
       console.warn('[LlmQuery] parse failed, using deterministic parser:', e.message);
     }
 
     if (!parsed) return deterministic();
 
-    // Hallucination guard: a domain the command never named must not reach the
-    // selector (see literalDomains).
-    parsed.domains = literalDomains(parsed.domains, cmd);
-
-    // open_tabs over-trigger guard: with open_tabs in the vocabulary the model
-    // sometimes tags any "pages/tabs" command as open_tabs even when no
-    // open-family verb is present ("u know those cricket pages" -> close/set
-    // semantics). The verb test mirrors INTENT_RULES in command-agent.js; when
-    // it fails, the deterministic ladder's reading (search_and_switch) stands.
-    if (parsed.intent === 'open_tabs' &&
-        !/\b(open|opening|show|showing|focus|focusing|reveal|highlight)\b|\b(bring\s+up|pull\s+up)\b/i.test(cmd)) {
-      parsed.intent = 'search_and_switch';
-    }
-
-    // The deterministic parser owns select-all detection: it is a reliable
-    // regex, and the model has no reason to be better at it.
-    const C = (typeof self !== 'undefined' && self.ConceptCore) || require('./concept-core.js');
-    const detP = C.parseCommand(cmd);
-    parsed.isSelectAll = detP.isSelectAll;
-
-    // Bare-universe forms concept-core's quantifier regexes miss (a bare
-    // unmute command, a sound action over every tab). Every word strips to
-    // filler -- no topic left -- yet tabs are named, so the universe IS the
-    // target. A verb is required so a bare fragment cannot read as everything.
-    if (!parsed.isSelectAll && !detP.concept && !detP.domains.length &&
-        /\b(tabs?|everything)\b/i.test(cmd) &&
-        C.INTENT_VERBS.some(([v]) => new RegExp(`(^|[^a-z])${v}(?![a-z])`, 'i').test(cmd))) {
-      parsed.isSelectAll = true;
-    }
+    parsed = reconcile(cmd, parsed);
 
     if (!opts.noCache && cache) {
       cache[key] = { q: parsed, _t: Date.now() };
@@ -405,11 +869,12 @@ Examples:
     return parsed;
   }
 
-  async function defaultCallModel(system, prompt, timeout) {
+  async function defaultCallModel(system, prompt, timeout, sampleOpts) {
     const settings = (typeof self !== 'undefined' && self.readAiSettings)
       ? await self.readAiSettings() : {};
     const url = (settings.ollamaUrl || 'http://localhost:11434').replace(/\/$/, '');
     const model = settings.queryParserModel || settings.ollamaModel || 'qwen2.5:latest';
+    const so = sampleOpts && typeof sampleOpts === 'object' ? sampleOpts : {};
 
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), timeout);
@@ -418,8 +883,13 @@ Examples:
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model, system, prompt, stream: false, format: 'json',
-          options: { temperature: 0, seed: 42, num_predict: 300 }
+          model, system, prompt, stream: false,
+          format: 'json',
+          options: {
+            temperature: Number.isFinite(so.temperature) ? so.temperature : 0,
+            seed: Number.isFinite(so.seed) ? so.seed : 42,
+            num_predict: 300
+          }
         }),
         signal: ctrl.signal
       });
@@ -430,7 +900,7 @@ Examples:
     }
   }
 
-  const LlmQuery = { parse, validate, normalizeCommand, SYSTEM, literalDomains };
+  const LlmQuery = { parse, decode, reconcile, validate, normalizeCommand, SYSTEM, literalDomains, coverage, JSON_SCHEMA };
   if (typeof module !== 'undefined' && module.exports) module.exports = LlmQuery;
   if (typeof self !== 'undefined') self.LlmQuery = LlmQuery;
 })();
