@@ -155,7 +155,13 @@
   // ------------------------------------------------------------------
   const META_NOUN_SEG_RE =
     /\b(?:contain(?:s|ing)?|with|has|have|having)\s+the\s+(?:words?|terms?|phrases?)\s+(.+)$/i;
-  const TITLED_SEG_RE = /\btitled?\b\s+(.+)$/i;
+  const TITLED_SEG_RE = /\btitled\b\s+(.+)$/i;
+  // "whose title starts with sign in" / "title contains oauth" / "title is
+  // identical to another": "title(s)" is the SUBJECT of a relative clause
+  // here, not a quoting verb. The titled branch must stay silent or it
+  // shreds the real criterion into tokens.
+  const TITLE_SUBJECT_RE =
+    /\b(?:whose\s+)?titles?\s+(?:(?:is|are|be)\s+)?(?:starts?|contains?|includes?|identical|ends?|matches?)\b/i;
   // Legacy production shape: "word X in their title" names the token inline.
   const WORD_TAIL_RE =
     /\bwords?\s+([a-z0-9][a-z0-9'-]*)\s+(?:in|within|inside)\s+(?:their\s+|the\s+|its\s+)?titles?\b/i;
@@ -187,6 +193,7 @@
     const s = String(cmd || '');
     if (!s) return null;
     if (!ACTION_VERB_RE.test(s)) return null;
+    if (TITLE_SUBJECT_RE.test(s)) return null;
 
     let seg = null, single = null;
     let m = s.match(META_NOUN_SEG_RE);

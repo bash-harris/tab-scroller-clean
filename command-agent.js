@@ -95,7 +95,19 @@ function registrable(host) {
 // Scope host H matches candidate C iff they share a registrable domain, or C
 // literally lives under H's registrable domain. A spoof chain fails both:
 // its registrable root is the attacker's, not the impersonated brand's.
+//
+// EXACT-HOST SCOPE: a scope with >= 3 labels (docs.github.com, docs.google.com)
+// is a precise address typed by the user, not a brand. Registrable collapse
+// would drag every sibling subdomain of the brand's family in ("close tabs
+// from docs.github.com only" must not take the whole github org). Two-label
+// scopes keep the registrable semantics: "github.com" means the brand family.
 function hostMatchesScope(candidateHost, scopeHost) {
+  const scopeLabels = String(scopeHost || '').toLowerCase().replace(/^www\./, '').split('.').filter(Boolean);
+  if (scopeLabels.length >= 3) {
+    const h = String(candidateHost || '').toLowerCase();
+    const bare = String(scopeHost || '').toLowerCase().replace(/^www\./, '');
+    return !!h && (h === bare || h.endsWith('.' + bare));
+  }
   const cr = registrable(candidateHost);
   const sr = registrable(scopeHost);
   return !!cr && !!sr && (cr === sr || candidateHost.endsWith('.' + sr));

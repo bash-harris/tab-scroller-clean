@@ -13,6 +13,26 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+
+// Result cache: NLI stage + pool embeddings are deterministic given
+// (selection code, parse, pool). JSON-cache both, keyed on hashes, so repeat
+// runs skip the ~300s of model forward passes. Hashing the selection modules
+// means a builder's code change invalidates the cache automatically -- the
+// loop can never measure stale results.
+const DEPS = ['nli-select.js', 'plan-ops.js', 'concept-core.js', 'llm-query.js', 'facet.js', 'domain-priors.js'];
+const sha = s => crypto.createHash('sha256').update(s).digest('hex').slice(0, 16);
+const codeHash = sha(DEPS.map(f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8')).join('\n'));
+const poolHash = sha(fs.readFileSync(path.join(__dirname, 'suite-v3.pool.json'), 'utf8'));
+const RCACHE_EMB = path.join(__dirname, '.suite-v3-emb-cache.json');
+const RCACHE_RES = path.join(__dirname, '.suite-v3-result-cache.json');
+const resultCache = (() => {
+  try {
+    const j = JSON.parse(fs.readFileSync(RCACHE_RES, 'utf8'));
+    return (j.codeHash === codeHash && j.poolHash === poolHash) ? j.entries : {};
+  } catch { return {}; }
+})();
+const flushResultCache = () => fs.writeFileSync(RCACHE_RES, JSON.stringify({ codeHash, poolHash, entries: resultCache }, null, 1));
 
 global.self = global;
 require(path.join(__dirname, '..', 'concept-core.js'));
@@ -133,10 +153,19 @@ const CAT_NAMES = {
 
   // Same reasoning as llm-nli-integration: hand every card the embedding the
   // indexer would have stored, or the bench exercises the abstaining path.
+  // Embeddings cached per pool hash (pool is read-only gold, so a hit is safe).
   const { pipeline } = require('@xenova/transformers');
   const embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
   const embed = async s => Array.from((await embedder(s, { pooling: 'mean', normalize: true })).data);
-  for (const c of candidates) c.embedding = await embed(NliSelect.tabText(c));
+  let embCache = {};
+  try { embCache = JSON.parse(fs.readFileSync(RCACHE_EMB, 'utf8')); } catch {}
+  if (embCache.poolHash !== poolHash) embCache = { poolHash, texts: {} };
+  for (const c of candidates) {
+    const key = NliSelect.tabText(c);
+    c.embedding = embCache.texts[key] || await embed(key);
+    embCache.texts[key] = c.embedding;
+  }
+  fs.writeFileSync(RCACHE_EMB, JSON.stringify(embCache));
   NliSelect.setEmbedder(embed);
 
   const label = [
@@ -184,9 +213,26 @@ const CAT_NAMES = {
       if (query.source === 'fallback') fallbacks++;
     }
 
-    const t1 = Date.now();
-    const res = await NliSelect.select(c.command, candidates, query ? { query } : {});
-    nliMs += Date.now() - t1;
+    // Result cache keyed on (code, pool, command, parse). Parse enters the key
+    // so a changed parse after cache eviction still selects honestly.
+    const rkey = sha(c.command + '|' + JSON.stringify(query) + '|' + (NO_LLM ? 'floor' : 'ceil'));
+    const cached = resultCache[rkey];
+    let res, nliElapsed = 0, hit = false;
+    if (cached && Array.isArray(cached.matches) && Array.isArray(cached.mode)) {
+      res = { matches: cached.matches, mode: cached.mode[0] };
+      hit = true; cacheHits++;
+    } else {
+      const t1 = Date.now();
+      res = await NliSelect.select(c.command, candidates, query ? { query } : {});
+      nliElapsed = Date.now() - t1;
+      nliMs += nliElapsed;
+      resultCache[rkey] = {
+        matches: res.matches.map(m => ({ tabId: m.tabId, confidence: m.confidence, reason: m.reason })),
+        mode: [res.mode]
+      };
+      flushResultCache();
+      cacheMisses++;
+    }
 
     const got = new Set(res.matches.filter(m => m.confidence >= 0.5).map(m => m.tabId));
     const b = bucketOf(c);
@@ -216,7 +262,7 @@ const CAT_NAMES = {
     console.log(`cat ${String(cat).padStart(2)} ${CAT_NAMES[cat].padEnd(22)} set-exact ${pct(slot.exact, slot.n).padEnd(18)} violations ${slot.viol}`);
   }
 
-  console.log(`\nllm ${llmMs}ms (${cacheHits} cached, ${cacheMisses} fresh, ${fallbacks} fallback) | nli ${nliMs}ms`);
+  console.log(`\nllm ${llmMs}ms (${cacheHits} cache hits, ${cacheMisses} fresh) | nli ${nliMs}ms${resultCache && Object.keys(resultCache).length ? ` | result-cache ${Object.keys(resultCache).size} entries, code ${codeHash}` : ''}`);
   if (failures.length) {
     console.log(`\n-- failures (${failures.length}) ---------------------------------------------`);
     for (const f of failures) {

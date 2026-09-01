@@ -393,6 +393,18 @@
     return SECOND_LEVEL.has(last2) ? parts.slice(-3).join('.') : last2;
   }
   function hostMatchesScope(host, scopeHost) {
+    // EXACT-HOST SCOPE: a scope token with >= 3 labels (docs.github.com,
+    // docs.google.com) is a precise address, not a brand. Registrable
+    // collapse would drag every sibling subdomain of the brand's family in
+    // ("close tabs from docs.github.com only" must not take the whole github
+    // org). Two-label scopes keep the registrable semantics: "github.com"
+    // means the whole brand family, exactly as before.
+    const scopeLabels = String(scopeHost || '').replace(/^www\./, '').split('.').filter(Boolean);
+    if (scopeLabels.length >= 3) {
+      const h = String(host || '').toLowerCase();
+      const bare = String(scopeHost || '').toLowerCase().replace(/^www\./, '');
+      return h === bare || h.endsWith('.' + bare);
+    }
     const h = registrable(host), s = registrable(scopeHost);
     return h === s || host.endsWith('.' + s);
   }
@@ -1011,6 +1023,218 @@
       matches: universe.map(c => ({ tabId: c.tabId, reason, confidence: conf }))
     });
 
+    // ---- Deterministic literal gates --------------------------------------
+    // These command shapes name a literal structural predicate, not a topic.
+    // Entailment approximates them badly (a URL token is a string test; a
+    // group name is an exact label), so they resolve here, before any scoring.
+    // Each gate is inert unless its own distinctiveness check passes; a gate
+    // that finds nothing falls through to the normal pipeline unchanged.
+
+    // URL-CONTAINS. "close tabs whose url contains utm_source" is a substring
+    // test over candidate URLs -- the same predicate background.js's filter
+    // engine owns -- unreachable through the semantic layer because entailment
+    // scores tab TEXT, and a query parameter never reaches it. Fire only when
+    // the literal is DISTINCTIVE: present in >= 1 candidate URL but far from
+    // generic (< 30% of the pool). "com" or "http" never qualify.
+    {
+      const um = cmdStr.match(/\b(?:urls?|links?|addresses?)\s+(?:that\s+|which\s+)?(?:contains?|includes?|has|having|with)\s+([a-z0-9][a-z0-9_.-]*)/i);
+      if (um) {
+        const token = um[1].toLowerCase().replace(/^[.'"-]+|[.'"-]+$/g, '');
+        if (token.length >= 3) {
+          const hits = candidates.filter(c => String(c.url || '').toLowerCase().includes(token));
+          if (hits.length && hits.length / candidates.length < 0.30) {
+            return allMatches(hits, `URL contains: ${token}`);
+          }
+        }
+      }
+    }
+
+    // TITLE LITERAL. "title contains oauth" / "with concurrency in the title"
+    // name an exact title-token test -- the meta-quote machinery (plan-ops)
+    // covers "the word X" phrasings but not these relative-clause shapes.
+    // Every token must word-boundary hit the title, and each token must be
+    // distinctive across the pool's titles, otherwise the clause is too
+    // generic to own the command and the semantic path keeps it.
+    {
+      const sm = cmdStr.match(/\btitles?\s+starts?\s+with\s+(.+)$/i);
+      if (sm) {
+        const lit = sm[1].trim().toLowerCase().replace(/^["']+|["']+$/g, '');
+        if (lit.length >= 3) {
+          const hits = candidates.filter(c => String(c.title || '').toLowerCase().startsWith(lit));
+          if (hits.length) return allMatches(hits, `Title starts with: ${lit}`);
+        }
+      }
+      let phrase = null;
+      const m1 = cmdStr.match(/\btitles?\s+(?:contains?|containing|includes?|has|having|with)\s+(.+)$/i);
+      if (m1) phrase = m1[1];
+      if (!phrase) {
+        const m2 = cmdStr.match(/\b(?:contains?|containing|includes?|has|having|with)\s+(.+?)\s+(?:in|within|inside)\s+(?:the\s+|their\s+|its\s+)?titles?\b/i);
+        if (m2) phrase = m2[1];
+      }
+      if (phrase) {
+        const stops = new Set(['the', 'a', 'an', 'and', 'or', 'both', 'either',
+          'neither', 'not', 'in', 'with', 'has', 'have', 'having', 'my', 'their', 'its', 'all']);
+        const toks = phrase.toLowerCase().split(/[^a-z0-9]+/)
+          .filter(t => t.length >= 3 && !stops.has(t));
+        if (toks.length) {
+          const distinct = toks.every(t => {
+            const df = candidates.filter(c => wordHit(t, c.title)).length;
+            return df >= 1 && df / candidates.length < 0.30;
+          });
+          if (distinct) {
+            const hits = candidates.filter(c => toks.every(t => wordHit(t, c.title)));
+            if (hits.length) return allMatches(hits, `Title contains: ${toks.join(' + ')}`);
+          }
+        }
+      }
+    }
+
+    // CHROME NEW-TAB PAGES. "chrome newtab pages" names a URL scheme, not a
+    // topic; no entailment signal can reach chrome:// URLs (no title, no
+    // content). Resolve to the newtab URLs directly.
+    if (/\bchrome\b[^,;]{0,12}\bnew\s?tabs?\b/i.test(cmdStr) || /chrome:\/\/newtab/i.test(cmdStr)) {
+      const hits = candidates.filter(c => /^chrome:\/\/newtab/i.test(String(c.url || '').trim()));
+      if (hits.length) return allMatches(hits, 'Chrome new-tab pages');
+    }
+
+    // GROUP NAME. "mute all tabs in the cricket group" is an exact group-label
+    // membership test -- the same metadata predicate as a domain scope, but
+    // scored today through entailment on "cricket", which drags every sports
+    // tab in. Fire only when a group with that exact name exists in the pool;
+    // "in grey colored groups" (color adjectives, plural) finds no such group
+    // and stays with the normal path.
+    {
+      const gm = cmdStr.match(/\bin (?:the |my |our |their )?([a-z0-9][a-z0-9' -]*?) groups?\b/i);
+      if (gm) {
+        const name = gm[1].trim().toLowerCase();
+        const hits = candidates.filter(c => String(c.groupName || '').toLowerCase() === name);
+        if (hits.length) return allMatches(hits, `Group: ${name}`);
+      }
+    }
+
+    // CONTENT CONJUNCT. "tabs ... that contain X" / "tabs ... containing X" /
+    // "tabs ... with X" where X is a page-CONTENT phrase (c++ code, downloadable
+    // pdfs, an email address) is a body word-boundary test, not a topic: the
+    // candidate's BODY must carry the literal evidence. Entailment on the
+    // pooled text muddles this shape (the bing SERP for "c++ threading" was
+    // bookmarked for "containing c++ code"; the tag page rode its c++ title in).
+    // Guards keep the gate honest:
+    //   - the command must not ALREADY name its criteria in title/url/domain
+    //     terms ("in the title", "url contains") -- those clauses own it;
+    //   - the conjunct must not be a tag-criteria meta phrase ("with the cpp
+    //     tag" is a taxonomy ask, not body text);
+    //   - the head/content words of X must be DISTINCTIVE (present in < 30% of
+    //     pool identities) and must hit >= 1 candidate body -- otherwise the
+    //     clause is generic vocabulary and the semantic path keeps the command.
+    // Two compositions: when the parse concepts are subsumed by the conjunct
+    // phrase, the conjunct IS the whole criterion (replace); otherwise it is an
+    // additional AND over the scored matches (intersect).
+    let conjFilter = null;
+    {
+      let conj = null;
+      const c1 = cmdStr.match(/\b(?:tabs?|pages?)\s+containing\s+([^,;.]+)$/i);
+      const c2 = cmdStr.match(/\b(?:tabs?|pages?)\b[^,;]{0,48}?\b(?:that\s+|which\s+)?contains?\s+([^,;.]+?)(?=\s+(?:but|that|which|except|are|is)\b|$)/i);
+      const c3 = cmdStr.match(/\b(?:tabs?|pages?)\s+with\s+([^,;.]+)$/i);
+      if (c1) conj = c1[1];
+      else if (c2) conj = c2[1];
+      else if (c3) conj = c3[1];
+      if (conj) {
+        const clauseOwned =
+          /\bin\s+(?:the\s+|their\s+|its\s+)?(?:titles?|urls?|links?|addresses?|domains?)\b/i.test(cmdStr) ||
+          /\b(?:titles?|urls?|links?|addresses?)\s+(?:contains?|starts?|includes?)\b/i.test(cmdStr);
+        const tagCriteria = /\bthe\s+[a-z0-9-]+\s+tags?\b/i.test(conj);
+        // Keep '+' compounds ("c++") intact -- the deterministic tokenizer must
+        // not shred the one token the command is about.
+        const conjToks = conj.toLowerCase().split(/[^a-z0-9+]+/)
+          .filter(t => t.length >= 2 && !['a', 'an', 'the', 'and', 'or', 'both'].includes(t));
+        const headToks = conjToks.filter(t => t.length >= 3);
+        if (!clauseOwned && !tagCriteria && headToks.length && conjToks.length <= 3) {
+          const idfHas = t => candidates.some(c => idTokensOf(c).includes(stem(t)) || idTokensOf(c).includes(t));
+          const distinctive = headToks.every(t => {
+            let df = 0;
+            for (const c of candidates) {
+              const idt = idTokensOf(c);
+              if (idt.includes(stem(t)) || idt.includes(t)) df++;
+            }
+            return df / candidates.length < 0.30;
+          });
+          if (distinctive && conjToks.some(t => idfHas(t))) {
+            // Body test: word-boundary hit with plural tolerance and a bounded
+            // morphology fallback ("download" evidences "downloadable").
+            const conjBodyHit = (tok, c) => {
+              const body = [c.mainText || '', c.title || '', c.url || ''].join(' ').toLowerCase();
+              const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const bL = /\+/.test(tok) ? '(^|[^a-z0-9+])' : '(^|[^a-z0-9])';
+              const bR = /\+/.test(tok) ? '([^a-z0-9+]|$)' : '([^a-z0-9]|$)';
+              if (new RegExp(bL + esc(tok) + bR, 'i').test(body)) return true;
+              const stemTok = /s$/.test(tok) && !/ss$/.test(tok) ? tok.slice(0, -1) : tok;
+              if (stemTok !== tok &&
+                  new RegExp(bL + esc(stemTok) + 's?' + bR, 'i').test(body)) return true;
+              if (tok.length >= 5) {
+                return body.split(/[^a-z0-9]+/).some(t => tokenRelated(t, tok));
+              }
+              return false;
+            };
+            conjFilter = c => conjToks.every(t => conjBodyHit(t, c));
+            // REPLACE when the parse's concepts add nothing beyond the conjunct
+            // ("bookmark tabs containing c++ code": the conjunct is the whole
+            // criterion). INTERSECT when a separate topic rides along ("tabs
+            // about c++ that contain code": c++ scopes, code narrows).
+            const conceptToks = new Set();
+            for (const con of ((q.concepts && q.concepts.length) ? q.concepts : (det.concept ? [det.concept] : []))) {
+              for (const w of String(con).toLowerCase().split(/[^a-z0-9+]+/)) {
+                const sw = stem(w);
+                if (sw.length >= 2) conceptToks.add(sw);
+              }
+            }
+            const conjStems = new Set(conjToks.map(stem));
+            const replaceMode = conceptToks.size > 0 &&
+              [...conceptToks].every(t => conjStems.has(t)) && conjStems.size >= 2;
+            if (replaceMode) {
+              let hits = candidates.filter(conjFilter);
+              if (hits.length && domains.length) hits = matchDomains(hits, domains, cmdStr);
+              if (hits.length) {
+                return allMatches(hits, `Content contains: ${conjToks.join(' + ')}`);
+              }
+              // Empty conjunct set: the clause owns nothing here -- the normal
+              // pipeline's answer is better than an empty assertion.
+            }
+          }
+        }
+      }
+    }
+
+
+    // AMBIGUOUS MULTI-DOMAIN AGE SCOPE -> ABSTAIN. "close old github and
+    // stack overflow tabs about c++" attaches a vague age word ("old") to TWO
+    // independent site scopes; there is no defensible reading of which site
+    // the age modifies, and the parser's best-guess window (older_than
+    // 1_week) silently picks one -- measured: it selected a tab the gold
+    // refuses. When >= 2 DISTINCT named domain scopes meet a vague age word
+    // with NO explicit comparative frame ("older than a week" keeps its
+    // parsed window and runs normally), the honest answer is the empty set.
+    if (domains.length >= 2 &&
+        /\b(old|new|newer|newest|oldest|recent|recently|stale|aged)\b/i.test(cmdStr) &&
+        !/\b(?:older|newer)\s+than\b|\b\d+\s*(?:minute|hour|day|week|month|year)s?\b|\b(?:last|past|within)\b|\b(?:yesterday|today|this week|last week|this morning)\b/i.test(cmdStr)) {
+      const normCmdD = cmdLower.replace(/[^a-z0-9.\s]/g, ' ').replace(/\s+/g, ' ');
+      const collapsedCmdD = normCmdD.replace(/[^a-z0-9]/g, '');
+      // Count distinct BRANDS, not registrable domains: one brand's regional
+      // family (amazon.com/.in/.co.uk/.de) is ONE scope, while github vs
+      // stack overflow are two.
+      const regs = new Set();
+      for (const d of domains) {
+        const bare = String(d || '').toLowerCase().replace(/^www\./, '');
+        const label = bare.split('.')[0];
+        if (label && (collapsedCmdD.includes(label) || collapsedCmdD.includes(bare.replace(/[^a-z0-9]/g, '')))) {
+          regs.add(registrable(bare).split('.')[0]);
+        }
+      }
+      if (regs.size >= 2) {
+        return { decision: 'final', mode: 'abstain_ambiguous_scope', matches: [], needDetails: [] };
+      }
+    }
+
+
     // ---- Deterministic qualifier stage -----------------------------------
     // Order: domain scope -> time window -> tab state -> select-all/exclude.
     let universe = candidates;
@@ -1195,7 +1419,7 @@
           // a quantified-topic exception acts on TOPIC minus X.
           const confById = new Map(scopedMatches.map(m => [m.tabId, m.confidence]));
           const baseCards = scopedMatches.map(m => stateKept.find(c => c.tabId === m.tabId)).filter(Boolean);
-          const kept = baseCards.filter(c => !excludedIds.has(c.tabId));
+          const kept = baseCards.filter(c => !excludedIds.has(c.tabId) && (!conjFilter || conjFilter(c)));
           return {
             decision: 'final',
             mode: `Scoped complement of: ${topicExcl.join(', ')}`,
@@ -1389,6 +1613,17 @@
     });
 
     let { matches } = scored;
+
+    // Content-conjunct intersect (non-replace mode): a scored match must ALSO
+    // carry the conjunct's body evidence ("tabs about c++ that contain code
+    // but are not videos" keeps only c++ tabs whose body carries "code").
+    if (conjFilter && matches.length) {
+      matches = matches.filter(m => {
+        const c = universe.find(x => x.tabId === m.tabId) ||
+          candidates.find(x => x.tabId === m.tabId);
+        return c ? conjFilter(c) : false;
+      });
+    }
 
     // Zero-corroboration abstain: entailment never got warm ANYWHERE, so the
     // topic names no real set here ("fantasy football" max-entailment .04,
@@ -2077,6 +2312,10 @@
   async function resolveExclusions(phrases, universe, cmdLower, opts = {}) {
     const excludedIds = new Set();
     let evidenceFound = false;
+    // Per-call facet cache shared by the type-word lexical channel below
+    // (resolveExclusions runs once per command; building a facet per tab per
+    // phrase would otherwise be O(phrases x tabs) Facet.build calls).
+    const typeFacetCache = new Map();
 
     async function semScore(phrase, c) {
       let s = scoreCache.get(sha(phrase + '||' + tabText(c)));
@@ -2105,6 +2344,23 @@
         if (cat === p || tags.includes(p)) return 2;
       } else if (cat === phrase || tags.some(t => wordHit(phrase, t))) {
         return 2;
+      }
+      // TYPE-WORD exclusions ("not videos", "except pdfs") are structural
+      // media facts, not topics. "video" names a media facet the candidate
+      // carries only in its tags/category/URL; entailment on the pooled text
+      // often reads a code Q&A as "about video" (measured inversion: the
+      // c++ VIDEOS were kept, the code thread excluded). A facet/type word
+      // satisfied by the card's own structural evidence is lexical-grade
+      // exclusion evidence; absent structural evidence it elects nothing.
+      if (Facet) {
+        try {
+          if (!typeFacetCache.has(c.tabId)) typeFacetCache.set(c.tabId, Facet.build(c));
+          const f = typeFacetCache.get(c.tabId);
+          if (f) {
+            const pred = facetPredicateFor(String(phrase).toLowerCase().replace(/s$/, ''), cmdLower);
+            if (pred && pred(f)) return 2;
+          }
+        } catch { /* facet build is best-effort; lexical channels continue */ }
       }
       // Host labels only: subdomain + registrable labels joined. "docs" lives
       // in docs.google.com's labels; mail.google.com's labels never spell
