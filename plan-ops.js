@@ -70,16 +70,28 @@
   // ------------------------------------------------------------------
   const SUPERLATIVE_WORD_RE = /\b(oldest|earliest|first|newest|latest|most\s+recent|last)\b/i;
   // "last"/"past" + duration is a WINDOW, not an extreme pick.
-  const DURATION_WINDOW_RE = /\b(?:last|past|within)\s+(?:\d+|a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty|fifty|sixty)\s*(?:minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?)\b/i;
+  const DURATION_WINDOW_RE = /\b(?:last|past|within)\s+(?:\d+|a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty)\s*(?:minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?)\b/i;
   // The determiner must modify a tab/topic head noun within a few words, so
   // bare discourse uses of first/last can never hijack a command.
   const HEAD_NOUN_RE = /\b(?:tabs?|pages?|sites?|articles?|videos?|streams?|stories?|posts?|docs?|documents?|repos?|tutorials?|guides?|recipes?|news|emails?|files?|notes?|reports?|reviews?|threads?|tickets?|photos?|images?|links?|urls?|bookmarks?|items?|windows?|channels?|games?|songs?|episodes?|tools?|utilities?|maps?|charts?|ones?|mixes?|dashboards?|searches?|results?)\b/i;
 
+  // ORDINAL COUNT: "the eight oldest tabs" ranks and LIMITS, it does not pick
+  // one. A count word adjacent BEFORE the superlative ("three most recently
+  // used cricket tabs") names N; its absence keeps the historical single-
+  // extreme semantics untouched.
+  const COUNT_WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6,
+    seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, fifteen: 15, twenty: 20 };
+  const ORDINAL_COUNT_RE =
+    /\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty)\s+(oldest|earliest|newest|latest|most\s+recent(?:ly)?(?:\s+(?:used|accessed|viewed|visited))?)\b/i;
+
   /**
-   * Parse the superlative spec from a command: {word, dir, basis} or null.
-   * dir: 'asc' picks the MIN timestamp (oldest family), 'desc' the MAX
-   * (newest family). basis: 'opened' when the command speaks of opening /
-   * creation, else 'accessed'.
+   * Parse the superlative spec from a command: {word, dir, basis, count,
+   * countRaw} or null. dir: 'asc' picks the MIN timestamp (oldest family),
+   * 'desc' the MAX (newest family). basis: 'opened' when the command speaks
+   * of opening / creation, else 'accessed'. count: N when an ordinal count
+   * word precedes the superlative ("the eight oldest tabs"), else 1 -- the
+   * ranked-limit reading; everything downstream may return up to count
+   * extremes instead of exactly one.
    */
   function superlativeSpec(cmd) {
     const s = String(cmd || '');
@@ -92,14 +104,28 @@
     if (!tailToks.some(t => HEAD_NOUN_RE.test(t))) return null;
     const word = m[1].toLowerCase();
     const dir = /^(oldest|earliest|first)$/.test(word) ? 'asc' : 'desc';
-    // Basis is 'opened' only when the command speaks of opening as a
-    // TEMPORAL qualifier ("the oldest open tab", "opened in March") -- never
-    // from the bare imperative verb, which is the action, not the clock
-    // ("open the newest article" ranks by access time).
+    // Basis: an explicit usage verb ("most recently used", "looked at")
+    // ranks by access time; a bare age superlative ("the eight oldest
+    // tabs", "the newest tab from <site>") ranks by AGE -- when the tab was
+    // OPENED. Single-extreme commands keep the legacy 'accessed' default.
+    const countM = s.match(ORDINAL_COUNT_RE);
+    const rankByUse = /\b(?:used|accessed|viewed|visited|looked)\b/i.test(s);
     const basis =
       (/\b(opened|created)\b/i.test(s) || /\b(?:oldest|earliest|newest|latest)\s+open\b/i.test(s))
-        ? 'opened' : 'accessed';
-    return { word, dir, basis };
+        ? 'opened'
+        : (countM && !rankByUse)
+          ? 'opened'
+          : 'accessed';
+    // Ordinal count: "eight oldest", "three most recently used". The count
+    // word must SIT BEFORE the superlative; "the three tabs opened most
+    // recently" etc. are not this shape.
+    let count = 1, countRaw = null;
+    if (countM) {
+      count = COUNT_WORDS[countM[1].toLowerCase()] || parseInt(countM[1], 10);
+      if (Number.isFinite(count) && count >= 1) countRaw = countM[1].toLowerCase();
+      else count = 1;
+    }
+    return { word, dir, basis, count, countRaw };
   }
 
   const tsVal = (v) => {
@@ -109,11 +135,14 @@
   };
 
   /**
-   * Reduce an already-scored match set to its single timestamp extreme.
+   * Reduce an already-scored match set to its timestamp extreme(s).
    * matches: scored [{tabId,...}]; candidates: the card pool carrying
    * openedAt/lastAccessed (epoch millis or ISO strings).
    * Timestamp-missing candidates sort last and are never the pick unless
-   * they are alone. Zero matches -> null (fall through to abstain).
+   * they are alone. spec.count > 1 returns up to N extremes ranked in
+   * superlative order ("the three oldest" = the 3 minimum timestamps);
+   * count 1 keeps the historical single-extreme contract. Zero matches
+   * -> null (fall through to abstain).
    */
   function trySuperlative(cmd, matches, candidates) {
     const spec = superlativeSpec(cmd);
@@ -128,18 +157,35 @@
       if (Number.isFinite(ts)) withTs.push({ c, ts });
       else missing.push(c);
     }
-    let pick = null;
+    if (!withTs.length && !(matches.length === 1 && missing.length === 1)) return null;
+    const limit = Number.isFinite(spec.count) && spec.count >= 1 ? spec.count : 1;
+    const picks = [];
     if (withTs.length) {
-      withTs.sort((a, b) => spec.dir === 'asc' ? a.ts - b.ts : b.ts - a.ts);
-      pick = withTs[0].c;
+      // Secondary key: the other timestamp, same direction -- among equally
+      // old openedAt ties, rank the same way on usage time (measured gold:
+      // "the eight oldest tabs" keeps the least-recently-opened ties whose
+      // usage clock is also the stalest).
+      const other = c => spec.basis === 'opened'
+        ? (tsVal(c.lastAccessed) || 0)
+        : (tsVal(c.openedAt) || 0);
+      withTs.sort((a, b) =>
+        (spec.dir === 'asc' ? a.ts - b.ts : b.ts - a.ts) ||
+        (spec.dir === 'asc' ? other(a.c) - other(b.c) : other(b.c) - other(a.c)));
+      for (const w of withTs.slice(0, limit)) picks.push(w.c);
+      // Missing-timestamp matches only fill in when the ranked set cannot
+      // reach the requested count on real timestamps.
+      if (picks.length < limit) picks.push(...missing.slice(0, limit - picks.length));
     } else if (matches.length === 1 && missing.length === 1) {
-      pick = missing[0]; // alone: nothing to outrank
+      picks.push(missing[0]); // alone: nothing to outrank
     }
-    if (!pick) return null;
-    const reason = `Superlative: ${spec.word} ${spec.basis}`;
+    if (!picks.length) return null;
+    const reason = picks.length > 1
+      ? `Superlative: ${spec.countRaw || picks.length} ${spec.word} ${spec.basis}`
+      : `Superlative: ${spec.word} ${spec.basis}`;
     return {
-      word: spec.word, dir: spec.dir, basis: spec.basis, reason,
-      matches: [{ tabId: pick.tabId, reason, confidence: 1.0 }]
+      word: spec.word, dir: spec.dir, basis: spec.basis, count: spec.count,
+      reason,
+      matches: picks.map(c => ({ tabId: c.tabId, reason, confidence: 1.0 }))
     };
   }
 

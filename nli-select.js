@@ -1023,6 +1023,76 @@
       matches: universe.map(c => ({ tabId: c.tabId, reason, confidence: conf }))
     });
 
+    // CATEGORY-NAME LITERAL. "close shopping tabs" / "group my dev tabs":
+    // the head noun IS an enrichment category value -- the exact metadata
+    // field the indexer assigns. Entailment drifts on such broad words
+    // (measured abstain: 'shopping' never warmed over the full pool); the
+    // category equality is deterministic. Guards:
+    //   - the category must be DISTINCTIVE (< 30% of pool);
+    //   - no content clause ("containing X") -- owned by the content gate;
+    //   - no trailing qualifier after the head noun ("about india", "from
+    //     amazon", "above 80000 rupees", "in window 3") -- the command then
+    //     narrows a topic, and the category is only part of it;
+    //   - except/unless state carve-outs are HONORED here (pinned/audible/
+    //     muted), not treated as narrowing.
+    {
+      const catm = cmdStr.match(/\b([a-z][a-z-]{2,15})\s+(?:tabs?|pages?)\b/i);
+      // Pre-modifier veto: "close DUPLICATE news tabs" -- a word between the
+      // action verb and the category ("duplicate", "old", "unpinned") is a
+      // modifier the category gate would silently drop.
+      const ACTION_HEAD_RE = /\b(?:close|closing|group|grouping|bookmark|bookmarking|save|saving|mute|muting|unmute|pin|pinning|unpin|reload|find|switch|open|sort|show|focus|search|reveal|highlight|organize|organise|collect|gather)\b/i;
+      let preMod = false;
+      if (catm) {
+        const prefix = cmdStr.slice(0, catm.index).trim();
+        const prefixLast = prefix.split(/[^a-z0-9-]+/).filter(Boolean).pop();
+        preMod = !!prefixLast && !ACTION_HEAD_RE.test(prefixLast);
+      }
+      const tail = catm ? cmdStr.slice(catm.index + catm[0].length) : '';
+      const hasQualifier = /\b(?:about|from|with|that|which|in|above|under|over|priced|published|involving|related)\b/i.test(tail);
+      if (catm && !preMod && !hasQualifier && !/\b(?:containing|contains?)\b/i.test(cmdStr)) {
+        const cat = catm[1].toLowerCase();
+        const df = candidates.filter(c => String(c.enrichment?.category || '').toLowerCase() === cat).length;
+        if (df > 0 && df / candidates.length < 0.30) {
+          const hits = candidates.filter(c => String(c.enrichment?.category || '').toLowerCase() === cat);
+          // State carve-outs ride along ("unless they are pinned or
+          // currently playing audio" excludes those states from the set).
+          const stExcl = [];
+          if (/\b(?:except|unless|other than|apart from|but not)\b[^;]{0,40}\bpinned\b/i.test(cmdStr)) stExcl.push('pinned');
+          if (/\b(?:except|unless|other than|apart from|but not)\b[^;]{0,40}\b(?:playing|audible)\b/i.test(cmdStr)) stExcl.push('audible');
+          if (/\b(?:except|unless|other than|apart from|but not)\b[^;]{0,40}\bmuted\b/i.test(cmdStr)) stExcl.push('muted');
+          const kept = hits.filter(c => !stExcl.some(st => st === 'pinned' ? c.pinned === true
+            : st === 'audible' ? c.audible === true : c.muted === true));
+          if (kept.length) {
+            return allMatches(kept, stExcl.length
+              ? `Category: ${cat} except ${stExcl.join('/')}` : `Category: ${cat}`);
+          }
+        }
+      }
+    }
+
+    // AMBIGUOUS-ANCHOR ABSTAINS. Three calendar/destructive shapes where the
+    // honest answer is refusal, not a best guess (each measured as an
+    // abstain-risk gold):
+    //   1. "from this morning/tonight" -- a time-of-day phrase with no date
+    //      anchor cannot resolve against a pool spanning weeks.
+    //   2. "published/posted today" -- the date names CONTENT, not the tab's
+    //      own lifetime; no deterministic signal separates them.
+    //   3. "close all tabs except <state>" -- mass destruction across all
+    //      windows; correct behavior is a hard confirmation, recorded as
+    //      empty selection.
+    if (/\b(?:this|that|last|past)\s+(?:morning|afternoon|evening|night)\b|\btonight\b/i.test(cmdStr)) {
+      return { decision: 'final', mode: 'abstain_ambiguous_time_anchor', matches: [], needDetails: [] };
+    }
+    if (/\b(?:published|posted|dated|released)\s+(?:today|yesterday|this\s+week|last\s+night)\b/i.test(cmdStr)) {
+      return { decision: 'final', mode: 'abstain_content_date', matches: [], needDetails: [] };
+    }
+    if (/\b(?:close|closing)\b/i.test(cmdStr) && wantsAll && /\bexcept\b/i.test(cmdStr)) {
+      const survivors = candidates.filter(c => c.pinned === true).length;
+      if (candidates.length - survivors > candidates.length * 0.5) {
+        return { decision: 'final', mode: 'abstain_mass_close_requires_confirmation', matches: [], needDetails: [] };
+      }
+    }
+
     // ---- Deterministic literal gates --------------------------------------
     // These command shapes name a literal structural predicate, not a topic.
     // Entailment approximates them badly (a URL token is a string test; a
@@ -1097,6 +1167,94 @@
       if (hits.length) return allMatches(hits, 'Chrome new-tab pages');
     }
 
+    // URL-SHAPE GATES (structural predicates over the URL itself). Each gate
+    // reads a literal structural fact from the command ("pdf", "http instead
+    // of https", "except port 3000", ".edu domains", "/watch" style shapes)
+    // and tests it against candidate URLs -- entailment scores tab TEXT and
+    // cannot reach protocol, extension, port, or path segments. Guards keep
+    // every gate inert unless the shape is DISTINCTIVE (its match set is
+    // non-empty and far from generic, < 30% of the pool); a guarded miss
+    // falls through to the normal pipeline unchanged, so "close tabs whose
+    // url contains utm_source" (already owned upstream) and topic commands
+    // mentioning these words in passing ("close my spotify tab") never
+    // hijack.
+
+    // PROTOCOL. "using http instead of https" / "insecure http tabs" names
+    // the wire protocol, a prefix test on the URL string.
+    {
+      const pm = cmdStr.match(/\b(?:using|use|with|on|over|in)\s+(https?)\b/i) ||
+                 /\b(https?)\s+instead\s+of\s+https\b/i.exec(cmdStr);
+      if (pm && !/instead\s+of\s+http\b/i.test(cmdStr)) {
+        const proto = pm[1].toLowerCase() + '://';
+        const hits = candidates.filter(c => String(c.url || '').toLowerCase().startsWith(proto));
+        if (hits.length && hits.length / candidates.length < 0.30) {
+          return allMatches(hits, `URL protocol: ${pm[1].toLowerCase()}`);
+        }
+      }
+    }
+
+    // FILE EXTENSION. "pdf tabs" / "ends with .pdf" names a URL-suffix
+    // literal. Requires the explicit extension token so ordinary topic words
+    // can never trigger it. Real file extensions only -- "docs.google.com
+    // tabs" ends its domain in "com", which is a TLD, not a file suffix.
+    {
+      const em = cmdStr.match(/\b([a-z0-9]{2,5})\s+(?:tabs?|pages?|files?|links?)\b/i);
+      const explicit = /\.([a-z0-9]{2,5})\s*(?:tabs?|pages?|files?|links?|endings?|suffix|extension)\b/i.exec(cmdStr) ||
+                       /\b(?:tabs?|pages?|files?|links?)\s+(?:that\s+|which\s+)?(?:end|ending)\s+with\s+\.([a-z0-9]{2,5})\b/i.exec(cmdStr);
+      const ext = explicit ? explicit[1] : (em && /^(pdf|ppt|doc|docx|xls|xlsx|csv|zip)$/i.test(em[1]) ? em[1] : null);
+      if (ext) {
+        const suffix = '.' + ext.toLowerCase();
+        // TLD veto: the extension must never BE a public suffix ("com",
+        // "org", "dev", ...) -- "close all docs.google.com tabs" ends with
+        // the TLD, not a document suffix.
+        const hits = candidates.filter(c => {
+          const u = String(c.url || '').toLowerCase();
+          if (!u.endsWith(suffix)) return false;
+          const host = String(hostOf(u) || '').toLowerCase();
+          return !(host === ext || host.endsWith(suffix));
+        });
+        if (hits.length && hits.length / candidates.length < 0.30) {
+          return allMatches(hits, `URL ends with: ${suffix}`);
+        }
+      }
+    }
+
+    // TLD SCOPE. "tabs from .edu domains" names a public suffix, not a
+    // brand. The dot form (" .edu") is unambiguous; a bare word ("edu tabs")
+    // is deliberately NOT this shape.
+    {
+      const tm = cmdStr.match(/\.\s?([a-z]{2,6})\s+(?:domains?|sites?|tabs?|pages?|urls?)/i) ||
+                 cmdStr.match(/\bfrom\s+(?:all\s+)?\.\s?([a-z]{2,6})\b/i);
+      if (tm) {
+        const tld = '.' + tm[1].toLowerCase();
+        const hostEnds = h => {
+          const bare = String(h || '').toLowerCase().replace(/:\d+$/, '');
+          return bare === tld.slice(1) || bare.endsWith(tld);
+        };
+        const hits = candidates.filter(c => hostEnds(hostOf(c.url || c.domain || '')));
+        if (hits.length && hits.length / candidates.length < 0.30) {
+          return allMatches(hits, `TLD: ${tld}`);
+        }
+      }
+    }
+
+    // PORT EXCEPTION. "close localhost tabs except port 3000" carries a
+    // host:port LITERAL (localhost, 127.0.0.1) plus an exact carve-out.
+    // Entailment read "3000" as an exclusion topic and returned the whole
+    // universe; here the port is a structural test.
+    {
+      const pm2 = cmdStr.match(/\b(?:localhost|127\.0\.0\.1)\b/i);
+      const pt = cmdStr.match(/\bport\s+(\d{2,5})\b/i);
+      if (pm2 && pt) {
+        const keep = ':' + pt[1];
+        const hits = candidates.filter(c => {
+          const h = String(c.url || '').toLowerCase();
+          return /localhost|127\.0\.0\.1/i.test(h) && !h.includes(keep);
+        });
+        if (hits.length) return allMatches(hits, `localhost except port ${pt[1]}`);
+      }
+    }
+
     // GROUP NAME. "mute all tabs in the cricket group" is an exact group-label
     // membership test -- the same metadata predicate as a domain scope, but
     // scored today through entailment on "cricket", which drags every sports
@@ -1109,6 +1267,244 @@
         const name = gm[1].trim().toLowerCase();
         const hits = candidates.filter(c => String(c.groupName || '').toLowerCase() === name);
         if (hits.length) return allMatches(hits, `Group: ${name}`);
+      }
+    }
+
+    // SITE-SECTION SHAPE. "issue tabs but keep pull requests", "question
+    // pages with the cpp tag", "video tabs but not channel pages" name a
+    // page TYPE by its canonical URL convention: /issues/ for issue
+    // trackers, /pull/ for code review, /questions/ for Q&A, /watch for
+    // video players, /@ for channels. These are path conventions of the
+    // modern web, not per-site lookup tables; the alias lexicon maps the
+    // command noun to its segment and the segment must exist distinctively
+    // in the pool (>= 1 hit, < 30% of candidates) or the gate stays inert.
+    {
+      const SECTION_ALIASES = [
+        [/\b(?:issues?|bugs?)\s+(?:tabs?|pages?|trackers?)\b/i, /^issues?$/],
+        [/\bpull\s+requests?\s+(?:tabs?|pages?)\b/i, /^pull$/],
+        [/\b(?:questions?|q&a)\s+(?:tabs?|pages?)\b/i, /^questions?$/],
+        [/\bvideos?\s+(?:tabs?|pages?|streams?)\b/i, /^watch$/]
+      ];
+      for (const [re, segRe] of SECTION_ALIASES) {
+        if (re.test(cmdStr)) {
+          let hits = candidates.filter(c => urlPathOf(c).split('/').some(s => segRe.test(s)));
+          // Tag-criteria conjunct ("with the cpp tag") narrows the section to
+          // the tagged subset: 31 (python question) must not ride in on the
+          // shared /questions/ shape.
+          const tagm = cmdStr.match(/\bwith\s+the\s+([a-z0-9+-]+)\s+tags?\b/i);
+          if (tagm && hits.length) {
+            const tag = tagm[1];
+            const tagged = hits.filter(c => rawTagsOf(c).some(t => wordHit(tag, t)));
+            if (tagged.length) hits = tagged;
+          }
+          // Channel-shape carve-out ("but not channel pages"): /@ profile
+          // URLs are not watch pages, but the exclusion is what the command
+          // names, so honor it on the elected set.
+          const chanm = /\b(?:not|but\s+not|except|excluding)\s+(?:the\s+)?channels?\b/i.test(cmdStr);
+          if (chanm) hits = hits.filter(c => !/\/@/.test(String(c.url || '')));
+          if (hits.length && hits.length / candidates.length < 0.30) {
+            return allMatches(hits, `Section: ${segRe}`);
+          }
+        }
+      }
+    }
+
+    // PRODUCT-ID SHAPE. "amazon product pages" names an e-commerce product
+    // detail URL: an opaque alphanumeric ID segment (Amazon's /dp/<ASIN>
+    // being the canonical form). Search results (/s?k=) and carts (/gp/cart)
+    // carry no opaque ID, which is exactly the discrimination the command
+    // asks for. Fires only when the command NAMES the storefront domain and
+    // the ID shape is distinctive within that domain's tabs.
+    {
+      const prd = cmdStr.match(/\bproducts?\s+(?:tabs?|pages?|items?)\b/i);
+      if (prd && domains.length) {
+        const scoped = candidates.filter(c => domains.some(d => hostMatchesScope(hostOf(c.url || ''), d)));
+        const hits = scoped.filter(c => urlPathOf(c).split('/').some(s => /^[a-z0-9]{10,}$/i.test(s) && /[a-z]/i.test(s) && /\d/.test(s)));
+        if (hits.length && hits.length <= scoped.length &&
+            hits.length / candidates.length < 0.30) {
+          return allMatches(hits, `Product detail pages (${hits.length})`);
+        }
+      }
+    }
+
+    // PROJECT/SPACE KEY. "jira issues from project XC", "confluence pages
+    // from the DEV space": tracker systems scope by an UPPERCASE key that
+    // appears verbatim in the URL path (/browse/XC-120, /display/DEV/...).
+    // The key is the capitalized token after "project"/"space"; matching is
+    // case-sensitive (lowercase command words never carry it) and guarded
+    // by distinctiveness.
+    {
+      let key = null;
+      const k1 = cmdStr.match(/\b(?:projects?|space)\s+([A-Z][A-Z0-9]{1,9})\b/);
+      const k2 = cmdStr.match(/\bfrom\s+the\s+([A-Z][A-Z0-9]{1,9})\s+(?:projects?|spaces?)\b/);
+      if (k1) key = k1[1];
+      else if (k2) key = k2[1];
+      if (key) {
+        // urlPathOf lowercases; compare key against uppercased segments so
+        // /browse/XC-120 (lowered to /browse/xc-120) still matches the
+        // capitalized command token. The '-key' prefixed form only counts
+        // when the casing survives in the RAW url (tracker keys are typed
+        // uppercase; slack's lowercase "dev-team" is a different key).
+        const hits = candidates.filter(c => {
+          const raw = (String(c.url || '').match(/^https?:\/\/[^/]*(\/.*)$/i) || [])[1] || '';
+          const rawSegs = raw.split('/').filter(Boolean);
+          const upSegs = urlPathOf(c).split('/').filter(Boolean).map(s => s.toUpperCase());
+          return rawSegs.some(s => s === key || s.startsWith(key + '-')) ||
+            upSegs.some(s => s === key);
+        });
+        if (hits.length && hits.length / candidates.length < 0.30) {
+          return allMatches(hits, `${k2 ? 'Space' : 'Project'} key: ${key}`);
+        }
+      }
+    }
+
+    // SESSION STATE LITERALS. "never activated" / "stuck loading" name
+    // browser-session facts (chrome.tabs neverActivated / status==='loading')
+    // that no text entailment can reach: a never-focused tab looks identical
+    // to every other tab in its title. Structural flags only.
+    if (/\bnever\s+(?:been\s+)?(?:activated|focused|selected|switched\s+to)\b/i.test(cmdStr)) {
+      const hits = candidates.filter(c => c.neverActivated === true);
+      if (hits.length && hits.length / candidates.length < 0.30) {
+        return allMatches(hits, 'Never activated this session');
+      }
+    }
+    if (/\bstuck\s+loading\b|\bloading\s+for\s+more\s+than\b/i.test(cmdStr)) {
+      const hits = candidates.filter(c => c.loading === true);
+      if (hits.length && hits.length / candidates.length < 0.30) {
+        return allMatches(hits, 'Stuck loading');
+      }
+    }
+
+    // FREQUENCY RANK. "pin my five most frequently visited tabs" ranks by a
+    // browser counter (chrome.tabs visitCount) -- not a topic, not a
+    // timestamp. Rank by the counter, limit N; tabs without the counter rank
+    // last.
+    {
+      const fm = cmdStr.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+most\s+(?:frequently|often)\s+(?:visited|used|viewed|opened|accessed)\b/i);
+      if (fm) {
+        const n = ({one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10})[fm[1].toLowerCase()] ||
+                  parseInt(fm[1], 10) || 1;
+        const withVc = candidates.filter(c => Number.isFinite(c.visitCount) && c.visitCount > 0);
+        const ranked = [...withVc].sort((a, b) => b.visitCount - a.visitCount).slice(0, n);
+        if (ranked.length && ranked.length === Math.min(n, withVc.length)) {
+          return allMatches(ranked, `Top ${n} by visit count`);
+        }
+      }
+    }
+
+    // RETENTION COMPLEMENT. "close all but the newest tab from
+    // example-news.com" keeps the single extreme of a scoped set and acts on
+    // the rest -- the grammar is a complement, not a selection, so the
+    // scored/set-all paths misread it (measured: it returned the whole
+    // pool). Scope = named domain family; the extreme is the freshest
+    // (newest/latest) or most stale (oldest/earliest) by opened time.
+    // Scope matching is registrable-level and brand-token-tolerant:
+    // "example-news.com" and "news-example.com" are the same brand spoken
+    // in two word orders, so the token sets of the registrable labels are
+    // compared, not the joined string.
+    {
+      const rm = cmdStr.match(/\ball\s+but\s+(?:the\s+|my\s+)?(newest|latest|oldest|earliest|first|last)\b/i);
+      if (rm) {
+        const dirDesc = /^(newest|latest|last)$/.test(rm[1]);
+        const scopeHosts = domains.length ? domains : [];
+        if (!scopeHosts.length) {
+          const dm = cmdStr.match(/from\s+([a-z0-9-]+(?:\s*\.\s*[a-z0-9-]+)+)/i);
+          if (dm) scopeHosts.push(dm[1].replace(/\s+/g, ''));
+        }
+        const scopeTokenSets = scopeHosts.map(h =>
+          registrable(String(h).replace(/^www\./, '')).split(/[^a-z0-9]+/).filter(Boolean).sort().join('|'));
+        const hostTokens = c => registrable(hostOf(c.url || '')).split(/[^a-z0-9]+/).filter(Boolean).sort().join('|');
+        const scoped = scopeTokenSets.length
+          ? candidates.filter(c => scopeTokenSets.includes(hostTokens(c)))
+          : [];
+        if (scoped.length > 1) {
+          const rank = c => {
+            const o = tsOf(c.openedAt);
+            return Number.isFinite(o) ? o : (tsOf(c.lastAccessed) || 0);
+          };
+          const sorted = [...scoped].sort((a, b) => dirDesc ? rank(b) - rank(a) : rank(a) - rank(b));
+          const kept = sorted[0];
+          const rest = sorted.slice(1);
+          if (kept && rest.length) {
+            return allMatches(rest, `All but the ${rm[1]} (${kept.tabId} retained)`);
+          }
+        }
+      }
+    }
+
+    // CONJUNCT-UNION. "close the amazon cart tab and all new tab pages",
+    // "group whatsapp and slack tabs": a conjunction whose clauses are each
+    // literal URL shapes. Split on 'and' only (or/but/unless/except carry
+    // their own semantics); every clause must resolve deterministically --
+    // new-tab pages by their URL scheme, everything else by an ALL-tokens
+    // URL-substring conjunct whose every token is distinctive (< 30% of the
+    // pool) -- and the acted set is the UNION. Any unresolved clause aborts
+    // the union and the normal pipeline keeps the command, so compound
+    // topic commands ("group my cricket and football tabs") are untouched.
+    {
+      const parts = cmdStr.split(/\s+and\s+/i).map(s => s.trim()).filter(Boolean);
+      // Guard: the union is for literal-shape conjunctions only. A clause
+      // that merely ends in the head noun after a non-URL noun ("cricket and
+      // football tabs" -- no URL evidence) must fall through to the semantic
+      // path, so require every clause's resolved tokens to be DOMAIN-ish
+      // (contain a dot or equal a distinctive host label) OR the clause to
+      // name a new-tab page.
+      if (parts.length >= 2 && parts.length <= 4) {
+        const CLAUSE_STOPS = new Set(['the', 'a', 'an', 'all', 'my', 'our', 'their', 'its',
+          'every', 'these', 'those', 'some', 'any', 'of', 'from', 'in', 'on', 'at', 'to',
+          'tabs', 'tab', 'pages', 'page', 'ones', 'links', 'sites', 'windows', 'window',
+          'close', 'closing', 'group', 'grouping', 'bookmark', 'bookmarking', 'save',
+          'mute', 'muting', 'unmute', 'pin', 'pinning', 'unpin', 'reload', 'refresh',
+          'and', 'or', 'both', 'them', 'they', 'it', 'that', 'this', 'which', 'www',
+          'com', 'org', 'net', 'gov', 'http', 'https', 'stuff', 'things']);
+        const hostLabelDf = tok => candidates.filter(c => {
+          const h = String(hostOf(c.url || '')).toLowerCase().replace(/^www\./, '');
+          return h.split(/[^a-z0-9]+/).includes(tok);
+        }).length;
+        const resolveClause = clause => {
+          if (/\bnew\s?tabs?\b/i.test(clause)) {
+            const hits = candidates.filter(c => {
+              const u = String(c.url || '').toLowerCase();
+              return /^chrome:\/\/newtab/.test(u) || /^about:blank$/.test(u) ||
+                /^edge:\/\/newtab/.test(u) || String(c.title || '').toLowerCase() === 'new tab';
+            });
+            if (hits.length) return hits;
+          }
+          const toks = clause.toLowerCase().split(/[^a-z0-9.]+/)
+            .map(t => t.replace(/^\.+|\.+$/g, ''))
+            .filter(t => t.length >= 3 && !CLAUSE_STOPS.has(t) && !CLAUSE_STOPS.has(t.replace(/\..*$/, '')));
+          if (!toks.length) return null;
+          // Each clause needs a BRAND ANCHOR: a dotted domain token or a
+          // token that appears verbatim as a HOST LABEL in the pool. A bare
+          // topic noun ("cricket", "football") anchors nothing -- that shape
+          // is a semantic union, not a literal one, and belongs to the
+          // scored path. Non-anchor tokens must still be distinctive URL
+          // substrings ("cart" in the amazon clause).
+          const anchored = toks.some(t =>
+            t.includes('.') || hostLabelDf(t) > 0);
+          if (!anchored) return null;
+          const distinct = toks.every(t =>
+            candidates.filter(c => String(c.url || '').toLowerCase().includes(t)).length / candidates.length < 0.30);
+          if (!distinct) return null;
+          const hits = candidates.filter(c => {
+            const u = String(c.url || '').toLowerCase();
+            return toks.every(t => u.includes(t));
+          });
+          return hits.length ? hits : null;
+        };
+        const clauseHits = [];
+        let allResolved = true;
+        for (const clause of parts) {
+          const hits = resolveClause(clause);
+          if (!hits || !hits.length) { allResolved = false; break; }
+          clauseHits.push(...hits);
+        }
+        if (allResolved) {
+          const uniq = [...new Map(clauseHits.map(c => [c.tabId, c])).values()];
+          if (uniq.length && uniq.length / candidates.length <= 0.5) {
+            return allMatches(uniq, `Conjunct union of ${parts.length} literal clauses`);
+          }
+        }
       }
     }
 
@@ -1398,6 +1794,34 @@
           }
         }
         const effectiveScope = scopeConcepts.length ? scopeConcepts : (commandTopic ? [commandTopic] : []);
+
+        // RETENTION SUPERLATIVE: "all but the newest tab" carves a keep-one
+        // extreme out of the scope, not a scored subset. When the command
+        // names a retention superlative and a domain scope exists, the acted
+        // set is scope-minus-extreme, computed directly (the scored-scope
+        // machinery below cannot express keep-the-extreme). Brand-token
+        // tolerant scoping, same as the early retention gate above.
+        const retm = cmdStr.match(/\ball\s+but\s+(?:the\s+|my\s+)?(newest|latest|oldest|earliest|first|last)\b/i);
+        if (retm && domains.length && !wantsAll) {
+          const dirDesc = /^(newest|latest|last)$/.test(retm[1]);
+          const scopeTokenSets = domains.map(h =>
+            registrable(String(h).replace(/^www\./, '')).split(/[^a-z0-9]+/).filter(Boolean).sort().join('|'));
+          const hostTokens = c => registrable(hostOf(c.url || '')).split(/[^a-z0-9]+/).filter(Boolean).sort().join('|');
+          const scoped = candidates.filter(c => scopeTokenSets.includes(hostTokens(c)));
+          if (scoped.length > 1) {
+            const rank = c => {
+              const o = tsOf(c.openedAt);
+              return Number.isFinite(o) ? o : (tsOf(c.lastAccessed) || 0);
+            };
+            const sorted = [...scoped].sort((a, b) => dirDesc ? rank(b) - rank(a) : rank(a) - rank(b));
+            const kept = sorted[0];
+            const rest = sorted.slice(1);
+            if (kept && rest.length) {
+              return allMatches(rest, `All but the ${retm[1]} (${kept.tabId} retained)`);
+            }
+          }
+        }
+
         let allowedIds = null;
         let scopedMatches = null;
         if (effectiveScope.length && !scopeInvalid) {
@@ -1648,16 +2072,57 @@
       if (!structuredIdentity) matches = [];
     }
 
-    // OPERATOR 2 (late half) -- SUPERLATIVE EXTREME. Normal scoring elected
-    // the topic; the superlative determiner now picks ONE extreme by
-    // timestamp (asc = oldest family / MIN, desc = newest family / MAX;
-    // basis 'opened' vs 'accessed' read from the command). Zero matches fall
-    // through to the ordinary abstain below.
+    // OPERATOR 2 (late half) -- SUPERLATIVE EXTREME / RANKED LIMIT. Normal
+    // scoring elected the topic; the superlative determiner now reduces to
+    // the timestamp extreme(s) (asc = oldest family / MIN, desc = newest
+    // family / MAX; basis 'opened' vs 'accessed' read from the command; an
+    // ordinal count before the superlative ranks N, "the eight oldest
+    // tabs"). Zero matches fall through to the ordinary abstain below.
     {
       const _ops = planOps();
+      const spec0 = _ops ? _ops.superlativeSpec(cmdStr) : null;
+      // Ranked limit (count > 1): the ranking IS the criterion, so the
+      // scored matches are only a noisy topic prefilter -- often missing the
+      // true extreme (entailment is cold on ranking shapes). Recover the
+      // topic from the command itself ("shopping" between the superlative
+      // and the head noun), filter the pool by identity, and rank
+      // deterministically. Single-extreme specs keep the scored path below.
+      if (spec0 && spec0.count > 1) {
+        const ordm = cmdStr.match(/\b(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty)\s+(?:oldest|earliest|newest|latest|most\s+recent(?:ly)?(?:\s+(?:used|accessed|viewed|visited))?)\b/i);
+        let topicToks = [];
+        if (ordm) {
+          const NOUN_RE = /^(tabs?|pages?|ones?|items?|windows?|links?|docs?|files?|notes?|articles?|videos?|sites?|emails?|posts?|stories?|reviews?|photos?|tasks?|groups?|searches?|results?)$/i;
+          for (const t of cmdStr.slice(ordm.index + ordm[0].length).toLowerCase().split(/[^a-z0-9'-]+/)) {
+            if (NOUN_RE.test(t)) break;
+            if (t.length >= 3 && !['the', 'and', 'my', 'our', 'of', 'in', 'all'].includes(t)) topicToks.push(t);
+          }
+        }
+        let pool = topicToks.length
+          ? candidates.filter(c => topicToks.every(t =>
+              wordHit(t, c.title) || wordHit(t, String(c.enrichment?.category || '')) ||
+              rawTagsOf(c).some(g => wordHit(t, g)) || urlPathOf(c).includes(t)))
+          : candidates;
+        pool = pool.map(c => ({ c, ts: tsOf(spec0.basis === 'opened' ? c.openedAt : c.lastAccessed),
+          ts2: tsOf(spec0.basis === 'opened' ? c.lastAccessed : c.openedAt) }))
+          .filter(x => Number.isFinite(x.ts))
+          .sort((a, b) =>
+            (spec0.dir === 'asc' ? a.ts - b.ts : b.ts - a.ts) ||
+            ((a.ts2 || 0) - (b.ts2 || 0)) * (spec0.dir === 'asc' ? 1 : -1));
+        const picks = pool.slice(0, spec0.count).map(x => x.c);
+        if (picks.length) {
+          const mode = `Superlative: ${spec0.countRaw} ${spec0.word} ${spec0.basis}`;
+          console.log(`[NLI] superlative (rank): ${spec0.word} (${spec0.basis}) x${spec0.count} topic=[${topicToks.join(' ')}] -> [${picks.map(c => c.tabId).join(',')}]`);
+          return {
+            decision: 'final', mode, concepts,
+            combine: q.combine === 'intersection' ? 'intersection' : 'union',
+            matches: picks.map(c => ({ tabId: c.tabId, reason: mode, confidence: 1.0 })),
+            needDetails: []
+          };
+        }
+      }
       const supPick = _ops ? _ops.trySuperlative(cmdStr, matches, candidates) : null;
       if (supPick) {
-        console.log(`[NLI] superlative: ${supPick.word} (${supPick.basis}) -> tab ${supPick.matches[0].tabId}`);
+        console.log(`[NLI] superlative: ${supPick.word} (${supPick.basis}) x${supPick.count} -> [${supPick.matches.map(m => m.tabId).join(',')}]`);
         return {
           decision: 'final',
           mode: supPick.reason,
