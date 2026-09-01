@@ -1951,5 +1951,4353 @@
   "confidence": 0.9,
   "source": "llm",
   "isSelectAll": false
+ },
+ "close all tabs from github.com": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "github.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.5,
+  "isSelectAll": false,
+  "source": "fallback"
+ },
+ "group tabs from github.com or stackoverflow.com": {
+  "intent": "group_tabs",
+  "concepts": [
+   "github.com",
+   "stackoverflow.com"
+  ],
+  "combine": "union",
+  "expansions": {
+   "github.com": [
+    "git",
+    "source code",
+    "repository"
+   ],
+   "stackoverflow.com": [
+    "questions",
+    "answers",
+    "programming"
+   ]
+  },
+  "domains": [
+   "github.com",
+   "stackoverflow.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs from docs.github.com only": {
+  "intent": "close_tabs",
+  "concepts": [
+   "docs.github.com"
+  ],
+  "combine": "union",
+  "expansions": {
+   "docs.github.com": [
+    "github",
+    "documentation",
+    "source code"
+   ]
+  },
+  "domains": [
+   "docs.github.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs whose url contains dashboard": {
+  "intent": "close_tabs",
+  "concepts": [
+   "dashboard"
+  ],
+  "combine": "union",
+  "expansions": {
+   "dashboard": [
+    "dashboard",
+    "admin",
+    "control panel",
+    "analytics"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark tabs whose url starts with developer.chrome.com": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "developer.chrome.com"
+  ],
+  "combine": "union",
+  "expansions": {
+   "developer.chrome.com": [
+    "chrome developer tools",
+    "chrome extension development",
+    "chrome web store"
+   ]
+  },
+  "domains": [
+   "developer.chrome.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all pdf tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "pdf"
+  ],
+  "combine": "union",
+  "expansions": {
+   "pdf": [
+    "document",
+    "file",
+    "reader"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group all tabs using http instead of https": {
+  "intent": "group_tabs",
+  "concepts": [
+   "http"
+  ],
+  "combine": "union",
+  "expansions": {
+   "http": [
+    "http",
+    "hyper text transfer protocol"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close localhost tabs except port 3000": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "3000"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs from espncricinfo.com and cricbuzz.com": {
+  "intent": "group_tabs",
+  "concepts": [
+   "espncricinfo.com",
+   "cricbuzz.com"
+  ],
+  "combine": "union",
+  "expansions": {
+   "espncricinfo.com": [
+    "cricket news",
+    "sports news"
+   ],
+   "cricbuzz.com": [
+    "cricket news",
+    "sports news"
+   ]
+  },
+  "domains": [
+   "espncricinfo.com",
+   "cricbuzz.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs from .edu domains": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs from the same website as the current tab": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs whose url contains utm source": {
+  "intent": "close_tabs",
+  "concepts": [
+   "utm_source"
+  ],
+  "combine": "union",
+  "expansions": {
+   "utm_source": [
+    "utm",
+    "source",
+    "campaign",
+    "tracking"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group gist tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "gist"
+  ],
+  "combine": "union",
+  "expansions": {
+   "gist": [
+    "code",
+    "repository",
+    "snippet"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all docs.google.com tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "docs.google.com"
+  ],
+  "combine": "union",
+  "expansions": {
+   "docs.google.com": [
+    "google docs",
+    "google spreadsheet",
+    "google drive"
+   ]
+  },
+  "domains": [
+   "docs.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group all youtube tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "videos",
+    "channel",
+    "playlist"
+   ]
+  },
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all chrome newtab pages": {
+  "intent": "close_tabs",
+  "concepts": [
+   "chrome",
+   "newtab"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chrome": [
+    "google chrome",
+    "chromium"
+   ],
+   "newtab": [
+    "homepage",
+    "start page",
+    "welcome page"
+   ]
+  },
+  "domains": [
+   "chrome.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs from spiegel.de": {
+  "intent": "close_tabs",
+  "concepts": [
+   "spiegel.de"
+  ],
+  "combine": "union",
+  "expansions": {
+   "spiegel.de": [
+    "spiegel",
+    "news",
+    "germany"
+   ]
+  },
+  "domains": [
+   "spiegel.de"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group all arxiv tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "arxiv"
+  ],
+  "combine": "union",
+  "expansions": {
+   "arxiv": [
+    "preprint",
+    "physics",
+    "math",
+    "cs"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close wikipedia tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "wikipedia"
+  ],
+  "combine": "union",
+  "expansions": {
+   "wikipedia": [
+    "encyclopedia",
+    "encyclopedia articles",
+    "encyclopedia pages"
+   ]
+  },
+  "domains": [
+   "wikipedia.org"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close my spotify tab": {
+  "intent": "close_tabs",
+  "concepts": [
+   "spotify"
+  ],
+  "combine": "union",
+  "expansions": {
+   "spotify": [
+    "music",
+    "playlists",
+    "radio"
+   ]
+  },
+  "domains": [
+   "spotify.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group whatsapp and slack tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "whatsapp",
+   "slack"
+  ],
+  "combine": "union",
+  "expansions": {
+   "whatsapp": [
+    "whatsapp",
+    "chat",
+    "messaging"
+   ],
+   "slack": [
+    "slack",
+    "team",
+    "communication"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close medium tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "medium"
+  ],
+  "combine": "union",
+  "expansions": {
+   "medium": [
+    "medium.com",
+    "medium-reader",
+    "medium-reader-app"
+   ]
+  },
+  "domains": [
+   "medium.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close reddit tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "reddit"
+  ],
+  "combine": "union",
+  "expansions": {
+   "reddit": [
+    "subreddits",
+    "r/"
+   ]
+  },
+  "domains": [
+   "reddit.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close chrome web store tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "chrome web store"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chrome web store": [
+    "chrome store",
+    "google web store"
+   ]
+  },
+  "domains": [
+   "chrome.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all webinar tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "webinar"
+  ],
+  "combine": "union",
+  "expansions": {
+   "webinar": [
+    "webinar",
+    "web conference",
+    "meeting"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group all google meet and drive tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "google meet",
+   "drive"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google meet": [
+    "meetings",
+    "video calls"
+   ],
+   "drive": [
+    "google drive",
+    "google docs"
+   ]
+  },
+  "domains": [
+   "meet.google.com",
+   "drive.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all coursera and udemy tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "coursera",
+   "udemy"
+  ],
+  "combine": "union",
+  "expansions": {
+   "coursera": [
+    "edx",
+    "coursera",
+    "udacity"
+   ],
+   "udemy": [
+    "udemy",
+    "coursera",
+    "edx"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close my leetcode tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "leetcode"
+  ],
+  "combine": "union",
+  "expansions": {
+   "leetcode": [
+    "leetcode.com",
+    "leetcode"
+   ]
+  },
+  "domains": [
+   "leetcode.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close github issue tabs but keep pull requests": {
+  "intent": "close_tabs",
+  "concepts": [
+   "pull requests"
+  ],
+  "combine": "union",
+  "expansions": {
+   "pull requests": [
+    "pull requests",
+    "pull requests",
+    "pull requests"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "github"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group github tabs belonging to the auth service repository": {
+  "intent": "group_tabs",
+  "concepts": [
+   "auth-service"
+  ],
+  "combine": "union",
+  "expansions": {
+   "auth-service": [
+    "github",
+    "repository",
+    "authentication"
+   ]
+  },
+  "domains": [
+   "github.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.8,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group youtube video tabs but not channel pages": {
+  "intent": "group_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "youtube.com",
+    "youtube"
+   ]
+  },
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "channel"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close amazon product pages but not search pages": {
+  "intent": "close_tabs",
+  "concepts": [
+   "amazon product pages"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon product pages": [
+    "amazon shopping",
+    "amazon products",
+    "amazon listings"
+   ]
+  },
+  "domains": [
+   "amazon.com",
+   "amazon.in",
+   "amazon.co.uk",
+   "amazon.de"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "search pages"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group google docs documents but not sheets or slides": {
+  "intent": "group_tabs",
+  "concepts": [
+   "google docs"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google docs": [
+    "docs",
+    "google document",
+    "google docs"
+   ]
+  },
+  "domains": [
+   "docs.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "sheets",
+   "slides"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group jira issues from project xc": {
+  "intent": "group_tabs",
+  "concepts": [
+   "jira issues"
+  ],
+  "combine": "union",
+  "expansions": {
+   "jira issues": [
+    "jira tickets",
+    "jira issues",
+    "jira tasks"
+   ]
+  },
+  "domains": [
+   "jira.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group confluence pages from the dev space": {
+  "intent": "group_tabs",
+  "concepts": [
+   "confluence"
+  ],
+  "combine": "union",
+  "expansions": {
+   "confluence": [
+    "confluence",
+    "wiki",
+    "knowledge base"
+   ]
+  },
+  "domains": [
+   "confluence.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close stack overflow question pages with the cpp tag": {
+  "intent": "close_tabs",
+  "concepts": [
+   "cpp"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cpp": [
+    "c++",
+    "c plus plus",
+    "programming language"
+   ]
+  },
+  "domains": [
+   "stackoverflow.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close duplicate product pages even if their tracking parameters differ": {
+  "intent": "close_tabs",
+  "concepts": [
+   "product"
+  ],
+  "combine": "union",
+  "expansions": {
+   "product": [
+    "product page",
+    "product listing",
+    "product item"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.16666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs with concurrency in the title": {
+  "intent": "group_tabs",
+  "concepts": [
+   "concurrency"
+  ],
+  "combine": "union",
+  "expansions": {
+   "concurrency": [
+    "parallelism",
+    "simultaneous",
+    "multitasking"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs containing 404 or page not found in the title": {
+  "intent": "close_tabs",
+  "concepts": [
+   "404",
+   "page not found"
+  ],
+  "combine": "union",
+  "expansions": {
+   "404": [
+    "error page",
+    "not found page",
+    "404 error"
+   ],
+   "page not found": [
+    "missing page",
+    "not accessible",
+    "404 error"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark tabs whose titles contain both react and performance": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "react",
+   "performance"
+  ],
+  "combine": "intersection",
+  "expansions": {
+   "react": [
+    "reactjs",
+    "react native",
+    "react components"
+   ],
+   "performance": [
+    "performance optimization",
+    "react performance",
+    "react profiling"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs whose title starts with sign in": {
+  "intent": "close_tabs",
+  "concepts": [
+   "sign in"
+  ],
+  "combine": "union",
+  "expansions": {
+   "sign in": [
+    "login",
+    "signin",
+    "authentication"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs whose title is identical to another open tab keeping the oldest": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs with unusually long titles": {
+  "intent": "group_tabs",
+  "concepts": [
+   "tabs"
+  ],
+  "combine": "union",
+  "expansions": {
+   "tabs": [
+    "pages",
+    "webpages",
+    "documents"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs whose title is still loading": {
+  "intent": "close_tabs",
+  "concepts": [
+   "loading"
+  ],
+  "combine": "union",
+  "expansions": {
+   "loading": [
+    "loading",
+    "loading",
+    "loading"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs whose title contains oauth": {
+  "intent": "group_tabs",
+  "concepts": [
+   "oauth"
+  ],
+  "combine": "union",
+  "expansions": {
+   "oauth": [
+    "authorization",
+    "authentication",
+    "token"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs opened in the last hour": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "within",
+   "value": "last_hour"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs opened in the last 24 hours": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "within",
+   "value": "24_hours"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs i havent looked at in seven days": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "older_than",
+   "value": "7_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs used in the last two hours": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "within",
+   "value": "2_hours"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs opened between 3 and 7 days ago": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "older_than",
+   "value": "4_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs opened this week": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "within",
+   "value": "this_week"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs i havent looked at in three days": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "older_than",
+   "value": "3_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs never activated during this session": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": true,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs i viewed for less than ten seconds": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "reload tabs stuck loading for more than 30 seconds": {
+  "intent": "reload_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs opened more than 30 days ago": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "older_than",
+   "value": "30_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs opened in the last 30 minutes": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "older_than",
+   "value": "30_minutes"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group all unpinned tabs in this window": {
+  "intent": "group_tabs",
+  "concepts": [
+   "unpinned"
+  ],
+  "combine": "union",
+  "expansions": {
+   "unpinned": [
+    "unpinned"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "unpinned"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs currently playing audio": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "audible"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close discarded tabs except pinned ones": {
+  "intent": "close_tabs",
+  "concepts": [
+   "pinned"
+  ],
+  "combine": "union",
+  "expansions": {
+   "pinned": [
+    "pinned"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "discarded"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group ungrouped tabs in window 2": {
+  "intent": "group_tabs",
+  "concepts": [
+   "ungrouped"
+  ],
+  "combine": "union",
+  "expansions": {
+   "ungrouped": [
+    "unsorted",
+    "unorganized",
+    "unclassified"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "mute all tabs in the cricket group": {
+  "intent": "mute_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "sports",
+    "football",
+    "soccer"
+   ]
+  },
+  "domains": [
+   "cricket.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "muted"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "mute incognito tabs": {
+  "intent": "mute_tabs",
+  "concepts": [
+   "incognito"
+  ],
+  "combine": "union",
+  "expansions": {
+   "incognito": [
+    "private",
+    "anonymous",
+    "private browsing"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "audible"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "unpin the cricket tabs": {
+  "intent": "unpin_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "sports",
+    "cricket matches",
+    "cricket news"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "unmute my muted tabs in window 2": {
+  "intent": "unmute_tabs",
+  "concepts": [
+   "muted"
+  ],
+  "combine": "union",
+  "expansions": {
+   "muted": [
+    "muted"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "muted"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "show me my jira tabs": {
+  "intent": "open_tabs",
+  "concepts": [
+   "jira"
+  ],
+  "combine": "union",
+  "expansions": {
+   "jira": [
+    "jira",
+    "atlassian jira",
+    "project management"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "switch to the q3 budget spreadsheet": {
+  "intent": "search_and_switch",
+  "concepts": [
+   "budget"
+  ],
+  "combine": "union",
+  "expansions": {
+   "budget": [
+    "financial",
+    "financial planning",
+    "financial report"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all tabs in the archive group": {
+  "intent": "close_tabs",
+  "concepts": [
+   "archive"
+  ],
+  "combine": "union",
+  "expansions": {
+   "archive": [
+    "archive group",
+    "archive folder",
+    "archive collection"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs in grey colored groups": {
+  "intent": "group_tabs",
+  "concepts": [
+   "grey"
+  ],
+  "combine": "union",
+  "expansions": {
+   "grey": [
+    "gray",
+    "greyish",
+    "dark grey",
+    "light grey"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all tabs to the right of the current tab in this window": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": true,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark the first five tabs in this window": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "tabs"
+  ],
+  "combine": "union",
+  "expansions": {
+   "tabs": [
+    "pages",
+    "pages"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs in the shopping group": {
+  "intent": "group_tabs",
+  "concepts": [
+   "shopping"
+  ],
+  "combine": "union",
+  "expansions": {
+   "shopping": [
+    "shopping",
+    "retail",
+    "e-commerce"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "sort tabs in the work group by title": {
+  "intent": "sort_tabs",
+  "concepts": [
+   "work group"
+  ],
+  "combine": "union",
+  "expansions": {
+   "work group": [
+    "team",
+    "group",
+    "project"
+   ]
+  },
+  "domains": [
+   "workgroup.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group my dev tools tabs in window 3": {
+  "intent": "group_tabs",
+  "concepts": [
+   "dev tools"
+  ],
+  "combine": "union",
+  "expansions": {
+   "dev tools": [
+    "developer tools",
+    "debugging tools",
+    "inspector"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs related to the current tab": {
+  "intent": "group_tabs",
+  "concepts": [
+   "current tab"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs opened from the fastmcp google search": {
+  "intent": "group_tabs",
+  "concepts": [
+   "fastmcp"
+  ],
+  "combine": "union",
+  "expansions": {
+   "fastmcp": [
+    "fastmcp",
+    "fastmc",
+    "fastmcp"
+   ]
+  },
+  "domains": [
+   "google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs from the same browsing chain as the fastmcp search": {
+  "intent": "group_tabs",
+  "concepts": [
+   "fastmcp"
+  ],
+  "combine": "union",
+  "expansions": {
+   "fastmcp": [
+    "fastmcp",
+    "fastmc",
+    "fastmcp search"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs opened from the fastmcp docs page": {
+  "intent": "group_tabs",
+  "concepts": [
+   "fastmcp"
+  ],
+  "combine": "union",
+  "expansions": {
+   "fastmcp": [
+    "fastmcp",
+    "fastmc",
+    "fastmcp"
+   ]
+  },
+  "domains": [
+   "fastmcp.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close duplicate tabs and keep the oldest": {
+  "intent": "close_tabs",
+  "concepts": [
+   "duplicate"
+  ],
+  "combine": "union",
+  "expansions": {
+   "duplicate": [
+    "duplicates",
+    "repeated",
+    "identical"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close duplicates in other windows": {
+  "intent": "close_tabs",
+  "concepts": [
+   "duplicates"
+  ],
+  "combine": "union",
+  "expansions": {
+   "duplicates": [
+    "copies",
+    "repeats",
+    "identical"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close duplicate news tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "news"
+  ],
+  "combine": "union",
+  "expansions": {
+   "news": [
+    "articles",
+    "stories",
+    "updates"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "duplicate"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close duplicated mdn tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "mdn"
+  ],
+  "combine": "union",
+  "expansions": {
+   "mdn": [
+    "developer.mozilla.org",
+    "mdn.dev"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "duplicate"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the three most recently used cricket tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "cricket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "sports",
+    "batsman",
+    "bowler"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "within",
+   "value": "3_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "pin my five most frequently visited tabs": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "tabs"
+  ],
+  "combine": "union",
+  "expansions": {
+   "tabs": [
+    "pages",
+    "webpages",
+    "web pages"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark tabs that are not bookmarked and are about research": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "research"
+  ],
+  "combine": "union",
+  "expansions": {
+   "research": [
+    "study",
+    "study materials",
+    "research papers"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close open tabs that are already bookmarked": {
+  "intent": "close_tabs",
+  "concepts": [
+   "bookmarked"
+  ],
+  "combine": "union",
+  "expansions": {
+   "bookmarked": [
+    "favorites",
+    "saved",
+    "saved pages"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs bookmarked under research": {
+  "intent": "group_tabs",
+  "concepts": [
+   "research"
+  ],
+  "combine": "union",
+  "expansions": {
+   "research": [
+    "study",
+    "study materials",
+    "research papers"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark tabs containing c code": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "c++"
+  ],
+  "combine": "union",
+  "expansions": {
+   "c++": [
+    "c++",
+    "cpp",
+    "c plus plus",
+    "c++ programming"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group pages that mention both oauth and refresh tokens": {
+  "intent": "group_tabs",
+  "concepts": [
+   "oauth",
+   "refresh tokens"
+  ],
+  "combine": "union",
+  "expansions": {
+   "oauth": [
+    "authorization",
+    "authentication",
+    "security tokens"
+   ],
+   "refresh tokens": [
+    "access tokens",
+    "session keys",
+    "session management"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close product pages that say out of stock": {
+  "intent": "close_tabs",
+  "concepts": [
+   "product pages"
+  ],
+  "combine": "union",
+  "expansions": {
+   "product pages": [
+    "product listings",
+    "product catalog",
+    "product listings page"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "out of stock"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group pages containing downloadable pdfs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "pdf"
+  ],
+  "combine": "union",
+  "expansions": {
+   "pdf": [
+    "document",
+    "file",
+    "downloadable"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close pages containing an email address": {
+  "intent": "close_tabs",
+  "concepts": [
+   "email"
+  ],
+  "combine": "union",
+  "expansions": {
+   "email": [
+    "email address",
+    "contact info",
+    "contact details"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close pages published before 2020": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs with code blocks": {
+  "intent": "group_tabs",
+  "concepts": [
+   "code blocks"
+  ],
+  "combine": "union",
+  "expansions": {
+   "code blocks": [
+    "code snippets",
+    "programming",
+    "programming languages"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group documentation pages": {
+  "intent": "group_tabs",
+  "concepts": [
+   "documentation"
+  ],
+  "combine": "union",
+  "expansions": {
+   "documentation": [
+    "manuals",
+    "guides",
+    "reference"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark tutorial tabs": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "tutorial"
+  ],
+  "combine": "union",
+  "expansions": {
+   "tutorial": [
+    "guide",
+    "how-to",
+    "instruction"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": true
+ },
+ "close promotional popup tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "promotional popup"
+  ],
+  "combine": "union",
+  "expansions": {
+   "promotional popup": [
+    "popup",
+    "ad",
+    "notification"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark official documentation about fastmcp": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "fastmcp"
+  ],
+  "combine": "union",
+  "expansions": {
+   "fastmcp": [
+    "fastmcp",
+    "fastmc",
+    "fastmcp documentation"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close login pages": {
+  "intent": "close_tabs",
+  "concepts": [
+   "login"
+  ],
+  "combine": "union",
+  "expansions": {
+   "login": [
+    "authentication",
+    "sign in",
+    "log in"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close forms and login tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "forms",
+   "login"
+  ],
+  "combine": "union",
+  "expansions": {
+   "forms": [
+    "web forms",
+    "registration forms",
+    "login forms"
+   ],
+   "login": [
+    "login pages",
+    "authentication pages"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs strongly related to c concurrency": {
+  "intent": "group_tabs",
+  "concepts": [
+   "c++",
+   "concurrency"
+  ],
+  "combine": "union",
+  "expansions": {
+   "c++": [
+    "cpp",
+    "c++ programming",
+    "c++ language"
+   ],
+   "concurrency": [
+    "parallelism",
+    "multithreading",
+    "asynchronous programming"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close ai tabs that are not about local models": {
+  "intent": "close_tabs",
+  "concepts": [
+   "ai"
+  ],
+  "combine": "union",
+  "expansions": {
+   "ai": [
+    "artificial intelligence",
+    "machine learning",
+    "deep learning"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "local models"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs about bengaluru": {
+  "intent": "group_tabs",
+  "concepts": [
+   "bengaluru"
+  ],
+  "combine": "union",
+  "expansions": {
+   "bengaluru": [
+    "bengaluru",
+    "bangalore",
+    "karnataka"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs related to react excluding react native": {
+  "intent": "group_tabs",
+  "concepts": [
+   "react"
+  ],
+  "combine": "union",
+  "expansions": {
+   "react": [
+    "javascript",
+    "web development",
+    "frontend"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "react native"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs about python 2 but keep python 3": {
+  "intent": "close_tabs",
+  "concepts": [
+   "python 2"
+  ],
+  "combine": "union",
+  "expansions": {
+   "python 2": [
+    "python",
+    "programming language",
+    "programming"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "python 3"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group pages for jira tickets xc 120 through xc 150": {
+  "intent": "group_tabs",
+  "concepts": [
+   "jira tickets"
+  ],
+  "combine": "union",
+  "expansions": {
+   "jira tickets": [
+    "jira",
+    "issue tracker",
+    "project management"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs about java the programming language not the island": {
+  "intent": "group_tabs",
+  "concepts": [
+   "java"
+  ],
+  "combine": "union",
+  "expansions": {
+   "java": [
+    "programming language",
+    "programming",
+    "coding"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.75,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group fastmcp tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "fastmcp"
+  ],
+  "combine": "union",
+  "expansions": {
+   "fastmcp": [
+    "fastmc",
+    "fastmcp"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs automatically opened by websites": {
+  "intent": "close_tabs",
+  "concepts": [
+   "websites"
+  ],
+  "combine": "union",
+  "expansions": {
+   "websites": [
+    "sites",
+    "sites",
+    "sites"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group pages i opened from google search results": {
+  "intent": "group_tabs",
+  "concepts": [
+   "google search results"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google search results": [
+    "search results",
+    "web search",
+    "online search"
+   ]
+  },
+  "domains": [
+   "google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close google search pages but keep the results i opened": {
+  "intent": "close_tabs",
+  "concepts": [
+   "google search"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google search": [
+    "google",
+    "search engine"
+   ]
+  },
+  "domains": [
+   "google.com"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "results"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs from search engines": {
+  "intent": "group_tabs",
+  "concepts": [
+   "search engines"
+  ],
+  "combine": "union",
+  "expansions": {
+   "search engines": [
+    "google",
+    "bing",
+    "duckduckgo",
+    "yahoo"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group unread articles into a reading list": {
+  "intent": "group_tabs",
+  "concepts": [
+   "articles"
+  ],
+  "combine": "union",
+  "expansions": {
+   "articles": [
+    "news",
+    "stories",
+    "stories"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close articles i have finished": {
+  "intent": "close_tabs",
+  "concepts": [
+   "articles"
+  ],
+  "combine": "union",
+  "expansions": {
+   "articles": [
+    "news",
+    "stories",
+    "reports"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark partially read technical articles": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "technical articles"
+  ],
+  "combine": "union",
+  "expansions": {
+   "technical articles": [
+    "tech articles",
+    "engineering articles",
+    "computer science articles"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group long articles i havent finished": {
+  "intent": "group_tabs",
+  "concepts": [
+   "articles"
+  ],
+  "combine": "union",
+  "expansions": {
+   "articles": [
+    "news",
+    "articles",
+    "stories"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "older_than",
+   "value": "1_weeks"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close videos i have finished watching": {
+  "intent": "close_tabs",
+  "concepts": [
+   "videos"
+  ],
+  "combine": "union",
+  "expansions": {
+   "videos": [
+    "movies",
+    "films",
+    "entertainment"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "older_than",
+   "value": "1_weeks"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group sports news tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "sports news"
+  ],
+  "combine": "union",
+  "expansions": {
+   "sports news": [
+    "sports",
+    "news",
+    "sports stories",
+    "sports updates"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group my cricket and football tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "cricket",
+   "football"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cricket": [
+    "cricket",
+    "sports",
+    "batsman"
+   ],
+   "football": [
+    "football",
+    "soccer",
+    "goalkeeper"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close my music tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "music"
+  ],
+  "combine": "union",
+  "expansions": {
+   "music": [
+    "songs",
+    "playlists",
+    "albums"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group my bengaluru weather tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "bengaluru"
+  ],
+  "combine": "union",
+  "expansions": {
+   "bengaluru": [
+    "bangalore",
+    "weather",
+    "climate"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group ai tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "ai"
+  ],
+  "combine": "union",
+  "expansions": {
+   "ai": [
+    "artificial intelligence",
+    "machine learning",
+    "deep learning"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group nfl tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "nfl"
+  ],
+  "combine": "union",
+  "expansions": {
+   "nfl": [
+    "football",
+    "soccer",
+    "american football"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close analytics and tracking tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "analytics",
+   "tracking"
+  ],
+  "combine": "union",
+  "expansions": {
+   "analytics": [
+    "analytics",
+    "metrics",
+    "reporting"
+   ],
+   "tracking": [
+    "tracking",
+    "monitoring",
+    "log"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all shopping tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "shopping"
+  ],
+  "combine": "union",
+  "expansions": {
+   "shopping": [
+    "retail",
+    "e-commerce",
+    "online shopping"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group my study tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "study"
+  ],
+  "combine": "union",
+  "expansions": {
+   "study": [
+    "learning",
+    "education",
+    "class"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs i have visited only once and not used today": {
+  "intent": "close_tabs",
+  "concepts": [
+   "visited once"
+  ],
+  "combine": "union",
+  "expansions": {
+   "visited once": [
+    "single visit",
+    "one-time visit"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "within",
+   "value": "today"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "pin my two most frequently used work tabs": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "work"
+  ],
+  "combine": "union",
+  "expansions": {
+   "work": [
+    "office",
+    "office work",
+    "workplace"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs that failed to load": {
+  "intent": "close_tabs",
+  "concepts": [
+   "failed to load"
+  ],
+  "combine": "union",
+  "expansions": {
+   "failed to load": [
+    "failed to load",
+    "timed out",
+    "not loaded"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group pages asking me to sign in": {
+  "intent": "group_tabs",
+  "concepts": [
+   "sign in"
+  ],
+  "combine": "union",
+  "expansions": {
+   "sign in": [
+    "login",
+    "authentication",
+    "authorization"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close unavailable product pages": {
+  "intent": "close_tabs",
+  "concepts": [
+   "product pages"
+  ],
+  "combine": "union",
+  "expansions": {
+   "product pages": [
+    "product listings",
+    "product catalog",
+    "product details"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group pages written in german": {
+  "intent": "group_tabs",
+  "concepts": [
+   "german"
+  ],
+  "combine": "union",
+  "expansions": {
+   "german": [
+    "deutsch",
+    "deutsche",
+    "deutsche",
+    "deutsche"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group reference wiki tabs in german": {
+  "intent": "group_tabs",
+  "concepts": [
+   "reference",
+   "wiki"
+  ],
+  "combine": "union",
+  "expansions": {
+   "reference": [
+    "reference material",
+    "informational content"
+   ],
+   "wiki": [
+    "encyclopedia",
+    "encyclopedia articles"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close news pages about india": {
+  "intent": "close_tabs",
+  "concepts": [
+   "news",
+   "india"
+  ],
+  "combine": "union",
+  "expansions": {
+   "news": [
+    "articles",
+    "stories",
+    "updates"
+   ],
+   "india": [
+    "events",
+    "events",
+    "events"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group pages priced in inr": {
+  "intent": "group_tabs",
+  "concepts": [
+   "inr"
+  ],
+  "combine": "union",
+  "expansions": {
+   "inr": [
+    "indian rupee",
+    "rs",
+    "inr"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close laptop tabs above 80000 rupees": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": true,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.5,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": true,
+  "_sc": true,
+  "isSelectAll": false
+ },
+ "group in stock laptops": {
+  "intent": "group_tabs",
+  "concepts": [
+   "laptops"
+  ],
+  "combine": "union",
+  "expansions": {
+   "laptops": [
+    "computers",
+    "notebooks",
+    "electronics"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close product tabs that do not ship to india": {
+  "intent": "close_tabs",
+  "concepts": [
+   "product"
+  ],
+  "combine": "union",
+  "expansions": {
+   "product": [
+    "item",
+    "goods",
+    "merchandise"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "india"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group products with rating above 4": {
+  "intent": "group_tabs",
+  "concepts": [
+   "products"
+  ],
+  "combine": "union",
+  "expansions": {
+   "products": [
+    "items",
+    "goods",
+    "items for sale"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group everything related to fixing the authentication bug": {
+  "intent": "group_tabs",
+  "concepts": [
+   "authentication bug"
+  ],
+  "combine": "union",
+  "expansions": {
+   "authentication bug": [
+    "security issue",
+    "login problem",
+    "authorization error"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark resources used for jira ticket xc 142": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "jira ticket xc-142"
+  ],
+  "combine": "union",
+  "expansions": {
+   "jira ticket xc-142": [
+    "jira ticket",
+    "jira ticket xc-142",
+    "jira ticket number",
+    "jira ticket reference"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs related to my browser extension project": {
+  "intent": "group_tabs",
+  "concepts": [
+   "browser extension project"
+  ],
+  "combine": "union",
+  "expansions": {
+   "browser extension project": [
+    "extension",
+    "add-on",
+    "plugin"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs relevant to the all hands presentation": {
+  "intent": "group_tabs",
+  "concepts": [
+   "all hands presentation"
+  ],
+  "combine": "union",
+  "expansions": {
+   "all hands presentation": [
+    "meeting",
+    "conference",
+    "presentation"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close community tutorial copies of react docs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "react"
+  ],
+  "combine": "union",
+  "expansions": {
+   "react": [
+    "reactjs",
+    "react documentation",
+    "react tutorial"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group official documentation about browser extensions": {
+  "intent": "group_tabs",
+  "concepts": [
+   "official documentation",
+   "browser extensions"
+  ],
+  "combine": "union",
+  "expansions": {
+   "official documentation": [
+    "documentation",
+    "manual",
+    "guide"
+   ],
+   "browser extensions": [
+    "extensions",
+    "add-ons",
+    "plugins"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close pages whose instructions are outdated": {
+  "intent": "close_tabs",
+  "concepts": [
+   "instructions"
+  ],
+  "combine": "union",
+  "expansions": {
+   "instructions": [
+    "guidelines",
+    "manuals",
+    "how-to"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close articles that add no new information": {
+  "intent": "close_tabs",
+  "concepts": [
+   "articles"
+  ],
+  "combine": "union",
+  "expansions": {
+   "articles": [
+    "news",
+    "stories",
+    "reports"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "keep one representative tab from each category": {
+  "intent": "group_tabs",
+  "concepts": [
+   "category"
+  ],
+  "combine": "union",
+  "expansions": {
+   "category": [
+    "categories",
+    "categories",
+    "categories"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the shopping tabs i opened in the last hour": {
+  "intent": "close_tabs",
+  "concepts": [
+   "shopping"
+  ],
+  "combine": "union",
+  "expansions": {
+   "shopping": [
+    "shopping",
+    "retail",
+    "e-commerce"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close shopping tabs unless they are pinned or currently playing audio": {
+  "intent": "close_tabs",
+  "concepts": [
+   "shopping"
+  ],
+  "combine": "union",
+  "expansions": {
+   "shopping": [
+    "shopping",
+    "retail",
+    "e-commerce"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "pinned",
+   "audible"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs from github or gitlab that are older than a week": {
+  "intent": "close_tabs",
+  "concepts": [
+   "github",
+   "gitlab"
+  ],
+  "combine": "union",
+  "expansions": {
+   "github": [
+    "github.com"
+   ],
+   "gitlab": [
+    "gitlab.com"
+   ]
+  },
+  "domains": [
+   "github.com",
+   "gitlab.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "older_than",
+   "value": "1_weeks"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs about c that contain code but are not videos": {
+  "intent": "group_tabs",
+  "concepts": [
+   "c++"
+  ],
+  "combine": "union",
+  "expansions": {
+   "c++": [
+    "programming",
+    "programming language",
+    "c programming"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "videos"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark unpinned tabs opened in the last 24 hours except already bookmarked pages": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "unpinned",
+   "tabs",
+   "last_24_hours"
+  ],
+  "combine": "union",
+  "expansions": {
+   "unpinned": [
+    "unpinned"
+   ],
+   "tabs": [
+    "tabs"
+   ],
+   "last_24_hours": [
+    "last 24 hours"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "within",
+   "value": "24_hours"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close old github and stack overflow tabs about c": {
+  "intent": "close_tabs",
+  "concepts": [
+   "github",
+   "stack overflow",
+   "c++"
+  ],
+  "combine": "union",
+  "expansions": {
+   "github": [
+    "github.com"
+   ],
+   "stack overflow": [
+    "stackoverflow.com"
+   ],
+   "c++": [
+    "c++",
+    "programming",
+    "programming languages"
+   ]
+  },
+  "domains": [
+   "github.com",
+   "stackoverflow.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "older_than",
+   "value": "1_weeks"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs from google.com but not google docs sheets or maps": {
+  "intent": "close_tabs",
+  "concepts": [
+   "google.com"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google.com": [
+    "google",
+    "search",
+    "web"
+   ]
+  },
+  "domains": [
+   "google.com"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "google docs sheets",
+   "maps"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the amazon cart tab and all new tab pages": {
+  "intent": "close_tabs",
+  "concepts": [
+   "amazon",
+   "cart",
+   "new"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon": [
+    "amazon.com"
+   ],
+   "cart": [
+    "shopping cart",
+    "checkout"
+   ],
+   "new": [
+    "new tab",
+    "tab"
+   ]
+  },
+  "domains": [
+   "amazon.com",
+   "amazon.in",
+   "amazon.co.uk",
+   "amazon.de"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group my shopping tabs from amazon": {
+  "intent": "group_tabs",
+  "concepts": [
+   "shopping"
+  ],
+  "combine": "union",
+  "expansions": {
+   "shopping": [
+    "shopping",
+    "e-commerce",
+    "online shopping"
+   ]
+  },
+  "domains": [
+   "amazon.com",
+   "amazon.in",
+   "amazon.co.uk",
+   "amazon.de"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all tabs except pinned ones": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": true,
+  "exclude": [
+   "pinned"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all financial news tabs from this morning": {
+  "intent": "close_tabs",
+  "concepts": [
+   "financial news"
+  ],
+  "combine": "union",
+  "expansions": {
+   "financial news": [
+    "finance",
+    "money",
+    "investing"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group the tools tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "tools"
+  ],
+  "combine": "union",
+  "expansions": {
+   "tools": [
+    "tools",
+    "equipment",
+    "hardware"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group news articles published today": {
+  "intent": "group_tabs",
+  "concepts": [
+   "news articles"
+  ],
+  "combine": "union",
+  "expansions": {
+   "news articles": [
+    "articles",
+    "stories",
+    "stories"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "within",
+   "value": "today"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close every tab i opened before this week except bookmarks": {
+  "intent": "close_tabs",
+  "concepts": [
+   "bookmarks"
+  ],
+  "combine": "union",
+  "expansions": {
+   "bookmarks": [
+    "favorites",
+    "saved",
+    "saved pages"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "older_than",
+   "value": "this_week"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all tabs in window 3 except the leetcode one": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "leetcode"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs similar to the oauth refresh token article": {
+  "intent": "group_tabs",
+  "concepts": [
+   "oauth refresh token"
+  ],
+  "combine": "union",
+  "expansions": {
+   "oauth refresh token": [
+    "oauth",
+    "token",
+    "refresh",
+    "security"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close temporary tabs older than two days": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "older_than",
+   "value": "2_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group high priority tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "high priority"
+  ],
+  "combine": "union",
+  "expansions": {
+   "high priority": [
+    "urgent",
+    "important",
+    "critical"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark all tabs tagged onboarding": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "onboarding"
+  ],
+  "combine": "union",
+  "expansions": {
+   "onboarding": [
+    "boarding",
+    "tutorial",
+    "setup"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs tagged research": {
+  "intent": "group_tabs",
+  "concepts": [
+   "research"
+  ],
+  "combine": "union",
+  "expansions": {
+   "research": [
+    "study",
+    "study material",
+    "research paper"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs due this week": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "older_than",
+   "value": "1_weeks"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group my interview prep tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "interview"
+  ],
+  "combine": "union",
+  "expansions": {
+   "interview": [
+    "interviews",
+    "interview preparation",
+    "interview questions"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the eight oldest tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "older_than",
+   "value": "8_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the three oldest shopping tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "older_than",
+   "value": "3_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all but the newest tab from example news.com": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "example-news.com"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "newest"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark the two most relevant react performance tabs": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "react",
+   "performance"
+  ],
+  "combine": "union",
+  "expansions": {
+   "react": [
+    "reactjs",
+    "react components",
+    "react hooks"
+   ],
+   "performance": [
+    "performance optimization",
+    "react profiling",
+    "react lazy loading"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs i copied code from": {
+  "intent": "group_tabs",
+  "concepts": [
+   "code"
+  ],
+  "combine": "union",
+  "expansions": {
+   "code": [
+    "programming",
+    "programming language",
+    "source code"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the fastest loading tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "fastest loading"
+  ],
+  "combine": "union",
+  "expansions": {
+   "fastest loading": [
+    "fast",
+    "quick",
+    "efficient"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs where the user scrolled to the bottom": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.85,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
  }
 }

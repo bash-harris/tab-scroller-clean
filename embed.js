@@ -1,20 +1,39 @@
 (() => {
   let pipelineFn = null;
+  let loading = null;
 
+  // Already-loaded + in-flight guards, same shape as NliSelect.load(). Without
+  // them every caller ran its own load: on an extension reload with a large tab
+  // set, the startup sweep and the onUpdated burst all call ensureRagReady()
+  // inside the cold window, and each one fetched the model and built its own ORT
+  // session in the single worker thread. allowLocalModels is false (ort-config.js)
+  // so each of those is a full CDN fetch, and the pile-up wedged the worker
+  // before any code path reached its first console.log.
   async function loadPipeline() {
-    let mod;
+    if (pipelineFn) return pipelineFn;
+    if (loading) return loading;
+    loading = (async () => {
+      let mod;
+      try {
+        mod = require('@xenova/transformers');
+      } catch {
+        mod = self?.transformers;
+      }
+      // transformers.js has ONE global env, so this and nli-select.js are writing
+      // the same settings -- whichever loads first wins. Both call the same helper
+      // so the winner does not matter. See ort-config.js for why wasmPaths is the
+      // difference between a usable model and a 1495ms forward pass.
+      const OC = (typeof self !== 'undefined' && self.OrtConfig) || require('./ort-config.js');
+      OC.configureOrt(mod);
+      pipelineFn = await mod.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+      return pipelineFn;
+    })();
     try {
-      mod = require('@xenova/transformers');
-    } catch {
-      mod = self?.transformers;
+      return await loading;
+    } catch (e) {
+      loading = null; // a failed load must not poison every later attempt
+      throw e;
     }
-    // transformers.js has ONE global env, so this and nli-select.js are writing
-    // the same settings -- whichever loads first wins. Both call the same helper
-    // so the winner does not matter. See ort-config.js for why wasmPaths is the
-    // difference between a usable model and a 1495ms forward pass.
-    const OC = (typeof self !== 'undefined' && self.OrtConfig) || require('./ort-config.js');
-    OC.configureOrt(mod);
-    pipelineFn = await mod.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
   }
 
   const Embed = {

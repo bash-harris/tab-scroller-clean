@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Tab Scroller — Luxury Editorial Edition</title>
+  <link rel="stylesheet" href="welcome.css">
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <div class="container">
+    <!-- Brand Header -->
+    <header class="brand-header">
+      <div class="badge-edition">✨ Editorial Edition</div>
+      <h1 class="title-hero">Effortless Tab Control, <em>Elevated.</em></h1>
+      <p class="subtitle-hero">
+        Navigate hundreds of open tabs with a featherlight hover micro-bar, semantic natural-language commands, and instant memory recall.
+      </p>
+    </header>
+
+    <!-- Interactive Live Playground Showcase -->
+    <section class="showcase-card">
+      <div class="showcase-header">
+        <div class="showcase-title">
+          <div class="dot"></div>
+          <span>Live Interactive Playground</span>
+        </div>
+        <div class="showcase-hint">Hover or scroll below</div>
+      </div>
+
+      <div class="playground-viewport" id="playground">
+        <div class="interactive-microbar" id="microbar">
+          <div class="micro-tab active" data-title="GitHub — Pull Request #412" data-domain="github.com">🐙</div>
+          <div class="micro-tab" data-title="Linear — Q3 Roadmap & Sprints" data-domain="linear.app">📐</div>
+          <div class="micro-tab" data-title="Figma — Design Tokens & Components" data-domain="figma.com">🎨</div>
+          <div class="micro-tab" data-title="Claude AI — Research Architecture" data-domain="claude.ai">✨</div>
+          <div class="micro-tab" data-title="LeetCode — Daily Challenge" data-domain="leetcode.com">⚡</div>
+          <div class="micro-tab" data-title="Stripe Docs — Webhooks & Billing" data-domain="stripe.com">💳</div>
+        </div>
+      </div>
+
+      <div class="tab-preview-box" id="previewBox">
+        Currently focused: <strong id="previewTitle">GitHub — Pull Request #412</strong> <span id="previewDomain" style="opacity: 0.7;">(github.com)</span>
+      </div>
+    </section>
+
+    <!-- 3-Step Feature Tour -->
+    <section class="features-grid">
+      <div class="feature-box">
+        <div class="feature-icon">🪶</div>
+        <h3 class="feature-title">Spatial Micro-Bar</h3>
+        <p class="feature-desc">
+          Hover at the screen edge to reveal your tabs in an ultra-sleek, unobtrusive bar. Wheel-scroll to switch tabs instantaneously with 60 FPS spring physics.
+        </p>
+      </div>
+
+      <div class="feature-box">
+        <div class="feature-icon">🧠</div>
+        <h3 class="feature-title">Semantic AI Agent</h3>
+        <p class="feature-desc">
+          Speak in natural language: <em>"group all research tabs"</em>, <em>"close duplicate dev docs"</em>. Powered by on-device embeddings with cloud Gemini/Ollama fallback.
+        </p>
+      </div>
+
+      <div class="feature-box">
+        <div class="feature-icon">⏳</div>
+        <h3 class="feature-title">Session Memory</h3>
+        <p class="feature-desc">
+          Every browsing journey is automatically captured and organized into clean session topics. Restore 600+ tabs in seconds without memory overload.
+        </p>
+      </div>
+    </section>
+
+    <!-- Quick Preference Setup -->
+    <section class="setup-card">
+      <h3 class="setup-title">Personalize Your Experience</h3>
+
+      <div class="setup-row">
+        <div class="setup-info">
+          <h4>Visual Theme</h4>
+          <p>Choose between warm creamy ivory or deep obsidian matte</p>
+        </div>
+        <div class="segmented-control" id="themeControl">
+          <button class="segmented-btn active" data-theme="dark">Obsidian Dark</button>
+          <button class="segmented-btn" data-theme="ivory">Warm Ivory</button>
+        </div>
+      </div>
+
+      <div class="setup-row">
+        <div class="setup-info">
+          <h4>Micro-Bar Position</h4>
+          <p>Screen boundary where the hover bar activates</p>
+        </div>
+        <div class="segmented-control" id="positionControl">
+          <button class="segmented-btn active" data-pos="top">Top Edge</button>
+          <button class="segmented-btn" data-pos="bottom">Bottom Edge</button>
+          <button class="segmented-btn" data-pos="left">Left Edge</button>
+          <button class="segmented-btn" data-pos="right">Right Edge</button>
+        </div>
+      </div>
+
+      <div class="setup-row">
+        <div class="setup-info">
+          <h4>AI Intelligence Engine</h4>
+          <p>Select your default query parsing & semantic reasoning model</p>
+        </div>
+        <div class="segmented-control" id="aiControl">
+          <button class="segmented-btn active" data-provider="gemini">Gemini Cloud</button>
+          <button class="segmented-btn" data-provider="ollama">Local Ollama</button>
+          <button class="segmented-btn" data-provider="disabled">Lightweight / Fast</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Call to Action -->
+    <footer class="cta-footer">
+      <button class="btn-primary" id="getStartedBtn">
+        <span>Complete Setup & Open Options</span>
+        <span>→</span>
+      </button>
+      <div class="links-sub">
+        <a href="options.html" id="skipToOptions">Advanced Settings</a>
+        <span>•</span>
+        <a href="https://github.com" target="_blank" rel="noopener">Documentation</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="welcome.js"></script>
+</body>
+</html>

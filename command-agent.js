@@ -1096,7 +1096,7 @@ async function runCommandPipeline(userCommand, windowId) {
   const cleanCommand = sanitizeQuery(userCommand);
   const tracer = createTracer(cleanCommand);
   tracer.step('Start', `Received command: "${cleanCommand}"`);
-  reportProgress('parse', 'Analyzing command…', 10);
+  reportProgress('parse', 'Understanding your command…', 8);
 
   const classification = classifyCommand(cleanCommand);
   const cmdLower = cleanCommand.toLowerCase();
@@ -1119,7 +1119,7 @@ async function runCommandPipeline(userCommand, windowId) {
         intent,
         signals: routed.signals.join(', ')
       });
-      reportProgress('understand', 'Planning action with AI…', 35);
+      reportProgress('understand', 'Planning what to do with your tabs…', 30);
       try {
         const agentPlan = await runAgentPipeline(cleanCommand, windowId, routed.signals, tracer);
         if (agentPlan) {
@@ -1145,7 +1145,7 @@ async function runCommandPipeline(userCommand, windowId) {
       intent,
       scopes: domainScopes.map(s => s.join('+')).join(', ')
     });
-    reportProgress('retrieve', 'Matching domains…', 45);
+    reportProgress('retrieve', 'Finding matching tabs by domain…', 40);
     // Retrieval-only phrasing ("show me my gmail tabs") maps to open_tabs when
     // the intent ladder found no bulk verb anywhere in the command; background
     // serves open_tabs plans as an OPEN_TABS_PICKER on any path.
@@ -1177,7 +1177,7 @@ async function runCommandPipeline(userCommand, windowId) {
 
   if (classification === 'syntactic') {
     tracer.step('Router', 'Syntactic fast path chosen', { intent, classification });
-    reportProgress('retrieve', 'Scanning tabs…', 50);
+    reportProgress('retrieve', 'Scanning your open tabs…', 45);
 
     // Same all-windows scope as the semantic path: "close all youtube.com tabs"
     // must mean every window, not just the focused one. Grouping is the one
@@ -1331,7 +1331,7 @@ async function runAgentPipeline(cleanCommand, windowId, signals = [], tracer = n
 
   // 4b. MULTI-GROUP BRANCH: User asked for multiple groups in one natural language prompt
   if (signals.includes('multi_group') && typeof self.AgentPlanner.parseMultiGroupCommand === 'function') {
-    reportProgress('plan', 'Extracting group categories with AI…', 45);
+    reportProgress('plan', 'Figuring out group categories…', 42);
     const tMg0 = Date.now();
     const mgParsed = await self.AgentPlanner.parseMultiGroupCommand(cleanCommand, planOpts);
     logStep('MultiGroupParse', 'Parsed multi-group definitions', {
@@ -1341,7 +1341,7 @@ async function runAgentPipeline(cleanCommand, windowId, signals = [], tracer = n
     });
 
     if (mgParsed && Array.isArray(mgParsed.buckets) && mgParsed.buckets.length > 0 && typeof self.assignMultiGroupsCore === 'function') {
-      reportProgress('execute', 'Sorting tabs into custom groups…', 70);
+      reportProgress('execute', 'Sorting tabs into groups…', 68);
 
       // Time window BEFORE the NLI. If the command names a range ("...from the
       // last hour", "...opened between 2 and 5 days ago"), resolve it to the set
@@ -1408,7 +1408,7 @@ async function runAgentPipeline(cleanCommand, windowId, signals = [], tracer = n
   }
 
   // 5. Plan -> execute -> (at most) ONE self-correction.
-  reportProgress('plan', 'Planning filters with AI…', 50);
+  reportProgress('plan', 'Deciding which tabs match…', 50);
   const tPlan0 = Date.now();
   let plan = await self.AgentPlanner.buildFilterPlan(cleanCommand, planOpts);
   logStep('Planner', `Plan built (${plan.source})`, {
@@ -1424,7 +1424,7 @@ async function runAgentPipeline(cleanCommand, windowId, signals = [], tracer = n
     durMs: Date.now() - tPlan0
   });
 
-  reportProgress('execute', 'Applying tab filters…', 75);
+  reportProgress('execute', 'Selecting the right tabs…', 72);
   let exec = await self.AgentExecutor.executePlan(plan, candidates, execDeps);
   logStep('Executor', `Plan executed`, {
     selectedTabs: exec.tabIds.length,
@@ -1457,7 +1457,7 @@ async function runAgentPipeline(cleanCommand, windowId, signals = [], tracer = n
 
 
   if (exec.needsCorrection) {
-    reportProgress('plan', 'Self-correcting filter plan…', 85);
+    reportProgress('plan', 'Double-checking the selection…', 85);
     const correctionHint = (exec.notes && exec.notes.length) ? exec.notes.join('; ') : 'the plan matched 0 or all tabs';
     logStep('SelfCorrection', 'Triggering re-plan', { hint: correctionHint });
     const plan2 = await self.AgentPlanner.buildFilterPlan(cleanCommand, { ...planOpts, correctionHint });
@@ -1547,15 +1547,15 @@ async function selectMatches(cleanCommand, candidates, settings) {
           onProgress: (done, total, freeCount) => {
             const pct = 40 + Math.round(52 * (done / Math.max(1, total)));
             reportProgress('match',
-              total ? `Checking ${done} of ${total} tabs that need a closer look` : 'Matching tabs',
+              total ? `Comparing ${done} of ${total} tabs — almost done` : 'Finding matching tabs',
               pct);
             void freeCount;
           },
           onCosineDone: (nliCount, totalTabs) => {
             reportProgress('match',
               nliCount
-                ? `${totalTabs - nliCount} tabs decided instantly, ${nliCount} need a closer look`
-                : `All ${totalTabs} tabs decided instantly`,
+                ? `Quick match done — looking closer at ${nliCount} tabs`
+                : 'Quick match done — checking all tabs',
               40);
           }
         }, query ? { query } : {}));

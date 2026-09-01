@@ -1515,8 +1515,8 @@
       /\b(?:the|that|this|my|a|an)\s+(?:[a-z0-9'’-]+\s+){0,6}(?:tabs?|pages?|articles?|stories?|videos?|posts?|docs?|documents?|guides?|recipes?|repos?|streams?|sites?|files?|notes?|emails?|messages?|sheets?|reports?|forms?|charts?|maps?|dashboards?|portals?|logins?|viewers?|editors?|players?|tools?|apps?|websites?|blogs?|threads?|reviews?|tutorials?|demos?|homepages?|pdfs?|tickets?|issues?|wikis?|calendars?|inboxes?|playlists?|albums?|tracks?|games?|scores?|tables?|graphs?|decks?|slides?|boards?|cards?|profiles?|accounts?)\b/i;
     const LISTWISE_CLASS_CUE_RE =
       /\b(?:all|every|each|both|everything)\b|\b(?:tabs|pages|videos|articles|stories|documents|guides|docs|files|sites|streams|emails|notes|sheets|spreadsheets|reports|messages|posts|images|photos|links|bookmarks|ones|stuff|stuf|things|buckets|groups|categories)\b/i;
-    const LISTWISE_MARGIN = Number(process.env.NLI_LW_MARGIN) || 0.30;
-    if (process.env.NLI_DEBUG_LW &&
+    const LISTWISE_MARGIN = 0.30;
+    if (false &&
         typeof opts.callModel === 'function' && opts.listwise && opts.listwise.enabled === true) {
       console.log('[LWDBG]', JSON.stringify({
         cmd: cmdStr, n: matches.length,
@@ -2020,7 +2020,7 @@
             !taxoConcepts.has(conceptLower) &&
             sem >= NEAR_ULTRA) ||
           (!compoundBlocked && sem >= ULTRA);
-        if (process.env.NLI_DEBUG_IDENT && sem > 0.01) {
+        if (false && sem > 0.01) {
           console.log(`[DBG] ${c.tabId} "${concept}" sem=${sem.toFixed(2)} lex=${lex.toFixed(2)} iA=${identA} xI=${expIdent} sT=${strongTag} cc=${canonCatHit} tie=${canonTie} hE=${hostEv} ev=${evidence} id=${identity} amb=${ambiguousTopic} taxo=${taxoConcepts.has(conceptLower)} cb=${compoundBlocked} -> ${ok}`);
         }
         if (ok) {

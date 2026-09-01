@@ -29,7 +29,8 @@
         return;
       }
       // Stale orphan from a reloaded/invalidated context — clear it and take over.
-      console.warn('[TabScroller] Evicting stale strip left by a previous extension context');
+      // console.log (not warn): this is normal recovery, not a problem.
+      console.log('[TabScroller] Replacing stale strip');
       try { existingHost.remove(); } catch (e) {}
       // Drop the leftover page-push <style> too, so we don't stack two copies.
       // (literal kept in sync with STYLE_ID defined below.)
@@ -647,7 +648,7 @@
     if (userSettings.displayMode !== 'auto_hide' || isCollapsed || isSearchActive || aiPanelOpen || _isIndexingActive) return;
     hideTimeout = setTimeout(() => {
       collapseBar();
-    }, userSettings.collapseDelay || 1500);
+    }, 300); // fast retract: 300ms after mouse leaves (was 1500ms)
   }
 
   function expandBar() {
@@ -1706,16 +1707,28 @@
     const muteText = tab.muted ? "Unmute Tab" : "Mute Tab";
 
     // Glassmorphism card structure matching Stitch design
+    const host = tab.url ? tab.url.replace(/^https?:\/\//, "").split("/")[0] : "";
+    const timeAgo = tab.lastAccessed ? (() => {
+      const d = Date.now() - tab.lastAccessed;
+      if (d < 60000) return "just now";
+      if (d < 3600000) return Math.round(d / 60000) + "m ago";
+      if (d < 86400000) return Math.round(d / 3600000) + "h ago";
+      return Math.round(d / 86400000) + "d ago";
+    })() : "";
+
     hoverCard.innerHTML = `
       <div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-3 flex flex-col gap-3 relative transition-all duration-200 shadow-[0_4px_12px_rgba(0,0,0,0.02)] min-w-[280px]">
-        
+
         <div class="flex items-center gap-3 w-full group">
           <div class="w-8 h-8 rounded-md bg-white shadow-sm flex items-center justify-center flex-shrink-0 border border-surface-variant ts-hc-icon-container">
              <span class="ts-fallback text-on-surface font-bold">${(tab.title || "?")[0].toUpperCase()}</span>
           </div>
           <div class="flex-1 min-w-0">
              <h3 class="font-h2 text-body-md text-on-surface truncate">${tab.title || "Untitled"}</h3>
-             <p class="font-body-sm text-body-sm text-outline truncate">${tab.url ? tab.url.replace(/^https?:\/\//, "").split("/")[0] : ""}</p>
+             <div class="flex items-center gap-1.5 text-body-sm text-outline truncate">
+               <span>${host}</span>
+               ${timeAgo ? `<span style="opacity:.5">·</span><span style="opacity:.6;font-size:11px">${timeAgo}</span>` : ""}
+             </div>
           </div>
           <button class="w-6 h-6 rounded-full hover:bg-surface-variant text-outline hover:text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 bg-surface-container-low shadow-sm ts-close-hover" data-tab-id="${tab.id}">
              <span class="text-[16px] font-bold">&times;</span>
@@ -1726,7 +1739,12 @@
         <div class="flex gap-1">
            <span class="bg-primary/10 text-primary font-label-caps text-[10px] px-2 py-0.5 rounded-full">${tab.groupTitle}</span>
         </div>` : ""}
-        
+
+        ${tab.url && tab.url.length > 0 ? `
+        <div class="text-[11px] text-outline/70 truncate px-0.5" style="opacity:.55;font-family:'IBM Plex Mono',monospace;">
+          ${tab.url.length > 80 ? tab.url.slice(0, 80) + "…" : tab.url}
+        </div>` : ""}
+
         ${showMute ? `
         <div class="mt-2 border-t border-surface-variant pt-2">
           <button class="ts-hc-mute-btn flex items-center gap-2 w-full px-2 py-1.5 rounded hover:bg-surface-variant text-on-surface text-sm transition-colors" data-tab-id="${tab.id}" data-muted="${tab.muted}">
@@ -3760,7 +3778,7 @@ function tsBuildPickerModal(options, hooks) {
     modal.remove();
   };
   const cancel = () => {
-    if (!closed && typeof hooks.onCancel === "function") hooks.onCancel();
+    if (!closed && hooks && typeof hooks.onCancel === "function") hooks.onCancel();
     close();
   };
 
@@ -3895,7 +3913,22 @@ function tsBuildErrorDialog(message, hooks) {
   panel.appendChild(body);
 
   const footer = doc.createElement("div");
-  footer.style.cssText = "display:flex;justify-content:flex-end;flex:none;";
+  footer.style.cssText = "display:flex;justify-content:space-between;align-items:center;flex:none;";
+
+  // "Copy Details" button — lets the user report the error with diagnostics
+  const copyBtn = tsUiButton(doc, "ghost");
+  copyBtn.textContent = "Copy Details";
+  copyBtn.style.fontSize = "12px";
+  copyBtn.addEventListener("click", () => {
+    const diag = JSON.stringify({
+      error: message, url: location.href, ts: new Date().toISOString(),
+      userAgent: navigator.userAgent.slice(0, 120)
+    }, null, 1);
+    try { navigator.clipboard.writeText(diag); copyBtn.textContent = "Copied!"; } catch(e) { copyBtn.textContent = "Copy failed"; }
+    setTimeout(() => { copyBtn.textContent = "Copy Details"; }, 2500);
+  });
+  footer.appendChild(copyBtn);
+
   const cancelBtn = tsUiButton(doc, "solid");
   footer.appendChild(cancelBtn);
   panel.appendChild(footer);
@@ -3908,7 +3941,7 @@ function tsBuildErrorDialog(message, hooks) {
     modal.remove();
   };
   const cancel = () => {
-    if (!closed && typeof hooks.onCancel === "function") hooks.onCancel();
+    if (!closed && hooks && typeof hooks.onCancel === "function") hooks.onCancel();
     close();
   };
   cancelBtn.addEventListener("click", cancel);
@@ -3928,10 +3961,17 @@ function tsExtractHost(url) {
   }
 }
 
-const UIDialogs = Object.freeze({
-  buildPickerModal: tsBuildPickerModal,
-  buildErrorDialog: tsBuildErrorDialog,
-});
+// var (not const): Chrome re-injects content scripts on extension reload and
+// navigation. A top-level `const` throws "already been declared" on the second
+// injection; `var` silently re-declares. Object.freeze still makes the
+// resulting object immutable.
+var UIDialogs = (function() {
+  "use strict";
+  return Object.freeze({
+    buildPickerModal: tsBuildPickerModal,
+    buildErrorDialog: tsBuildErrorDialog,
+  });
+})();
 
 // Node-side export so the dialog builders can be tested without Chrome APIs
 // (same pattern as command-agent.js).

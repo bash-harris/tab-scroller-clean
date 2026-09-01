@@ -1,0 +1,43 @@
+suite-v3 baselines (181 commands, 117 tabs, 7 groups, 3 windows)
+run: node bench/suite-runner.js [--no-llm]   |   validator: node bench/validate-suite.js
+LLM: qwen2.5-coder-3b-ctx via Ollama; parse cache: bench/.llm-query-cache.json
+
+CEILING (LLM parser + hybrid NLI)  -- 2026-09-01
+  TOTAL        set-exact 54/181 (30%)   violations 33
+  implemented  set-exact 38/83  (46%)   violations 10
+  gap          set-exact  9/86  (10%)   violations 23
+  abstain      set-exact  5/9   (56%)   (correctly refuses 5 of 9 ambiguous commands)
+  featureGap   set-exact  2/3   (67%)
+
+FLOOR (deterministic parser, no Ollama)  -- 2026-09-01
+  TOTAL        set-exact 46/181 (25%)   violations 46
+  implemented  set-exact 32/83  (39%)   violations 14
+  gap          set-exact  5/86  (6%)    violations 32
+  abstain      set-exact  6/9   (67%)
+  featureGap   set-exact  3/3   (100%)
+  NOTE: floor cannot exercise time/state/dupes/limit commands (parser emits no
+  time{}/state[] slots) -- those score empty by construction. Floor is only
+  comparable on topic/domain categories.
+
+per-category (ceiling):
+  1 url-domain 61% | 2 structured-url 22% | 3 title 25% | 4 time 31%
+  5 tab-state 30% | 6 window-group 14% | 7 relationship 25% | 8 duplicates 50%
+  9 page-content 0% | 10 content-type 17% | 11 topic 60% | 12 entities 20%
+  13 nav-origin 0% | 14 search-query 0% | 15 reading-progress 0% | 16 bookmarks 0%
+  17 history-freq 0% | 18 error-health 0% | 19 language-geo 33% | 20 price 0%
+  21 task-project 50% | 22 quality 0% | 23 cross-tab 50% | 24 ranking-limit 17%
+  25 compound-boolean 29% | 26 conversational 33% | 27 user-defined 17%
+
+defects the suite caught on first run (gold verified, pipeline at fault):
+  - docs.google.com / docs.github.com asks drag the whole google/github family
+    (exact-host scope missing) -> 13 violations across cat1/cat2
+  - "close localhost tabs except port 3000" -> floor selected ~everything (no
+    scope resolution, exception ignored)
+  - "close tabs whose URL contains dashboard/utm_source" -> URL-contains not
+    reachable through the semantic layer (lives in background filter engine only)
+  - "close tabs from github or gitlab older than a week" -> empty (domain OR
+    domain + time composition)
+  - "group tabs about c++ that contain code but are not videos" -> matched the
+    c++ *videos* instead (NOT-type composition inverted)
+  - abstain failures: ambiguous-scope commands selected tabs instead of asking
+    ("old github and stack overflow tabs about c++" -> [30,31,32])

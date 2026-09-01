@@ -729,74 +729,200 @@ processor = AutoProcessor.from_pretrained("CohereLabs/North-Micro-Vision-Instruc
       embedding: `[Float32Array(${embedding.length}) ...]`
     }, null, 2);
 
-    // 3. STAGE 3: Raw LLM Request / Response & Query Parser
-    const systemPrompt = `You convert a browser-tab command into JSON. You never see the tabs.
-
-Return ONLY this JSON, no prose:
-{"intent":"<intent>","concepts":["<topic>"],"combine":"union"|"intersection","expansions":{"<topic>":["<related term>"]},"domains":["<host>"],"confidence":0.0-1.0}
-
-intent is exactly one of: close_tabs, group_tabs, bookmark_tabs, pin_tabs, unpin_tabs, mute_tabs, unmute_tabs, reload_tabs, sort_tabs, search_and_switch`;
-
-    document.getElementById('rawLlmSystemPrompt').textContent = systemPrompt;
-    document.getElementById('rawLlmUserMessage').textContent = `User Command: "${command}"`;
-
-    // Parse command using concept-core & llm-query rules
-    let parsedQuery = null;
-    if (self.parseCommand) {
-      parsedQuery = self.parseCommand(command);
-    } else if (self.ConceptCore) {
-      parsedQuery = self.ConceptCore.parseCommand(command);
-    } else {
-      // Fallback parser
-      const isGroup = /group/i.test(command);
-      const isClose = /close/i.test(command);
-      const intent = isGroup ? 'group_tabs' : (isClose ? 'close_tabs' : 'group_tabs');
-      const concept = command.replace(/group|close|all|my|the|tabs|tab/gi, '').trim() || 'all';
-      parsedQuery = { action: intent, concept, domains: [] };
+    // 2.5 STAGE: Facet Fingerprint (facet.js — Tier 1.1)
+    if (typeof self.Facet !== 'undefined' && typeof self.Facet.build === 'function') {
+      try {
+        const facetCandidate = {
+          tabId: 0,
+          title: card.title || richData.title || url,
+          url: url,
+          domain: new URL(url).hostname.replace(/^www\./, ''),
+          category: card.enrichment?.category || '',
+          tags: (card.enrichment?.tags || []).map(t => (typeof t === 'string' ? t : t.tag)),
+          pinned: false, muted: false, audible: false,
+          lastAccessed: Date.now(), openedAt: Date.now(),
+        };
+        const fp = self.Facet.build(facetCandidate);
+        document.getElementById('facetMedia').textContent = fp.media;
+        document.getElementById('facetCommerce').textContent = fp.commerce;
+        document.getElementById('facetGenre').textContent = fp.genre || 'null';
+        document.getElementById('facetTopicGenre').textContent = fp.topicGenre || 'null';
+        const fcContent = document.getElementById('facetContent');
+        fcContent.innerHTML = fp.content.length
+          ? fp.content.map(c=>`<span class="dbg-tag-chip">${c}</span>`).join('')
+          : '—';
+        const fcConflicts = document.getElementById('facetConflicts');
+        fcConflicts.innerHTML = fp.conflicts.length
+          ? fp.conflicts.map(x=>`<span class="dbg-tag-chip" style="border-color:var(--dbg-red,#ef4444)">${x.claimed} → ${x.derived}</span>`).join('')
+          : '<span class="dbg-hint">None — all metadata consistent</span>';
+      } catch(e) {
+        console.warn('[debug] Facet.build error:', e);
+      }
     }
 
-    const targetConcept = parsedQuery.concept || 'all';
-    const simulatedLlmResponse = {
-      intent: parsedQuery.action || 'group_tabs',
-      concepts: targetConcept === 'all' ? [] : [targetConcept],
+    // 3. STAGE: Router & Guards (agent-router.js + command-agent.js mirror + veto)
+    const cmdLower = command.toLowerCase();
+    let routerSignals = [];
+    if (self.AgentRouter) {
+      const routed = self.AgentRouter.isComplexCommand(command);
+      routerSignals = routed.signals;
+      document.getElementById('routeComplex').textContent = routed.complex ? 'YES → agent path' : 'No';
+    }
+    document.getElementById('routeSignals').innerHTML = routerSignals.length
+      ? routerSignals.map(s => `<span class="dbg-tag-chip">${s}</span>`).join('')
+      : '<span class="dbg-hint">None — simple command</span>';
+
+    // Intent detection via regex ladder (mirror of command-agent.js detectIntent)
+    let detectedIntent = 'group_tabs';
+    const INTENT_RE = [
+      ['unpin_tabs', /\bun-?pin(s|ned|ning)?\b/], ['unmute_tabs', /\b(un-?mute|unsilence)\b/],
+      ['close_tabs', /\b(close|closing|shut)\b(?!\s+caption)|\b(kill|quit|dismiss)/],
+      ['bookmark_tabs', /\b(bookmark|save\s+(for|these|them|all))/], ['pin_tabs', /\bpin\b/],
+      ['mute_tabs', /\b(mute|silence)\b/, ], ['reload_tabs', /\b(reload|refresh)\b/],
+      ['search_and_switch', /\b(search|find|go\s+to|switch)\b/], ['sort_tabs', /\b(sort|order|arrange)\b/],
+      ['open_tabs', /\b(open|opening|show|focus|reveal|highlight)\b|\b(bring\s+up|pull\s+up)\b/],
+      ['group_tabs', /\b(group|cluster|organi[sz]e|collect|gather|bundle)\b/]
+    ];
+    for (const [intent, re] of INTENT_RE) { if (re.test(cmdLower)) { detectedIntent = intent; break; } }
+    document.getElementById('routeIntent').textContent = detectedIntent;
+
+    const isDestructive = detectedIntent === 'close_tabs';
+    document.getElementById('routeDestructive').textContent = isDestructive ? '⚠ YES' : 'No';
+
+    // Domain fast path (mirror of resolveDomainScopes from command-agent.js)
+    const BRAND_HOSTS_MIRROR = {
+      amazon: ['amazon.com','amazon.in','amazon.co.uk','amazon.de'],
+      youtube: ['youtube.com','youtu.be'], github: ['github.com'], reddit: ['reddit.com'],
+      netflix: ['netflix.com'], spotify: ['spotify.com'], google: ['google.com'],
+      gmail: ['mail.google.com'], ebay: ['ebay.com'], flipkart: ['flipkart.com'],
+      wikipedia: ['wikipedia.org'], primevideo: ['primevideo.com'],
+    };
+    let scopes = null;
+    const dottedMatch = cmdLower.match(/\b[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9-]+)*\.(?:com|org|net|edu|gov|co|io|uk|in|de|jp|us|tv|app|dev|ai|me)\b/g) || [];
+    let searchText = ' ' + cmdLower.replace(new RegExp(dottedMatch.map(d=>d.replace(/\./g,'\\.')).join('|'),'g'), dottedMatch.length ? ' '.repeat(1) : '') + ' ';
+    for (const d of dottedMatch) { if (!scopes) scopes = []; scopes.push([d]); }
+    for (const [brand, hosts] of Object.entries(BRAND_HOSTS_MIRROR)) {
+      if (new RegExp('\\b'+brand+'\\b').test(searchText)) { if(!scopes)scopes=[]; scopes.push(hosts); }
+    }
+    const scopeChips = document.getElementById('routeScopes');
+    if (scopes && scopes.length) {
+      scopeChips.innerHTML = scopes.map(hs=>`<span class="dbg-tag-chip">${hs.join('|')}</span>`).join('');
+    } else { scopeChips.innerHTML = '<span class="dbg-hint">No domain scope resolved</span>'; }
+
+    const hasActionVerb = /\b(close|closing|group|grouping|open|opening|pin|pinning|unpin|mute|muting|unmute|unmuting|reload|refresh|bookmark|save|sort|show|showing|focus|switch|search|find|reveal|highlight|organize|organise|collect|gather|bring up|pull up)\b/i.test(cmdLower);
+    const instrShape = /^\s*[{[]/.test(cmdLower) || /\b(select|drop)\b[^;.]{0,80}\b(from|database|table|tabs)\b/i.test(cmdLower);
+    const jailbreak = /^\s*(system|developer mode|you are)\s*[:\w]/i.test(cmdLower) || /\bignore\b[^.]{0,30}\b(previous|your)\s+(rules|instructions)/i.test(cmdLower) || /\bbypass\b[^.]{0,20}\bconfirmation\b/i.test(cmdLower);
+    document.getElementById('vetoVerb').textContent = hasActionVerb ? 'Yes' : 'No';
+    document.getElementById('vetoShape').textContent = instrShape ? 'Instruction-shaped' : 'No';
+    document.getElementById('vetoJail').textContent = jailbreak ? 'Detected' : 'None';
+    const vetoed = (instrShape && !hasActionVerb) || jailbreak;
+    const vetoEl = document.getElementById('vetoVerdict');
+    vetoEl.textContent = vetoed ? 'VETOED — abstain' : 'Pass';
+    vetoEl.className = vetoed ? 'dbg-meta-val dbg-badge-cat' : 'dbg-meta-val dbg-badge-success';
+
+    // Fast-path decision display
+    const fastPathEl = document.getElementById('routeFastPath');
+    if (scopes && hasActionVerb) {
+      fastPathEl.textContent = `YES — ${scopes.flat().length} hosts, deterministic`;
+      fastPathEl.className = 'dbg-meta-val dbg-badge-success';
+    } else {
+      fastPathEl.textContent = 'No — semantic pipeline';
+      fastPathEl.className = 'dbg-meta-val';
+    }
+
+    // 4. STAGE: Query Compiler — REAL llm-query.js SYSTEM prompt + coverage
+    const systemPrompt = (typeof LlmQuery !== 'undefined' && LlmQuery.SYSTEM) ? LlmQuery.SYSTEM :
+      '(LlmQuery not loaded — check script include)';
+    document.getElementById('rawLlmSystemPrompt').textContent = systemPrompt;
+    document.getElementById('rawLlmUserMessage').textContent = `Command: "${command}"`;
+
+    // Parse using ConceptCore deterministic fallback (no Ollama in browser debug page)
+    let parsedQuery;
+    try { parsedQuery = self.ConceptCore.parseCommand(command); } catch(e) { parsedQuery = {}; }
+    const detIntent = parsedQuery.action || detectedIntent;
+    const detConcept = parsedQuery.concept || '';
+
+    // Coverage invariant (llm-query.js coverage())
+    let covData = { covered: [], uncovered: [], ratio: 1 };
+    if (typeof LlmQuery !== 'undefined' && LlmQuery.coverage) {
+      try { covData = LlmQuery.coverage(command, { concepts: detConcept ? [detConcept] : [], expansions: {}, domains: parsedQuery.domains || [] }); } catch(e) {}
+    }
+    document.getElementById('covCovered').innerHTML = covData.covered.length
+      ? covData.covered.map(w=>`<span class="dbg-tag-chip" style="border-color:var(--dbg-green)">${w}</span>`).join('')
+      : '—';
+    document.getElementById('covUncovered').innerHTML = covData.uncovered.length
+      ? covData.uncovered.map(w=>`<span class="dbg-tag-chip" style="border-color:var(--dbg-red,#ef4444)">${w}</span>`).join('')
+      : '— (full coverage)';
+    const covRatio = covData.ratio != null ? covData.ratio.toFixed(2) : '1.00';
+    document.getElementById('covRatio').textContent = covRatio;
+    document.getElementById('coverageMarker').style.left = Math.min(100, parseFloat(covRatio)*100) + '%';
+
+    // Build full-schema AST
+    const astResponse = {
+      intent: detIntent,
+      concepts: detConcept ? [detConcept] : [],
       combine: 'union',
-      expansions: targetConcept === 'all' ? {} : { [targetConcept]: [`${targetConcept} guide`, `${targetConcept} tools`] },
+      expansions: detConcept ? {[detConcept]: [detConcept+' guide', detConcept+' tutorial']} : {},
       domains: parsedQuery.domains || [],
-      confidence: 0.95
+      selectAll: /\b(all|every|everything)\b/i.test(cmdLower) && !detConcept,
+      exclude: [],
+      time: null,
+      state: [],
+      confidence: 0.85,
+      source: 'concept-core (deterministic fallback)',
+      _coverage: covRatio
     };
 
-    document.getElementById('rawLlmResponse').textContent = JSON.stringify(simulatedLlmResponse, null, 2);
-    document.getElementById('llmLatencyBadge').textContent = 'O(1) Cached / Deterministic';
+    document.getElementById('astIntent').textContent = astResponse.intent;
+    document.getElementById('astConcepts').textContent = JSON.stringify(astResponse.concepts);
+    document.getElementById('astCombine').textContent = astResponse.combine;
+    document.getElementById('astConfidence').textContent = astResponse.confidence;
+    document.getElementById('astSelectAll').textContent = String(astResponse.selectAll);
+    document.getElementById('astExclude').textContent = JSON.stringify(astResponse.exclude);
+    document.getElementById('astTime').textContent = astResponse.time ? JSON.stringify(astResponse.time) : 'null';
+    document.getElementById('astState').textContent = JSON.stringify(astResponse.state);
+    document.getElementById('astDomains').textContent = JSON.stringify(astResponse.domains);
+    document.getElementById('astSource').textContent = astResponse.source;
+    document.getElementById('astJson').textContent = JSON.stringify(astResponse, null, 2);
 
-    document.getElementById('astIntent').textContent = simulatedLlmResponse.intent;
-    document.getElementById('astConcepts').textContent = simulatedLlmResponse.concepts.join(', ') || '(All Tabs)';
-    document.getElementById('astCombine').textContent = simulatedLlmResponse.combine;
-    document.getElementById('astConfidence').textContent = simulatedLlmResponse.confidence;
-    document.getElementById('astJson').textContent = JSON.stringify(simulatedLlmResponse, null, 2);
+    // 5. STAGE: Selection Engine — facet admission + cosine bands + NLI + listwise status
 
-    // 4. STAGE 4: Two-Tier Hybrid Matcher & NLI Inspector
+    // Facet admission display
+    let facetPredName = 'None';
+    if (self.Facet && typeof self.Facet.build === 'function') {
+      try {
+        // The facet was already built in Stage 1; just report the ontology mapping
+        const FACET_KEYS = [
+          {keys:['entertainment','fun','movie','tv'], name:'entertainment'},
+          {keys:['video','vidoe','streaming','stream','watch'], name:'video'},
+          {keys:['music','audio','song','lofi','playlist','podcast'], name:'audio'},
+          {keys:['shopping','shop','store','retail','deals','marketplace'], name:'commerce'},
+          {keys:['news','journalism'], name:'news'},
+          {keys:['weather','forecast'], name:'weather'},
+          {keys:['docs','documentation','pdf','document'], name:'doc'}
+        ];
+        const conceptWords = (detConcept || cmdLower).split(/[^a-z0-9]+/).filter(Boolean);
+        for (const e of FACET_KEYS) {
+          if (e.keys.some(k => conceptWords.includes(k))) { facetPredName = e.name; break; }
+        }
+      } catch(e) {}
+    }
+    document.getElementById('selFacetPred').textContent = facetPredName;
+    document.getElementById('selFacetGrade').textContent = facetPredName !== 'None' ? 'Admission-grade (elect 0.70)' : 'N/A';
+
+    // Cosine scoring (existing logic preserved)
+    const targetConcept = detConcept || 'all';
     const queryVec = generateQueryVector(targetConcept);
     const rawCosine = computeCosine(embedding, queryVec);
-
-    // Compute Lexical & Category Fast-Track Alignment (Parity with nli-select.js)
     const conceptLower = targetConcept.toLowerCase();
     let canonQuery = null;
-    if (self.EnrichMath?.matchTag) {
-      canonQuery = self.EnrichMath.matchTag(conceptLower);
-    } else {
-      const MAP = { programming: 'coding', coding: 'coding', cricket: 'sports', sports: 'sports', recipes: 'cooking', sourdough: 'cooking' };
-      canonQuery = MAP[conceptLower] || null;
-    }
-
+    if (self.EnrichMath?.matchTag) canonQuery = self.EnrichMath.matchTag(conceptLower);
     const cardCat = card.enrichment?.category;
     const cardTags = (card.enrichment?.tags || []).map(t => (typeof t === 'string' ? t : t.tag));
-
     let catBoost = 0;
-    if (canonQuery && (cardCat === canonQuery || cardTags.includes(canonQuery))) {
-      catBoost = 0.20;
-    }
-
+    if (canonQuery && (cardCat === canonQuery || cardTags.includes(canonQuery))) catBoost = 0.20;
     const titleLower = (card.title || '').toLowerCase();
+
     const keywords = (card.structured?.keywords || []).map(k => String(k).toLowerCase());
     let lexicalBoost = 0;
 
@@ -932,6 +1058,59 @@ intent is exactly one of: close_tabs, group_tabs, bookmark_tabs, pin_tabs, unpin
       decisionBadge.textContent = 'DROPPED';
       decisionBadge.className = 'dbg-badge';
     }
+
+    // Listwise escalation display (mirror — no actual model call in browser debug page)
+    const lwFiredEl = document.getElementById('lwFired');
+    const lwTriggerEl = document.getElementById('lwTrigger');
+    const lwPickEl = document.getElementById('lwPick');
+    if (typeof self.NliSelect !== 'undefined' && self.NliSelect.listwiseStats) {
+      const stats = self.NliSelect.listwiseStats();
+      lwFiredEl.textContent = String(stats.escalated || 0);
+    } else {
+      // Mirror the trigger condition from nli-select.js
+      const marginOk = nliScore >= UNCERTAIN_THRESHOLD && nliScore < 1.0;
+      const singularShape = /\b(the|that|my)\s+[a-z0-9'-]+(\s+[a-z0-9'-]+){0,3}\s+(page|story|article|video|mix|stream|guide|recipe|repo|document|doc|tutorial|tab)\b/i.test(cmdLower);
+      const wouldEscalate = marginOk && singularShape;
+      lwFiredEl.textContent = wouldEscalate ? 'Would escalate (needs callModel in prod)' : 'Not triggered';
+      lwTriggerEl.textContent = wouldEscalate
+        ? `margin < 0.30, singular shape ✓, ${nliScore.toFixed(2)} conf`
+        : 'margin/shape not met';
+      lwPickEl.textContent = wouldEscalate ? '(model adjudicates in production)' : '—';
+    }
+
+    // 6. STAGE: Plan Operators & Execution Decision (plan-ops.js)
+    let restFires = false, superlativeSpec = null, literalToken = null;
+    if (typeof self.PlanOps !== 'undefined') {
+      try {
+        // Rest partition shape test (no universe needed for shape-only check)
+        const rpCmd = cmdLower;
+        const hasPartition = /\b(split|divide|sort|organize|group)\b/i.test(rpCmd) && /\binto\b|\bbuckets?\s*:/i.test(rpCmd);
+        const hasRestCue = /\bthe\s+rest\b|\beverything\s+else\b|\bthe\s+others\b/i.test(rpCmd);
+        restFires = hasPartition && hasRestCue;
+
+        // Superlative spec extraction
+        const supMatch = rpCmd.match(/\b(oldest|newest|most\s+recent|latest|first|last|earliest)\b/i);
+        if (supMatch) superlativeSpec = supMatch[1].toLowerCase();
+
+        // Literal token extraction
+        const litMatch = rpCmd.match(/\b(?:containing|with|has|having)\s+the\s+(?:word|term|phrase)\s+(["']?)([a-z0-9]+)\1?\s+in\s+their\s+title/i) ||
+                         rpCmd.match(/\btitled?\s+["']?([a-z0-9\s]+)["']?\s*$/i);
+        if (litMatch) literalToken = (litMatch[2] || litMatch[1]).trim();
+      } catch(e) {}
+    }
+    document.getElementById('opRestPartition').textContent = restFires ? `YES — universe expands` : 'No';
+    document.getElementById('opSuperlative').textContent = superlativeSpec ? `${superlativeSpec} → extreme pick` : 'No superlative detected';
+    document.getElementById('opLiteral').textContent = literalToken ? `Literal mode: title contains "${literalToken}"` : 'No literal-token command';
+
+    // Execution decision
+    const selectedCount = facetPredName !== 'None' ? 3 : (nliScore >= DEFAULT_THRESHOLD ? 1 : 0);
+    const needsPreview = isDestructive || selectedCount >= 3 || astResponse.confidence < 0.75;
+    const isAmbiguousCmd = / or | and (then )?(group|close|pin|mute)/i.test(cmdLower);
+
+    document.getElementById('execPreview').textContent = needsPreview ? 'YES — preview dialog fires' : 'No — auto-execute';
+    document.getElementById('execDestructive').textContent = isDestructive ? '⚠ YES — always previewed' : 'No';
+    document.getElementById('execAmbig').textContent = isAmbiguousCmd ? 'YES — competing intents detected' : 'No';
+    document.getElementById('execCount').textContent = String(selectedCount);
 
     pipelineStatusPill.textContent = 'Trace Completed';
     pipelineStatusPill.style.color = '#2ecc71';

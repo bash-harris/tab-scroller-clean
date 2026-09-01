@@ -177,36 +177,62 @@
 
       <!-- Navigation Tabs for Right Pane -->
       <div class="dbg-nav-tabs">
-        <button class="dbg-nav-tab active" data-stage="stage-db">
+        <button class="dbg-nav-tab active" data-stage="stage-ingest">
           <span class="dbg-tab-num">1</span>
-          <span>Tag Ingestion & DB Card</span>
+          <span>Ingest &amp; Facet Fingerprint</span>
         </button>
         <button class="dbg-nav-tab" data-stage="stage-extract">
           <span class="dbg-tab-num">2</span>
-          <span>DOM & NER Extraction</span>
+          <span>DOM &amp; NER Extraction</span>
+        </button>
+        <button class="dbg-nav-tab" data-stage="stage-route">
+          <span class="dbg-tab-num">3</span>
+          <span>Router &amp; Guards</span>
         </button>
         <button class="dbg-nav-tab" data-stage="stage-llm">
-          <span class="dbg-tab-num">3</span>
-          <span>LLM Query Compiler</span>
-        </button>
-        <button class="dbg-nav-tab" data-stage="stage-nli">
           <span class="dbg-tab-num">4</span>
-          <span>NLI Inference & 2-Tier Match</span>
+          <span>Query Compiler</span>
+        </button>
+        <button class="dbg-nav-tab" data-stage="stage-select">
+          <span class="dbg-tab-num">5</span>
+          <span>Selection Engine</span>
+        </button>
+        <button class="dbg-nav-tab" data-stage="stage-ops">
+          <span class="dbg-tab-num">6</span>
+          <span>Operators &amp; Execution</span>
         </button>
         <button class="dbg-nav-tab" data-stage="stage-storage">
-          <span class="dbg-tab-num">5</span>
-          <span>Storage & SQLite Disk</span>
+          <span class="dbg-tab-num">7</span>
+          <span>Storage</span>
         </button>
       </div>
 
       <!-- Inspector Panels Container -->
       <div class="dbg-inspector-body">
 
-        <!-- ================= STAGE 1: TAG INGESTION & DB CARD ================= -->
-        <div id="panel-stage-db" class="dbg-stage-panel active">
+        <!-- ================= STAGE 1: INGEST & FACET FINGERPRINT ================= -->
+        <div id="panel-stage-ingest" class="dbg-stage-panel active">
           <div class="dbg-card-header">
-            <h3>IndexedDB Stored Document & Tag Ingestion Card</h3>
+            <h3>IndexedDB Card &amp; Ingest-Time Facet Fingerprint</h3>
             <span class="dbg-badge-gold" id="dbKeyBadge">Key: urlHash</span>
+          </div>
+
+          <!-- NEW: Facet Fingerprint (facet.js — Tier 1.1) -->
+          <div class="dbg-section">
+            <div class="dbg-section-title">
+              <span>Ingest-Time Facet Fingerprint (facet.js)</span>
+              <span class="dbg-hint">Built once per tab at capture — queries compile against this, never re-derive it</span>
+            </div>
+            <div class="dbg-ast-grid" style="margin-bottom:10px;">
+              <div class="dbg-ast-card"><span class="dbg-ast-title">Media</span><span class="dbg-ast-val" id="facetMedia">—</span></div>
+              <div class="dbg-ast-card"><span class="dbg-ast-title">Commerce</span><span class="dbg-ast-val" id="facetCommerce">—</span></div>
+              <div class="dbg-ast-card"><span class="dbg-ast-title">Genre</span><span class="dbg-ast-val" id="facetGenre">—</span></div>
+              <div class="dbg-ast-card"><span class="dbg-ast-title">Topic Genre</span><span class="dbg-ast-val" id="facetTopicGenre">—</span></div>
+            </div>
+            <div class="dbg-meta-grid" style="margin-bottom:8px;">
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Trusted Content:</span><span class="dbg-chips-wrap" id="facetContent">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Conflicts (lying tags pruned):</span><span class="dbg-chips-wrap" id="facetConflicts">None</span></div>
+            </div>
           </div>
 
           <div class="dbg-meta-grid">
@@ -379,166 +405,194 @@
           </div>
         </div>
 
-        <!-- ================= STAGE 3: RAW LLM REQUEST / RESPONSE ================= -->
-        <div id="panel-stage-llm" class="dbg-stage-panel">
+        <!-- ================= STAGE 3: ROUTER & GUARDS ================= -->
+        <div id="panel-stage-route" class="dbg-stage-panel">
           <div class="dbg-card-header">
-            <h3>Upstream LLM Query Compiler (O(1) Constant Cost)</h3>
-            <span class="dbg-badge-gold">Query-Side Model Only</span>
+            <h3>Deterministic Router, Fast Path &amp; Injection Guard</h3>
+            <span class="dbg-badge" id="routeDecisionBadge">Awaiting Run</span>
           </div>
 
           <div class="dbg-architecture-note">
-            <strong>Architecture Fact:</strong> The LLM parses the <em>user query</em>, never the tabs. It receives zero page titles or browsing history, protecting privacy and running in <code>O(1)</code> time whether you have 5 or 1,000 tabs open.
+            <strong>Channel Rule:</strong> the user's command is the only instruction channel. Tab-derived text is always data. The veto fires on instruction-<em>shape</em> without an action verb, plus unconditional privilege/jailbreak markers.
           </div>
 
-          <!-- Raw Prompt Request sent to LLM -->
+          <div class="dbg-section">
+            <div class="dbg-section-title"><span>1. AgentRouter Signals (agent-router.js)</span></div>
+            <div class="dbg-meta-grid">
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Complex Command?</span><span class="dbg-meta-val dbg-badge-cat" id="routeComplex">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Signals:</span><span class="dbg-chips-wrap" id="routeSignals">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Detected Intent (regex ladder):</span><span class="dbg-meta-val dbg-mono" id="routeIntent">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Destructive:</span><span class="dbg-meta-val" id="routeDestructive">—</span></div>
+            </div>
+          </div>
+
+          <div class="dbg-section">
+            <div class="dbg-section-title"><span>2. Domain Fast Path (command-agent.js — zero model calls)</span></div>
+            <div class="dbg-meta-grid">
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Resolved Scopes:</span><span class="dbg-chips-wrap" id="routeScopes">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Fast Path Fires?</span><span class="dbg-meta-val" id="routeFastPath">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Spoof Guard:</span><span class="dbg-meta-val" id="routeSpoof">registrable-domain matching active</span></div>
+            </div>
+          </div>
+
+          <div class="dbg-section">
+            <div class="dbg-section-title"><span>3. Injection Veto (channel rule)</span></div>
+            <div class="dbg-meta-grid">
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Action Verb Present:</span><span class="dbg-meta-val" id="vetoVerb">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Instruction Shape:</span><span class="dbg-meta-val" id="vetoShape">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Jailbreak / Privilege Markers:</span><span class="dbg-meta-val" id="vetoJail">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Verdict:</span><span class="dbg-meta-val dbg-badge-success" id="vetoVerdict">—</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= STAGE 4: QUERY COMPILER ================= -->
+        <div id="panel-stage-llm" class="dbg-stage-panel">
+          <div class="dbg-card-header">
+            <h3>Query Compiler — Schema Decode, Coverage Invariant &amp; Self-Consistency</h3>
+            <span class="dbg-badge-gold">Query-Side Model Only · O(1)</span>
+          </div>
+
+          <div class="dbg-architecture-note">
+            <strong>Architecture:</strong> the model parses the <em>command</em>, never the tabs. Output is decoded against a JSON schema (grammar-tightened), validated through a span-coverage invariant, and low-quality parses trigger K=3 self-consistency resampling at T=0.7.
+          </div>
+
           <div class="dbg-section">
             <div class="dbg-section-title">
-              <span>1. Exact Raw Prompt Sent to LLM (As It Is)</span>
+              <span>1. Exact System Prompt (llm-query.js — byte-frozen)</span>
               <button class="dbg-btn-copy" data-copy="rawLlmRequest">Copy Prompt</button>
             </div>
             <div class="dbg-prompt-viewer">
-              <div class="dbg-prompt-role">SYSTEM PROMPT:</div>
+              <div class="dbg-prompt-role">SYSTEM PROMPT (schema-decoded via format=JSON_SCHEMA):</div>
               <pre class="dbg-code-block dbg-code-system"><code id="rawLlmSystemPrompt">Loading system prompt...</code></pre>
-              
               <div class="dbg-prompt-role">USER MESSAGE:</div>
               <pre class="dbg-code-block dbg-code-user"><code id="rawLlmUserMessage">Loading user query...</code></pre>
             </div>
           </div>
 
-          <!-- Raw LLM Response -->
           <div class="dbg-section">
             <div class="dbg-section-title">
-              <span>2. Raw Response from LLM (Unparsed Text)</span>
-              <span class="dbg-hint" id="llmLatencyBadge">Latency: —</span>
+              <span>2. Span-Coverage Invariant</span>
+              <span class="dbg-hint">Every content word must be consumed by a plan node — truncation is caught mechanically</span>
             </div>
-            <pre class="dbg-code-block"><code id="rawLlmResponse">// Model response JSON...</code></pre>
+            <div class="dbg-meter-track" style="margin-bottom:6px;">
+              <div class="dbg-meter-zone zone-accept" style="width:100%;"><span>Coverage Ratio</span></div>
+              <div class="dbg-meter-marker" id="coverageMarker" style="left:0%;"></div>
+            </div>
+            <div class="dbg-meta-grid">
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Covered Tokens:</span><span class="dbg-chips-wrap" id="covCovered">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Uncovered (drift):</span><span class="dbg-chips-wrap" id="covUncovered">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Ratio / Gate (&lt;0.6 + conf&lt;0.8 triggers resample):</span><span class="dbg-meta-val dbg-mono" id="covRatio">—</span></div>
+            </div>
           </div>
 
-          <!-- Validated AST Query Object -->
           <div class="dbg-section">
             <div class="dbg-section-title">
-              <span>3. Validated Structured Query AST</span>
+              <span>3. Validated Structured Query AST (full schema)</span>
               <span class="dbg-badge-success" id="astValidBadge">Validated</span>
             </div>
             <div class="dbg-ast-grid">
-              <div class="dbg-ast-card">
-                <span class="dbg-ast-title">Detected Intent</span>
-                <span class="dbg-ast-val" id="astIntent">—</span>
-              </div>
-              <div class="dbg-ast-card">
-                <span class="dbg-ast-title">Target Concepts</span>
-                <span class="dbg-ast-val" id="astConcepts">—</span>
-              </div>
-              <div class="dbg-ast-card">
-                <span class="dbg-ast-title">Combine Strategy</span>
-                <span class="dbg-ast-val" id="astCombine">—</span>
-              </div>
-              <div class="dbg-ast-card">
-                <span class="dbg-ast-title">Confidence</span>
-                <span class="dbg-ast-val" id="astConfidence">—</span>
-              </div>
+              <div class="dbg-ast-card"><span class="dbg-ast-title">Intent</span><span class="dbg-ast-val" id="astIntent">—</span></div>
+              <div class="dbg-ast-card"><span class="dbg-ast-title">Concepts</span><span class="dbg-ast-val" id="astConcepts">—</span></div>
+              <div class="dbg-ast-card"><span class="dbg-ast-title">Combine</span><span class="dbg-ast-val" id="astCombine">—</span></div>
+              <div class="dbg-ast-card"><span class="dbg-ast-title">Confidence</span><span class="dbg-ast-val" id="astConfidence">—</span></div>
+              <div class="dbg-ast-card"><span class="dbg-ast-title">Select All</span><span class="dbg-ast-val" id="astSelectAll">—</span></div>
+              <div class="dbg-ast-card"><span class="dbg-ast-title">Exclude</span><span class="dbg-ast-val" id="astExclude">—</span></div>
+              <div class="dbg-ast-card"><span class="dbg-ast-title">Time Filter</span><span class="dbg-ast-val" id="astTime">—</span></div>
+              <div class="dbg-ast-card"><span class="dbg-ast-title">State Filter</span><span class="dbg-ast-val" id="astState">—</span></div>
+              <div class="dbg-ast-card"><span class="dbg-ast-title">Domains</span><span class="dbg-ast-val" id="astDomains">—</span></div>
+              <div class="dbg-ast-card"><span class="dbg-ast-title">Source</span><span class="dbg-ast-val" id="astSource">—</span></div>
             </div>
             <pre class="dbg-code-block"><code id="astJson">// Structured AST...</code></pre>
           </div>
         </div>
 
-        <!-- ================= STAGE 4: NLI INFERENCE & 2-TIER MATCH ================= -->
-        <div id="panel-stage-nli" class="dbg-stage-panel">
+        <!-- ================= STAGE 5: SELECTION ENGINE ================= -->
+        <div id="panel-stage-select" class="dbg-stage-panel">
           <div class="dbg-card-header">
-            <h3>Two-Tier Hybrid Matcher & NLI Entailment Inspector</h3>
+            <h3>Selection Engine — Facet Admission, Qualifier Pipeline, Cosine Bands &rarr; NLI &rarr; Listwise</h3>
             <span class="dbg-badge" id="nliDecisionBadge">Awaiting Run</span>
           </div>
 
-          <!-- Tier 1: Vector Cosine & Lexical-Category Fast-Track -->
           <div class="dbg-section">
-            <div class="dbg-section-title">
-              <span>Tier 1: Instant Hybrid Screening (Vector Math + Lexical/Category Fast-Track)</span>
-              <span class="dbg-hint">0ms Cost — Instant Pre-Filter</span>
+            <div class="dbg-section-title"><span>Pipeline Order (all deterministic unless escalated)</span></div>
+            <div class="dbg-chips-wrap" style="margin-bottom:8px;">
+              <span class="dbg-tag-chip">veto</span><span class="dbg-tag-chip">domain scope</span><span class="dbg-tag-chip">time window</span><span class="dbg-tag-chip">state filter</span><span class="dbg-tag-chip">selectAll / complement</span><span class="dbg-tag-chip">facet admission</span><span class="dbg-tag-chip">cosine bands</span><span class="dbg-tag-chip">NLI middle band</span><span class="dbg-tag-chip">login demotion</span><span class="dbg-tag-chip">singular margin</span><span class="dbg-tag-chip">listwise cascade</span>
             </div>
+          </div>
 
+          <div class="dbg-section">
+            <div class="dbg-section-title"><span>Facet Admission (ontology-mapped concepts)</span></div>
+            <div class="dbg-meta-grid">
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Ontology Predicate Fired:</span><span class="dbg-meta-val" id="selFacetPred">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Admission Grade:</span><span class="dbg-meta-val" id="selFacetGrade">—</span></div>
+            </div>
+          </div>
+
+          <div class="dbg-section">
+            <div class="dbg-section-title"><span>Tier 1: Instant Hybrid Screening (Vector Math + Lexical/Category Fast-Track)</span></div>
             <div class="dbg-cosine-meter-card">
-              <div class="dbg-meter-header">
-                <span class="dbg-meter-title">Combined Tier 1 Score:</span>
-                <span class="dbg-meter-score" id="valCosineScore">0.000</span>
-              </div>
-              
-              <!-- Visual Ambiguity Band Bar -->
+              <div class="dbg-meter-header"><span class="dbg-meter-title">Combined Tier 1 Score:</span><span class="dbg-meter-score" id="valCosineScore">0.000</span></div>
               <div class="dbg-meter-track">
-                <div class="dbg-meter-zone zone-reject" style="width: 20%;">
-                  <span>Auto-Reject (&lt;0.20)</span>
-                </div>
-                <div class="dbg-meter-zone zone-band" style="width: 25%;">
-                  <span>Ambiguous Band (0.20 - 0.45) &rarr; NLI Tier 2</span>
-                </div>
-                <div class="dbg-meter-zone zone-accept" style="width: 55%;">
-                  <span>Auto-Accept (&ge;0.45, 0 NLI Passes)</span>
-                </div>
+                <div class="dbg-meter-zone zone-reject" style="width: 20%;"><span>Auto-Reject (&lt;0.20)</span></div>
+                <div class="dbg-meter-zone zone-band" style="width: 25%;"><span>Ambiguous Band &rarr; NLI</span></div>
+                <div class="dbg-meter-zone zone-accept" style="width: 55%;"><span>Auto-Accept (&ge;0.45)</span></div>
                 <div class="dbg-meter-marker" id="cosineMarker" style="left: 0%;"></div>
               </div>
-
-              <!-- Tier 1 Hybrid Breakdown Cards -->
               <div class="dbg-meta-grid" style="margin-top: 14px;">
-                <div class="dbg-meta-box">
-                  <span class="dbg-meta-label">Raw 384-d Cosine:</span>
-                  <span class="dbg-meta-val dbg-mono" id="valRawCosineScore">0.000</span>
-                </div>
-                <div class="dbg-meta-box">
-                  <span class="dbg-meta-label">Category Match Boost (+0.20):</span>
-                  <span class="dbg-meta-val dbg-mono" id="valCatBoost">0.00</span>
-                </div>
-                <div class="dbg-meta-box">
-                  <span class="dbg-meta-label">Lexical Tech Substring (+0.15):</span>
-                  <span class="dbg-meta-val dbg-mono" id="valLexicalBoost">0.00</span>
-                </div>
-                <div class="dbg-meta-box">
-                  <span class="dbg-meta-label">Tier 1 Decision:</span>
-                  <span class="dbg-meta-val dbg-badge-success" id="valTier1Decision">AUTO_ACCEPT</span>
-                </div>
-              </div>
-
-              <div class="dbg-tier1-result" id="tier1Explanation" style="margin-top: 10px;">
-                Cosine and category alignment evaluate all open tabs simultaneously with zero neural forward passes.
+                <div class="dbg-meta-box"><span class="dbg-meta-label">Raw 384-d Cosine:</span><span class="dbg-meta-val dbg-mono" id="valRawCosineScore">0.000</span></div>
+                <div class="dbg-meta-box"><span class="dbg-meta-label">Facet Elect (+0.70):</span><span class="dbg-meta-val dbg-mono" id="valFacetElect">—</span></div>
+                <div class="dbg-meta-box"><span class="dbg-meta-label">Category Match (+0.20):</span><span class="dbg-meta-val dbg-mono" id="valCatBoost">0.00</span></div>
+                <div class="dbg-meta-box"><span class="dbg-meta-label">Tier 1 Decision:</span><span class="dbg-meta-val dbg-badge-success" id="valTier1Decision">—</span></div>
               </div>
             </div>
           </div>
 
-          <!-- Tier 2: Natural Language Inference (NLI) -->
           <div class="dbg-section">
-            <div class="dbg-section-title">
-              <span>Tier 2: DeBERTa-v3 NLI Zero-Shot Inference</span>
-              <span class="dbg-hint">Xenova/nli-deberta-v3-xsmall (~70MB ONNX)</span>
-            </div>
-
-            <!-- Premise sent to NLI -->
-            <div class="dbg-nli-box">
-              <div class="dbg-nli-label">Exact Premise Tested Against Model:</div>
-              <div class="dbg-nli-text dbg-mono" id="nliPremiseText">"${card.title} ${card.url} ${card.enrichment.category} ${tags}"</div>
-            </div>
-
-            <!-- Hypothesis sent to NLI -->
-            <div class="dbg-nli-box">
-              <div class="dbg-nli-label">Exact Hypothesis Sent to Model:</div>
-              <div class="dbg-nli-text dbg-mono" id="nliHypothesisText">"This browser tab is about ${concept}."</div>
-            </div>
-
-            <!-- NLI Probabilities Breakdown -->
+            <div class="dbg-section-title"><span>Tier 2: DeBERTa-v3 NLI Zero-Shot (middle band only)</span></div>
+            <div class="dbg-nli-box"><div class="dbg-nli-label">Premise:</div><div class="dbg-nli-text dbg-mono" id="nliPremiseText">—</div></div>
+            <div class="dbg-nli-box"><div class="dbg-nli-label">Hypothesis:</div><div class="dbg-nli-text dbg-mono" id="nliHypothesisText">—</div></div>
             <div class="dbg-nli-scores-grid">
-              <div class="dbg-nli-card">
-                <span class="dbg-nli-card-title">Entailment Probability</span>
-                <span class="dbg-nli-card-score" id="nliEntailmentScore">—</span>
-              </div>
-              <div class="dbg-nli-card">
-                <span class="dbg-nli-card-title">Threshold (&ge; 0.55)</span>
-                <span class="dbg-nli-card-status" id="nliThresholdStatus">—</span>
-              </div>
-              <div class="dbg-nli-card">
-                <span class="dbg-nli-card-title">Uncertain Band (&ge; 0.35)</span>
-                <span class="dbg-nli-card-status" id="nliUncertainStatus">—</span>
-              </div>
-              <div class="dbg-nli-card">
-                <span class="dbg-nli-card-title">Final Action Decision</span>
-                <span class="dbg-nli-card-decision" id="nliFinalDecision">—</span>
-              </div>
+              <div class="dbg-nli-card"><span class="dbg-nli-card-title">Entailment</span><span class="dbg-nli-card-score" id="nliEntailmentScore">—</span></div>
+              <div class="dbg-nli-card"><span class="dbg-nli-card-title">Corroboration Floor (0.93)</span><span class="dbg-nli-card-status" id="nliThresholdStatus">—</span></div>
+              <div class="dbg-nli-card"><span class="dbg-nli-card-title">Uncertain Band</span><span class="dbg-nli-card-status" id="nliUncertainStatus">—</span></div>
+              <div class="dbg-nli-card"><span class="dbg-nli-card-title">Decision</span><span class="dbg-nli-card-decision" id="nliFinalDecision">—</span></div>
+            </div>
+          </div>
+
+          <div class="dbg-section">
+            <div class="dbg-section-title"><span>Listwise Escalation Cascade</span></div>
+            <div class="dbg-meta-grid">
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Escalation Fired:</span><span class="dbg-meta-val" id="lwFired">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Trigger (margin &lt; threshold, singular shape):</span><span class="dbg-meta-val" id="lwTrigger">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Comparative Pick:</span><span class="dbg-meta-val" id="lwPick">—</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= STAGE 6: OPERATORS & EXECUTION ================= -->
+        <div id="panel-stage-ops" class="dbg-stage-panel">
+          <div class="dbg-card-header">
+            <h3>Deterministic Plan Operators &amp; Execution Decision</h3>
+            <span class="dbg-badge-gold">plan-ops.js — zero model calls</span>
+          </div>
+
+          <div class="dbg-section">
+            <div class="dbg-section-title"><span>Operator Trace</span></div>
+            <div class="dbg-meta-grid">
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Rest-Partition Fires:</span><span class="dbg-meta-val" id="opRestPartition">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Superlative Spec:</span><span class="dbg-meta-val" id="opSuperlative">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Literal-Token Mode:</span><span class="dbg-meta-val" id="opLiteral">—</span></div>
+            </div>
+          </div>
+
+          <div class="dbg-section">
+            <div class="dbg-section-title"><span>Execution Decision</span></div>
+            <div class="dbg-meta-grid">
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Preview Required:</span><span class="dbg-meta-val" id="execPreview">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Destructive:</span><span class="dbg-meta-val" id="execDestructive">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Ambiguity → Preview:</span><span class="dbg-meta-val" id="execAmbig">—</span></div>
+              <div class="dbg-meta-box"><span class="dbg-meta-label">Selected Tab Count:</span><span class="dbg-meta-val" id="execCount">—</span></div>
             </div>
           </div>
         </div>
@@ -626,6 +680,9 @@
   <script src="extract-core.js"></script>
   <script src="domain-priors.js"></script>
   <script src="enrich-math.js"></script>
+  <script src="facet.js"></script>
+  <script src="agent-router.js"></script>
+  <script src="plan-ops.js"></script>
   <script src="concept-core.js"></script>
   <script src="llm-query.js"></script>
   <script src="db.js"></script>

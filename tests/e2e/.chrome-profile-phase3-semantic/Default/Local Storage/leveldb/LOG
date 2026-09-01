@@ -1,4 +1,0 @@
-2026/06/28-14:30:54.047 6dbc Creating DB C:\Users\bkh\Desktop\tab-scroller-clean\tests\e2e\.chrome-profile-phase3-semantic\Default\Local Storage\leveldb since it was missing.
-2026/06/28-14:30:54.094 6dbc Reusing MANIFEST C:\Users\bkh\Desktop\tab-scroller-clean\tests\e2e\.chrome-profile-phase3-semantic\Default\Local Storage\leveldb/MANIFEST-000001
-2026/06/28-14:32:51.393 6dbc Level-0 table #5: started
-2026/06/28-14:32:51.455 6dbc Level-0 table #5: 583179 bytes OK

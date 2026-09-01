@@ -25,6 +25,13 @@ importScripts('db.js', 'embed.js', 'indexer.js', 'recall-tabs.js', 'nli-select.j
 // from it; Layer 3 (the action gate) is the existing pipeline, unchanged.
 importScripts('agent-router.js', 'agent-planner.js', 'agent-executor.js');
 
+// Launch onboarding on initial installation
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason === 'install') {
+    chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') });
+  }
+});
+
 // --- Tunable Heuristics (Optimized via Autoresearch) ---
 let MAX_SNIPPET_LENGTH = 300;
 let CONFIDENCE_AUTO_EXEC_THRESHOLD = 0.75;
@@ -5083,10 +5090,20 @@ SessionMemoryEngine.initialize().then(() => {
 });
 
 // --- Task H: Context-Aware Tab Hibernation (Smart Suspend) ---
+// Circuit breaker: after 3 consecutive AI failures, stop calling for 30 min.
+let _aiFailStreak = 0;
+const AI_FAIL_STREAK_MAX = 3;
+const AI_COOLDOWN_MS = 30 * 60 * 1000;
+let _aiCooldownUntil = 0;
+
 setInterval(() => {
+  if (Date.now() < _aiCooldownUntil) return; // circuit breaker open
   chrome.storage.sync.get({ enableAi: false }, (settings) => {
     if (!settings.enableAi) return;
-    chrome.tabs.query({}, async (tabs) => {
+    // Skip if no API key configured — nothing to call
+    chrome.storage.sync.get({ geminiApiKey: '' }, (keys) => {
+      if (!keys.geminiApiKey) return;
+      chrome.tabs.query({}, async (tabs) => {
       const now = Date.now();
 
       const candidates = tabs.filter(t =>
@@ -5124,7 +5141,7 @@ setInterval(() => {
         responseMimeType: 'application/json',
         temperature: 0.1,
         maxOutputTokens: 512,
-      }).catch(() => null);
+      }).then(r => { _aiFailStreak = 0; return r; }).catch(() => { _aiFailStreak++; if (_aiFailStreak >= AI_FAIL_STREAK_MAX) { _aiCooldownUntil = Date.now() + AI_COOLDOWN_MS; _aiFailStreak = 0; console.warn('[SmartSuspend] AI circuit breaker open — cooling down 30 min'); } return null; });
 
       if (!aiResponse?.text) return;
 
@@ -5145,8 +5162,8 @@ setInterval(() => {
       }
     });
   });
+  });
 }, 5 * 60 * 1000);
-
 // =====================================================
 // RAG — Auto-Indexing Triggers
 // =====================================================
@@ -5182,33 +5199,55 @@ async function ensureOffscreenDocument() {
   }
 }
 
+// In-flight guard: _ragInitialized only flips AFTER the awaits below, so without
+// a memoized promise every concurrent caller (startup sweep + one indexTabById
+// per tab reaching 'complete') passed the gate and ran the whole init again.
+let _ragReadyPromise = null;
+
 async function ensureRagReady() {
   if (_ragInitialized) return;
-  await TabDB.init();
-  
-  // If local IndexedDB was wiped (e.g. extension reimported), restore from SQLite on computer disk
-  try {
-    const localCards = await TabDB.getAllTabCards();
-    if (localCards.length === 0 && typeof TabDB.restoreFromPermanentStorage === 'function') {
-      await TabDB.restoreFromPermanentStorage();
+  if (_ragReadyPromise) return _ragReadyPromise;
+
+  _ragReadyPromise = (async () => {
+    // Logged BEFORE the awaits on purpose: every other line in this function
+    // sits behind them, so a stall here used to produce a completely silent
+    // worker with no indication it had even started.
+    console.log('[background] RAG init starting (DB + embedding model)…');
+    await TabDB.init();
+
+    // If local IndexedDB was wiped (e.g. extension reimported), restore from SQLite on computer disk
+    try {
+      const localCards = await TabDB.getAllTabCards();
+      if (localCards.length === 0 && typeof TabDB.restoreFromPermanentStorage === 'function') {
+        await TabDB.restoreFromPermanentStorage();
+      }
+    } catch (e) {
+      // Ignore restore error
     }
+
+    await Embed.init();
+    _ragInitialized = true;
+    console.log('[background] RAG init complete');
+
+    // Warm the WebGPU offscreen document and NLI model OUT of band.
+    ensureOffscreenDocument().catch(() => {});
+
+    if (typeof self.NliSelect !== 'undefined') {
+      console.log('[background] Warming NLI model…');
+      self.NliSelect.load()
+        .then(() => console.log('[background] NLI model warm'))
+        .catch(e => console.warn('[background] NLI preload failed (falls back at query time):', e.message));
+    } else {
+      console.warn('[background] NliSelect module not loaded; NLI unavailable (check importScripts)');
+    }
+  })();
+
+  try {
+    return await _ragReadyPromise;
   } catch (e) {
-    // Ignore restore error
-  }
-
-  await Embed.init();
-  _ragInitialized = true;
-
-  // Warm the WebGPU offscreen document and NLI model OUT of band.
-  ensureOffscreenDocument().catch(() => {});
-
-  if (typeof self.NliSelect !== 'undefined') {
-    console.log('[background] Warming NLI model…');
-    self.NliSelect.load()
-      .then(() => console.log('[background] NLI model warm'))
-      .catch(e => console.warn('[background] NLI preload failed (falls back at query time):', e.message));
-  } else {
-    console.warn('[background] NliSelect module not loaded; NLI unavailable (check importScripts)');
+    _ragReadyPromise = null; // let a later call retry instead of caching the failure
+    console.warn('[background] RAG init failed:', e && e.message);
+    throw e;
   }
 }
 

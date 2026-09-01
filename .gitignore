@@ -9,3 +9,23 @@ tests/e2e/.chrome-profile*/
 
 # Model cache for the offline bench (downloaded on demand, not committed)
 bench/.model-cache/
+
+# local agent/tooling state
+.agents/
+.claude/
+.switchboard/
+.playwright-mcp/
+tests_output/
+debug-server.log
+
+# bench run logs and throwaway probes
+bench/.r*.log
+bench/.tmp-*.js
+bench/.bench-state/
+bench/.suite-v3-llm-run.txt
+bench/.llm-real-cache.json
+
+.switchboard/kanban.db
+bench/.llm-real-cache.json
+
+tests/e2e/.chrome-profile*
