@@ -6299,5 +6299,3331 @@
   "_coverage": 0,
   "_needsReparse": false,
   "isSelectAll": false
+ },
+ "close my github tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "github"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.5,
+  "isSelectAll": false,
+  "source": "fallback"
+ },
+ "close tabs from chatgpt.com": {
+  "intent": "close_tabs",
+  "concepts": [
+   "chatgpt"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chatgpt": [
+    "chatgpt.com",
+    "openai",
+    "gpt"
+   ]
+  },
+  "domains": [
+   "chatgpt.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs from gemini.google.com": {
+  "intent": "close_tabs",
+  "concepts": [
+   "gemini.google.com"
+  ],
+  "combine": "union",
+  "expansions": {
+   "gemini.google.com": [
+    "google",
+    "search",
+    "web"
+   ]
+  },
+  "domains": [
+   "gemini.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs from codeforces.com": {
+  "intent": "close_tabs",
+  "concepts": [
+   "codeforces"
+  ],
+  "combine": "union",
+  "expansions": {
+   "codeforces": [
+    "codeforces.com",
+    "codeforces",
+    "codeforces"
+   ]
+  },
+  "domains": [
+   "codeforces.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close maang.in tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "maang.in"
+  ],
+  "combine": "union",
+  "expansions": {
+   "maang.in": [
+    "maang",
+    "maang.in"
+   ]
+  },
+  "domains": [
+   "maang.in"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close geeksforgeeks tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "geeksforgeeks"
+  ],
+  "combine": "union",
+  "expansions": {
+   "geeksforgeeks": [
+    "geeksforgeeks.org",
+    "geeksforgeeks.com"
+   ]
+  },
+  "domains": [
+   "geeksforgeeks.org",
+   "geeksforgeeks.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close amazon.in shopping tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "amazon.in"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon.in": [
+    "amazon",
+    "shopping"
+   ]
+  },
+  "domains": [
+   "amazon.in"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs from arxiv.org": {
+  "intent": "close_tabs",
+  "concepts": [
+   "arxiv.org"
+  ],
+  "combine": "union",
+  "expansions": {
+   "arxiv.org": [
+    "arxiv",
+    "academic papers",
+    "research papers"
+   ]
+  },
+  "domains": [
+   "arxiv.org"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs from huggingface.co": {
+  "intent": "close_tabs",
+  "concepts": [
+   "huggingface.co"
+  ],
+  "combine": "union",
+  "expansions": {
+   "huggingface.co": [
+    "transformers",
+    "nlp",
+    "ai"
+   ]
+  },
+  "domains": [
+   "huggingface.co"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close linkedin tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "linkedin"
+  ],
+  "combine": "union",
+  "expansions": {
+   "linkedin": [
+    "linkedin.com"
+   ]
+  },
+  "domains": [
+   "linkedin.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close instagram tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "instagram"
+  ],
+  "combine": "union",
+  "expansions": {
+   "instagram": [
+    "social media",
+    "photo sharing",
+    "reels"
+   ]
+  },
+  "domains": [
+   "instagram.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tiktok tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "tiktok"
+  ],
+  "combine": "union",
+  "expansions": {
+   "tiktok": [
+    "tiktok.com",
+    "tiktok"
+   ]
+  },
+  "domains": [
+   "tiktok.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close neetcode tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "neetcode"
+  ],
+  "combine": "union",
+  "expansions": {
+   "neetcode": [
+    "neetcode.com",
+    "neetcode.io"
+   ]
+  },
+  "domains": [
+   "neetcode.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close whatsapp tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "whatsapp"
+  ],
+  "combine": "union",
+  "expansions": {
+   "whatsapp": [
+    "chat",
+    "messaging",
+    "mobile"
+   ]
+  },
+  "domains": [
+   "whatsapp.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs from openai.com": {
+  "intent": "close_tabs",
+  "concepts": [
+   "openai.com"
+  ],
+  "combine": "union",
+  "expansions": {
+   "openai.com": [
+    "openai",
+    "ai",
+    "gpt"
+   ]
+  },
+  "domains": [
+   "openai.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close localhost tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "localhost"
+  ],
+  "combine": "union",
+  "expansions": {
+   "localhost": [
+    "localhost"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close leetcode discuss tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "leetcode",
+   "discuss"
+  ],
+  "combine": "union",
+  "expansions": {
+   "leetcode": [
+    "leetcode.com"
+   ],
+   "discuss": [
+    "leetcode.com/discuss"
+   ]
+  },
+  "domains": [
+   "leetcode.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group leetcode contest tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "leetcode"
+  ],
+  "combine": "union",
+  "expansions": {
+   "leetcode": [
+    "contest",
+    "coding",
+    "algorithm"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close youtube shorts tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "youtube shorts"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube shorts": [
+    "shorts",
+    "youtube videos",
+    "short-form content"
+   ]
+  },
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group youtube watch pages": {
+  "intent": "group_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "youtube.com",
+    "youtube"
+   ]
+  },
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close youtube channel tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "youtube.com",
+    "youtube channel"
+   ]
+  },
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close github pull request tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "github"
+  ],
+  "combine": "union",
+  "expansions": {
+   "github": [
+    "github.com"
+   ]
+  },
+  "domains": [
+   "github.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close github blob tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "github"
+  ],
+  "combine": "union",
+  "expansions": {
+   "github": [
+    "github.com"
+   ]
+  },
+  "domains": [
+   "github.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group github tree browse tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "github"
+  ],
+  "combine": "union",
+  "expansions": {
+   "github": [
+    "git",
+    "source code",
+    "repository"
+   ]
+  },
+  "domains": [
+   "github.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close codeforces problem tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "codeforces"
+  ],
+  "combine": "union",
+  "expansions": {
+   "codeforces": [
+    "codeforces.com",
+    "codeforces.org"
+   ]
+  },
+  "domains": [
+   "codeforces.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close arxiv pdf tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "arxiv"
+  ],
+  "combine": "union",
+  "expansions": {
+   "arxiv": [
+    "preprint",
+    "academic",
+    "research"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close google drive folder tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "google drive folder"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google drive folder": [
+    "google drive",
+    "drive",
+    "google storage"
+   ]
+  },
+  "domains": [
+   "drive.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close colab notebook tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "colab notebook"
+  ],
+  "combine": "union",
+  "expansions": {
+   "colab notebook": [
+    "google colab",
+    "jupyter notebook",
+    "colab"
+   ]
+  },
+  "domains": [
+   "colab.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs whose title contains stone game": {
+  "intent": "close_tabs",
+  "concepts": [
+   "stone game"
+  ],
+  "combine": "union",
+  "expansions": {
+   "stone game": [
+    "stone",
+    "game",
+    "board game",
+    "strategy game"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs whose title contains jump game": {
+  "intent": "close_tabs",
+  "concepts": [
+   "jump game"
+  ],
+  "combine": "union",
+  "expansions": {
+   "jump game": [
+    "game",
+    "jump",
+    "gameplay"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs whose title contains binary": {
+  "intent": "group_tabs",
+  "concepts": [
+   "binary"
+  ],
+  "combine": "union",
+  "expansions": {
+   "binary": [
+    "binary code",
+    "bit",
+    "binary system"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs whose title contains access denied": {
+  "intent": "close_tabs",
+  "concepts": [
+   "access denied"
+  ],
+  "combine": "union",
+  "expansions": {
+   "access denied": [
+    "denied",
+    "restricted",
+    "unauthorized"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs whose title contains page not found": {
+  "intent": "close_tabs",
+  "concepts": [
+   "page not found"
+  ],
+  "combine": "union",
+  "expansions": {
+   "page not found": [
+    "error page",
+    "404 error",
+    "not found page"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs whose title contains amazon and interview": {
+  "intent": "group_tabs",
+  "concepts": [
+   "amazon",
+   "interview"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon": [
+    "amazon.com",
+    "amazon.co.uk",
+    "amazon.de"
+   ],
+   "interview": [
+    "interviews",
+    "interview questions",
+    "interview preparation"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs whose title contains slowed": {
+  "intent": "close_tabs",
+  "concepts": [
+   "slowed"
+  ],
+  "combine": "union",
+  "expansions": {
+   "slowed": [
+    "slow",
+    "lagging",
+    "delayed"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs whose title starts with leetcode": {
+  "intent": "close_tabs",
+  "concepts": [
+   "leetcode"
+  ],
+  "combine": "union",
+  "expansions": {
+   "leetcode": [
+    "leetcode.com",
+    "leetcode"
+   ]
+  },
+  "domains": [
+   "leetcode.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs whose title contains interview experience": {
+  "intent": "close_tabs",
+  "concepts": [
+   "interview experience"
+  ],
+  "combine": "union",
+  "expansions": {
+   "interview experience": [
+    "interviews",
+    "interviewing",
+    "interviewee"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the oldest tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group all pinned tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "pinned"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close my pinned tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "pinned"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "mute tabs that are playing audio": {
+  "intent": "mute_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "audible"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close discarded tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "discarded"
+  ],
+  "combine": "union",
+  "expansions": {
+   "discarded": [
+    "unused",
+    "unopened",
+    "unviewed"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "unmute all muted tabs": {
+  "intent": "unmute_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": true,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all tabs in the dev group": {
+  "intent": "close_tabs",
+  "concepts": [
+   "dev group"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "devgroup.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group my dev tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "dev"
+  ],
+  "combine": "union",
+  "expansions": {
+   "dev": [
+    "development",
+    "coding",
+    "programming"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "unpin the dev group tabs": {
+  "intent": "unpin_tabs",
+  "concepts": [
+   "dev group"
+  ],
+  "combine": "union",
+  "expansions": {
+   "dev group": [
+    "development team",
+    "development group",
+    "dev team"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "mute all tabs in the dev group": {
+  "intent": "mute_tabs",
+  "concepts": [
+   "dev group"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "devgroup.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "show me the tabs in my dev group": {
+  "intent": "open_tabs",
+  "concepts": [
+   "dev group"
+  ],
+  "combine": "union",
+  "expansions": {
+   "dev group": [
+    "development team",
+    "development group",
+    "dev team"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "sort tabs in the dev group by title": {
+  "intent": "sort_tabs",
+  "concepts": [
+   "dev group"
+  ],
+  "combine": "union",
+  "expansions": {
+   "dev group": [
+    "development team",
+    "development group",
+    "dev team"
+   ]
+  },
+  "domains": [
+   "devgroup.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs in window 2": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs from the same site as my current tab except this one": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "<current tab>"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs opened from the current tab": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs related to my current tab": {
+  "intent": "group_tabs",
+  "concepts": [
+   "current tab"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close duplicate tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "duplicate"
+  ],
+  "combine": "union",
+  "expansions": {
+   "duplicate": [
+    "duplicates",
+    "identical",
+    "repeated"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group my duplicate leetcode problem tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "leetcode"
+  ],
+  "combine": "union",
+  "expansions": {
+   "leetcode": [
+    "leetcode.com",
+    "leetcode problems",
+    "algorithm problems"
+   ]
+  },
+  "domains": [
+   "leetcode.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "duplicate"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the duplicate amazon interview experience tabs keeping the first": {
+  "intent": "close_tabs",
+  "concepts": [
+   "amazon",
+   "interview"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon": [
+    "amazon.com"
+   ],
+   "interview": [
+    "interviews",
+    "interview experience"
+   ]
+  },
+  "domains": [
+   "amazon.com",
+   "amazon.in",
+   "amazon.co.uk",
+   "amazon.de"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "first"
+  ],
+  "time": null,
+  "state": [
+   "duplicate"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.8333333333333334,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the duplicate whatsapp tab": {
+  "intent": "close_tabs",
+  "concepts": [
+   "whatsapp"
+  ],
+  "combine": "union",
+  "expansions": {
+   "whatsapp": [
+    "chat",
+    "messaging",
+    "mobile"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "duplicate"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close duplicate gemini chats about merging alexa devices": {
+  "intent": "close_tabs",
+  "concepts": [
+   "gemini",
+   "merging",
+   "alexa"
+  ],
+  "combine": "union",
+  "expansions": {
+   "gemini": [
+    "chat",
+    "conversation"
+   ],
+   "merging": [
+    "integration",
+    "unification"
+   ],
+   "alexa": [
+    "device",
+    "smart speaker"
+   ]
+  },
+  "domains": [
+   "gemini.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.8333333333333334,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close duplicate hermes agent chatgpt tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "hermes agent chatgpt"
+  ],
+  "combine": "union",
+  "expansions": {
+   "hermes agent chatgpt": [
+    "hermes agent",
+    "chatgpt"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.75,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close duplicate tabs of the 5 ai engineer projects youtube video keeping the first": {
+  "intent": "close_tabs",
+  "concepts": [
+   "ai engineer projects youtube video"
+  ],
+  "combine": "union",
+  "expansions": {
+   "ai engineer projects youtube video": [
+    "ai projects",
+    "ai engineering",
+    "ai development",
+    "ai research"
+   ]
+  },
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5714285714285714,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close near duplicate articles that cover the same story": {
+  "intent": "close_tabs",
+  "concepts": [
+   "articles"
+  ],
+  "combine": "union",
+  "expansions": {
+   "articles": [
+    "news",
+    "articles",
+    "stories"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close pages containing code blocks": {
+  "intent": "close_tabs",
+  "concepts": [
+   "code blocks"
+  ],
+  "combine": "union",
+  "expansions": {
+   "code blocks": [
+    "code snippets",
+    "code samples",
+    "code examples"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close pages mentioning refresh tokens": {
+  "intent": "close_tabs",
+  "concepts": [
+   "refresh tokens"
+  ],
+  "combine": "union",
+  "expansions": {
+   "refresh tokens": [
+    "refresh token",
+    "token refresh",
+    "oauth token"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group local file tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "local file"
+  ],
+  "combine": "union",
+  "expansions": {
+   "local file": [
+    "file",
+    "document",
+    "document file"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close google sheets tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "google sheets"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google sheets": [
+    "google spreadsheet",
+    "gsheet",
+    "docs"
+   ]
+  },
+  "domains": [
+   "google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group google docs documents": {
+  "intent": "group_tabs",
+  "concepts": [
+   "google docs"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google docs": [
+    "docs",
+    "google document",
+    "google spreadsheet"
+   ]
+  },
+  "domains": [
+   "docs.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close streaming site tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "streaming"
+  ],
+  "combine": "union",
+  "expansions": {
+   "streaming": [
+    "streaming services",
+    "video streaming",
+    "live content"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group article pages": {
+  "intent": "group_tabs",
+  "concepts": [
+   "article"
+  ],
+  "combine": "union",
+  "expansions": {
+   "article": [
+    "news",
+    "journal",
+    "report"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs about machine learning": {
+  "intent": "group_tabs",
+  "concepts": [
+   "machine learning"
+  ],
+  "combine": "union",
+  "expansions": {
+   "machine learning": [
+    "artificial intelligence",
+    "deep learning",
+    "neural networks"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs about llms": {
+  "intent": "close_tabs",
+  "concepts": [
+   "llms"
+  ],
+  "combine": "union",
+  "expansions": {
+   "llms": [
+    "large language models",
+    "artificial intelligence",
+    "chatgpt"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group my amazon interview prep tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "amazon interview prep"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon interview prep": [
+    "amazon interview",
+    "amazon interview prep",
+    "amazon interview questions"
+   ]
+  },
+  "domains": [
+   "amazon.com",
+   "amazon.in",
+   "amazon.co.uk",
+   "amazon.de"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close fitness tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "fitness"
+  ],
+  "combine": "union",
+  "expansions": {
+   "fitness": [
+    "workout",
+    "gym",
+    "exercise"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close anime tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "anime"
+  ],
+  "combine": "union",
+  "expansions": {
+   "anime": [
+    "manga",
+    "anime",
+    "cartoon",
+    "animation"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group my slowed reverb music tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "reverb"
+  ],
+  "combine": "union",
+  "expansions": {
+   "reverb": [
+    "soundscapes",
+    "ambient music",
+    "drone music"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close competitive programming tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "competitive programming"
+  ],
+  "combine": "union",
+  "expansions": {
+   "competitive programming": [
+    "coding",
+    "algorithm",
+    "contest"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs about rag": {
+  "intent": "group_tabs",
+  "concepts": [
+   "rag"
+  ],
+  "combine": "union",
+  "expansions": {
+   "rag": [
+    "ragged",
+    "raggedy",
+    "raggedy old"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close trading tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "trading"
+  ],
+  "combine": "union",
+  "expansions": {
+   "trading": [
+    "finance",
+    "stocks",
+    "forex"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close backend course tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "backend course"
+  ],
+  "combine": "union",
+  "expansions": {
+   "backend course": [
+    "backend",
+    "coursework",
+    "programming"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close vibe coding tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "vibe coding"
+  ],
+  "combine": "union",
+  "expansions": {
+   "vibe coding": [
+    "coding",
+    "development",
+    "web development"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close gsoc tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "gsoc"
+  ],
+  "combine": "union",
+  "expansions": {
+   "gsoc": [
+    "google summer of code",
+    "gsoc program",
+    "gsoc projects"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close shopping tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "shopping"
+  ],
+  "combine": "union",
+  "expansions": {
+   "shopping": [
+    "retail",
+    "e-commerce",
+    "online shopping"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs about claude": {
+  "intent": "group_tabs",
+  "concepts": [
+   "claude"
+  ],
+  "combine": "union",
+  "expansions": {
+   "claude": [
+    "chatgpt",
+    "openai",
+    "gpt-4"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs about gemini": {
+  "intent": "close_tabs",
+  "concepts": [
+   "gemini"
+  ],
+  "combine": "union",
+  "expansions": {
+   "gemini": [
+    "crypto",
+    "wallet",
+    "decentralized finance"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs about chatgpt": {
+  "intent": "close_tabs",
+  "concepts": [
+   "chatgpt"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chatgpt": [
+    "gpt",
+    "openai",
+    "ai assistant"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs about karpathy": {
+  "intent": "close_tabs",
+  "concepts": [
+   "karpathy"
+  ],
+  "combine": "union",
+  "expansions": {
+   "karpathy": [
+    "karpathy"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs about docker": {
+  "intent": "close_tabs",
+  "concepts": [
+   "docker"
+  ],
+  "combine": "union",
+  "expansions": {
+   "docker": [
+    "containerization",
+    "container",
+    "dockerfile"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs about python": {
+  "intent": "close_tabs",
+  "concepts": [
+   "python"
+  ],
+  "combine": "union",
+  "expansions": {
+   "python": [
+    "programming",
+    "coding",
+    "language"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group amazon leadership principles tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "amazon leadership principles"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon leadership principles": [
+    "amazon",
+    "leadership",
+    "principles"
+   ]
+  },
+  "domains": [
+   "amazon.com",
+   "amazon.in",
+   "amazon.co.uk",
+   "amazon.de"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs about ollama": {
+  "intent": "close_tabs",
+  "concepts": [
+   "ollama"
+  ],
+  "combine": "union",
+  "expansions": {
+   "ollama": [
+    "ollama ai",
+    "ollama llm",
+    "ollama model"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs about rust": {
+  "intent": "close_tabs",
+  "concepts": [
+   "rust"
+  ],
+  "combine": "union",
+  "expansions": {
+   "rust": [
+    "rust programming",
+    "rust language",
+    "rustacean"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs opened from google search results": {
+  "intent": "group_tabs",
+  "concepts": [
+   "google search results"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google search results": [
+    "search results",
+    "google search",
+    "web search"
+   ]
+  },
+  "domains": [
+   "google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all google search tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "google search"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google search": [
+    "google",
+    "search engine",
+    "web search"
+   ]
+  },
+  "domains": [
+   "google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close bing search tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "bing"
+  ],
+  "combine": "union",
+  "expansions": {
+   "bing": [
+    "search engine",
+    "bing.com"
+   ]
+  },
+  "domains": [
+   "bing.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close youtube search results tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "google",
+    "search",
+    "videos"
+   ]
+  },
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close reddit search tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "reddit"
+  ],
+  "combine": "union",
+  "expansions": {
+   "reddit": [
+    "subreddit",
+    "r",
+    "redd.it"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close search tabs about anime": {
+  "intent": "close_tabs",
+  "concepts": [
+   "anime"
+  ],
+  "combine": "union",
+  "expansions": {
+   "anime": [
+    "manga",
+    "anime",
+    "cartoon",
+    "animation"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close articles i have finished reading": {
+  "intent": "close_tabs",
+  "concepts": [
+   "articles"
+  ],
+  "combine": "union",
+  "expansions": {
+   "articles": [
+    "news",
+    "stories",
+    "stories"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "within",
+   "value": "today"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "pin my most frequently visited tabs": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "frequently visited"
+  ],
+  "combine": "union",
+  "expansions": {
+   "frequently visited": [
+    "frequent",
+    "popular",
+    "most visited"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs i have visited only once": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close broken pages": {
+  "intent": "close_tabs",
+  "concepts": [
+   "broken"
+  ],
+  "combine": "union",
+  "expansions": {
+   "broken": [
+    "corrupted",
+    "faulty",
+    "malfunctioning"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs with certificate errors": {
+  "intent": "close_tabs",
+  "concepts": [
+   "certificate errors"
+  ],
+  "combine": "union",
+  "expansions": {
+   "certificate errors": [
+    "security issues",
+    "invalid certificates",
+    "expired certificates"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group pages behind a paywall": {
+  "intent": "group_tabs",
+  "concepts": [
+   "paywall"
+  ],
+  "combine": "union",
+  "expansions": {
+   "paywall": [
+    "subscription",
+    "premium",
+    "locked"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.8,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close japanese language tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "japanese"
+  ],
+  "combine": "union",
+  "expansions": {
+   "japanese": [
+    "japanese language",
+    "kanji",
+    "hiragana",
+    "hiragana characters"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group products priced in inr": {
+  "intent": "group_tabs",
+  "concepts": [
+   "products"
+  ],
+  "combine": "union",
+  "expansions": {
+   "products": [
+    "items",
+    "goods",
+    "items for sale"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close product tabs under 5000 rupees": {
+  "intent": "close_tabs",
+  "concepts": [
+   "product"
+  ],
+  "combine": "union",
+  "expansions": {
+   "product": [
+    "item",
+    "goods",
+    "merchandise"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs related to my tab manager project": {
+  "intent": "group_tabs",
+  "concepts": [
+   "tab manager project"
+  ],
+  "combine": "union",
+  "expansions": {
+   "tab manager project": [
+    "project management",
+    "task manager",
+    "organizational tool"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark resources for my amazon prep ticket": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "amazon prep ticket"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon prep ticket": [
+    "amazon ticket",
+    "amazon event",
+    "amazon meeting"
+   ]
+  },
+  "domains": [
+   "amazon.com",
+   "amazon.in",
+   "amazon.co.uk",
+   "amazon.de"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.75,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group everything related to fixing the memory leak": {
+  "intent": "group_tabs",
+  "concepts": [
+   "memory leak"
+  ],
+  "combine": "union",
+  "expansions": {
+   "memory leak": [
+    "memory issues",
+    "leakage",
+    "buggy code"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group official documentation about claude code": {
+  "intent": "group_tabs",
+  "concepts": [
+   "claude code"
+  ],
+  "combine": "union",
+  "expansions": {
+   "claude code": [
+    "claude",
+    "code"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close community copies of documentation": {
+  "intent": "close_tabs",
+  "concepts": [
+   "documentation"
+  ],
+  "combine": "union",
+  "expansions": {
+   "documentation": [
+    "manual",
+    "guide",
+    "user manual"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close duplicate news coverage of the same story": {
+  "intent": "close_tabs",
+  "concepts": [
+   "news"
+  ],
+  "combine": "union",
+  "expansions": {
+   "news": [
+    "articles",
+    "articles",
+    "articles"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "keep one representative tab from each topic": {
+  "intent": "group_tabs",
+  "concepts": [
+   "topic"
+  ],
+  "combine": "union",
+  "expansions": {
+   "topic": [
+    "topic"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the last five tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "older_than",
+   "value": "5_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the first three tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "first three tabs"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group the first ten github tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "github"
+  ],
+  "combine": "union",
+  "expansions": {
+   "github": [
+    "git",
+    "source code",
+    "version control"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the first five leetcode problem tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "leetcode"
+  ],
+  "combine": "union",
+  "expansions": {
+   "leetcode": [
+    "leetcode.com",
+    "leetcode problems",
+    "coding problems"
+   ]
+  },
+  "domains": [
+   "leetcode.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group the last three gemini tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "gemini"
+  ],
+  "combine": "union",
+  "expansions": {
+   "gemini": [
+    "gemini.com",
+    "gemini wallet",
+    "gemini exchange"
+   ]
+  },
+  "domains": [
+   "gemini.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "within",
+   "value": "3_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark the last two amazon shopping tabs": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "amazon shopping"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon shopping": [
+    "amazon",
+    "shopping",
+    "e-commerce"
+   ]
+  },
+  "domains": [
+   "amazon.com",
+   "amazon.in",
+   "amazon.co.uk",
+   "amazon.de"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "within",
+   "value": "2_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the ten most recently used tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "tabs"
+  ],
+  "combine": "union",
+  "expansions": {
+   "tabs": [
+    "pages",
+    "webpages",
+    "documents"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "within",
+   "value": "10_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close leetcode tabs that are not about binary": {
+  "intent": "close_tabs",
+  "concepts": [
+   "leetcode"
+  ],
+  "combine": "union",
+  "expansions": {
+   "leetcode": [
+    "leetcode.com",
+    "codeforces",
+    "hacker rank"
+   ]
+  },
+  "domains": [
+   "leetcode.com"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "binary"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close github tabs about llm or rag": {
+  "intent": "close_tabs",
+  "concepts": [
+   "github",
+   "llm",
+   "rag"
+  ],
+  "combine": "union",
+  "expansions": {
+   "github": [
+    "github.com"
+   ],
+   "llm": [
+    "large language model",
+    "language model",
+    "artificial intelligence"
+   ],
+   "rag": [
+    "retrieval augmented generation",
+    "retrieval augmented language model",
+    "query-answering"
+   ]
+  },
+  "domains": [
+   "github.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close youtube tabs but keep shorts": {
+  "intent": "close_tabs",
+  "concepts": [
+   "shorts"
+  ],
+  "combine": "union",
+  "expansions": {
+   "shorts": [
+    "shorts videos",
+    "youtube shorts",
+    "shorts content"
+   ]
+  },
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs from codeforces or leetcode": {
+  "intent": "close_tabs",
+  "concepts": [
+   "codeforces",
+   "leetcode"
+  ],
+  "combine": "union",
+  "expansions": {
+   "codeforces": [
+    "codeforces.com"
+   ],
+   "leetcode": [
+    "leetcode.com"
+   ]
+  },
+  "domains": [
+   "codeforces.com",
+   "leetcode.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close amazon tabs that are not shopping pages": {
+  "intent": "close_tabs",
+  "concepts": [
+   "shopping"
+  ],
+  "combine": "union",
+  "expansions": {
+   "shopping": [
+    "online shopping",
+    "e-commerce",
+    "product pages"
+   ]
+  },
+  "domains": [
+   "amazon.com",
+   "amazon.in",
+   "amazon.co.uk",
+   "amazon.de"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "amazon shopping"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group machine learning tabs that are videos": {
+  "intent": "group_tabs",
+  "concepts": [
+   "machine learning"
+  ],
+  "combine": "union",
+  "expansions": {
+   "machine learning": [
+    "ai",
+    "deep learning",
+    "neural networks"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close interview tabs except amazon ones": {
+  "intent": "close_tabs",
+  "concepts": [
+   "interview"
+  ],
+  "combine": "union",
+  "expansions": {
+   "interview": [
+    "interviews",
+    "interviewee",
+    "interviewing"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "amazon"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close my fitness or anime tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "fitness",
+   "anime"
+  ],
+  "combine": "union",
+  "expansions": {
+   "fitness": [
+    "workout",
+    "gym",
+    "exercise"
+   ],
+   "anime": [
+    "manga",
+    "tv shows",
+    "cartoons"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close gemini chats about rag": {
+  "intent": "close_tabs",
+  "concepts": [
+   "gemini",
+   "rag"
+  ],
+  "combine": "union",
+  "expansions": {
+   "gemini": [
+    "gemini.com",
+    "gemini wallet"
+   ],
+   "rag": [
+    "ragged",
+    "ragged edge"
+   ]
+  },
+  "domains": [
+   "gemini.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close reddit tabs that are not in the dev group": {
+  "intent": "close_tabs",
+  "concepts": [
+   "reddit"
+  ],
+  "combine": "union",
+  "expansions": {
+   "reddit": [
+    "reddit.com"
+   ]
+  },
+  "domains": [
+   "reddit.com"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "dev"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all tabs except those in the dev group": {
+  "intent": "close_tabs",
+  "concepts": [
+   "dev group"
+  ],
+  "combine": "union",
+  "expansions": {
+   "dev group": [
+    "development",
+    "development team",
+    "dev team"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all gemini tabs except the rag ones": {
+  "intent": "close_tabs",
+  "concepts": [
+   "gemini"
+  ],
+  "combine": "union",
+  "expansions": {
+   "gemini": [
+    "gemini.com"
+   ]
+  },
+  "domains": [
+   "gemini.com"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "rag"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs similar to the amazon sde interview experience post": {
+  "intent": "close_tabs",
+  "concepts": [
+   "amazon sde interview experience"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon sde interview experience": [
+    "amazon",
+    "software engineering",
+    "interview",
+    "technical questions"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.75,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs similar to my rag gemini chat": {
+  "intent": "group_tabs",
+  "concepts": [
+   "rag gemini chat"
+  ],
+  "combine": "union",
+  "expansions": {
+   "rag gemini chat": [
+    "chat",
+    "conversation",
+    "dialogue"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close everything except my shopping tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "shopping"
+  ],
+  "combine": "union",
+  "expansions": {
+   "shopping": [
+    "shopping",
+    "retail",
+    "e-commerce"
+   ]
+  },
+  "domains": [],
+  "selectAll": true,
+  "exclude": [
+   "shopping"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs tagged temp": {
+  "intent": "close_tabs",
+  "concepts": [
+   "temp"
+  ],
+  "combine": "union",
+  "expansions": {
+   "temp": [
+    "temporary",
+    "temporal",
+    "temporary"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
  }
 }

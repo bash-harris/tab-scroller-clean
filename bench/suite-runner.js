@@ -23,16 +23,8 @@ const crypto = require('crypto');
 const DEPS = ['nli-select.js', 'plan-ops.js', 'concept-core.js', 'llm-query.js', 'facet.js', 'domain-priors.js'];
 const sha = s => crypto.createHash('sha256').update(s).digest('hex').slice(0, 16);
 const codeHash = sha(DEPS.map(f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8')).join('\n'));
-const poolHash = sha(fs.readFileSync(path.join(__dirname, 'suite-v3.pool.json'), 'utf8'));
 const RCACHE_EMB = path.join(__dirname, '.suite-v3-emb-cache.json');
 const RCACHE_RES = path.join(__dirname, '.suite-v3-result-cache.json');
-const resultCache = (() => {
-  try {
-    const j = JSON.parse(fs.readFileSync(RCACHE_RES, 'utf8'));
-    return (j.codeHash === codeHash && j.poolHash === poolHash) ? j.entries : {};
-  } catch { return {}; }
-})();
-const flushResultCache = () => fs.writeFileSync(RCACHE_RES, JSON.stringify({ codeHash, poolHash, entries: resultCache }, null, 1));
 
 global.self = global;
 require(path.join(__dirname, '..', 'concept-core.js'));
@@ -48,8 +40,9 @@ const IMPLEMENTED_ONLY = args.includes('--implemented-only');
 const catArg = args.find(a => a.startsWith('--category'));
 const CAT = catArg ? Number(catArg.split('=')[1]) : null;
 
-const CMD_FILE = path.join(__dirname, 'suite-v3.commands.jsonl');
-const POOL_FILE = path.join(__dirname, 'suite-v3.pool.json');
+const SUITE = (args.find(a=>a.startsWith('--suite')) || '--suite=suite-v3').split('=')[1];
+const CMD_FILE = path.join(__dirname, SUITE + '.commands.jsonl');
+const POOL_FILE = path.join(__dirname, SUITE + '.pool.json');
 const QCACHE = path.join(__dirname, '.llm-query-cache.json');
 
 const qcache = (() => { try { return JSON.parse(fs.readFileSync(QCACHE, 'utf8')); } catch { return {}; } })();
@@ -60,12 +53,25 @@ const CMDS = fs.readFileSync(CMD_FILE, 'utf8').trim().split('\n')
   .filter(r => !IMPLEMENTED_ONLY || r.implemented)
   .filter(r => CAT == null || r.category === CAT);
 
+// Cache keys are suite-scoped: poolHash per pool file, entries per (suite,
+// command, parse, mode) so identically-phrased commands on different pools
+// never share results.
+const poolHash = sha(fs.readFileSync(POOL_FILE, 'utf8'));
+const resultCache = (() => {
+  try {
+    const j = JSON.parse(fs.readFileSync(RCACHE_RES, 'utf8'));
+    return (j.codeHash === codeHash && j.poolHash === poolHash) ? j.entries : {};
+  } catch { return {}; }
+})();
+const flushResultCache = () => fs.writeFileSync(RCACHE_RES, JSON.stringify({ codeHash, poolHash, entries: resultCache }, null, 1));
+
 // Offset-based times -> epoch ms at suite load. refNow in nli-select anchors
 // to the freshest candidate timestamp, which is load-time minus minutes, so
 // relative windows reproduce.
 const now = Date.now();
 const MIN = 60 * 1000;
 const at = minAgo => (minAgo == null ? null : now - minAgo * MIN);
+const closedTabs = pool.closedTabs || [];
 
 const groupById = new Map(pool.groups.map(g => [g.id, g]));
 
@@ -160,11 +166,12 @@ const CAT_NAMES = {
   const embed = async s => Array.from((await embedder(s, { pooling: 'mean', normalize: true })).data);
   let embCache = {};
   try { embCache = JSON.parse(fs.readFileSync(RCACHE_EMB, 'utf8')); } catch {}
-  if (embCache.poolHash !== poolHash) embCache = { poolHash, texts: {} };
+  if (!embCache[poolHash] || typeof embCache[poolHash] !== 'object') embCache = { [poolHash]: {} };
+  embCache.poolHash = poolHash;
   for (const c of candidates) {
     const key = NliSelect.tabText(c);
-    c.embedding = embCache.texts[key] || await embed(key);
-    embCache.texts[key] = c.embedding;
+    c.embedding = embCache[poolHash][key] || await embed(key);
+    embCache[poolHash][key] = c.embedding;
   }
   fs.writeFileSync(RCACHE_EMB, JSON.stringify(embCache));
   NliSelect.setEmbedder(embed);
@@ -216,7 +223,7 @@ const CAT_NAMES = {
 
     // Result cache keyed on (code, pool, command, parse). Parse enters the key
     // so a changed parse after cache eviction still selects honestly.
-    const rkey = sha(c.command + '|' + JSON.stringify(query) + '|' + (NO_LLM ? 'floor' : 'ceil'));
+    const rkey = sha(SUITE + '|' + c.command + '|' + JSON.stringify(query) + '|' + (NO_LLM ? 'floor' : 'ceil'));
     const cached = resultCache[rkey];
     let res, nliElapsed = 0, hit = false;
     if (cached && Array.isArray(cached.matches) && Array.isArray(cached.mode)) {
@@ -225,7 +232,10 @@ const CAT_NAMES = {
     } else {
       const t1 = Date.now();
       res = await NliSelect.select(c.command, candidates, query ? {
-        query, meta: { currentTabId: 10, currentWindowId: 1 }
+        query, meta: {
+          currentTabId: pool.meta && pool.meta.currentTabId != null ? pool.meta.currentTabId : null,
+          currentWindowId: pool.meta && pool.meta.currentWindowId != null ? pool.meta.currentWindowId : 1
+        }
       } : {});
       nliElapsed = Date.now() - t1;
       nliMs += nliElapsed;
