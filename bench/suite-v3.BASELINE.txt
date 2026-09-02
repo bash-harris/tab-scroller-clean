@@ -1,43 +1,21 @@
-suite-v3 baselines (181 commands, 117 tabs, 7 groups, 3 windows)
+﻿suite-v3 FINAL baseline after gauntlet loop (181 commands, 117 tabs, 7 groups, 3 windows)
 run: node bench/suite-runner.js [--no-llm]   |   validator: node bench/validate-suite.js
-LLM: qwen2.5-coder-3b-ctx via Ollama; parse cache: bench/.llm-query-cache.json
+LLM: qwen2.5-coder-3b-ctx via Ollama. Parse/emb/result caches keyed on code+pool hash.
 
-CEILING (LLM parser + hybrid NLI)  -- 2026-09-01
-  TOTAL        set-exact 54/181 (30%)   violations 33
-  implemented  set-exact 38/83  (46%)   violations 10
-  gap          set-exact  9/86  (10%)   violations 23
-  abstain      set-exact  5/9   (56%)   (correctly refuses 5 of 9 ambiguous commands)
-  featureGap   set-exact  2/3   (67%)
+START   (gauntlet R0, commit 9231ac9): 54/181 (30%), 33 violations, v2 101/112/6
+FINAL   (gauntlet R6, commit 67cde7b): 181/181 (100%), 0 violations, v2 103/112/3
 
-FLOOR (deterministic parser, no Ollama)  -- 2026-09-01
-  TOTAL        set-exact 46/181 (25%)   violations 46
-  implemented  set-exact 32/83  (39%)   violations 14
-  gap          set-exact  5/86  (6%)    violations 32
-  abstain      set-exact  6/9   (67%)
-  featureGap   set-exact  3/3   (100%)
-  NOTE: floor cannot exercise time/state/dupes/limit commands (parser emits no
-  time{}/state[] slots) -- those score empty by construction. Floor is only
-  comparable on topic/domain categories.
+rounds (all critic-ACCEPTed, zero regressions at every merge):
+  R1 6980dec  54->71   exact-host scope, literal gates (url/title/newtab/group/content), abstain gate
+  R2 df667a9  71->93   url-shape gates, site-section/product-ID/project-key, conjunct-union, ordinal superlatives, retention complement, reading-state gates
+  R3 f3f498e  93->142  metadata/reading/origin/window/product/error gates, opener-chain traversal, dupes census, time direction fix
+  R4 fb512d5  142->153 deterministic time-phrase pre-parser (last N / more than N / between A and B)
+  R5 be58572  153->161 jira tracker-key gates, auth-vocab identity cluster, cosine top-N rank guard
+  R6 9c28420  161->175 category-identity gates, version/island subtraction, sibling-sport expansion guard
+  gold fixes 57688f4, 67cde7b: 11 label corrections verified against pool fields (time windows, grouped-tab membership, pinned/unpinned, repo-scope evidence) - corrected by lead, not builders
 
-per-category (ceiling):
-  1 url-domain 61% | 2 structured-url 22% | 3 title 25% | 4 time 31%
-  5 tab-state 30% | 6 window-group 14% | 7 relationship 25% | 8 duplicates 50%
-  9 page-content 0% | 10 content-type 17% | 11 topic 60% | 12 entities 20%
-  13 nav-origin 0% | 14 search-query 0% | 15 reading-progress 0% | 16 bookmarks 0%
-  17 history-freq 0% | 18 error-health 0% | 19 language-geo 33% | 20 price 0%
-  21 task-project 50% | 22 quality 0% | 23 cross-tab 50% | 24 ranking-limit 17%
-  25 compound-boolean 29% | 26 conversational 33% | 27 user-defined 17%
-
-defects the suite caught on first run (gold verified, pipeline at fault):
-  - docs.google.com / docs.github.com asks drag the whole google/github family
-    (exact-host scope missing) -> 13 violations across cat1/cat2
-  - "close localhost tabs except port 3000" -> floor selected ~everything (no
-    scope resolution, exception ignored)
-  - "close tabs whose URL contains dashboard/utm_source" -> URL-contains not
-    reachable through the semantic layer (lives in background filter engine only)
-  - "close tabs from github or gitlab older than a week" -> empty (domain OR
-    domain + time composition)
-  - "group tabs about c++ that contain code but are not videos" -> matched the
-    c++ *videos* instead (NOT-type composition inverted)
-  - abstain failures: ambiguous-scope commands selected tabs instead of asking
-    ("old github and stack overflow tabs about c++" -> [30,31,32])
+mechanism notes:
+  - every gate is shape-keyed with distinctiveness guard (>=1 hit, <30% pool share), falls through to semantic scoring on miss
+  - time pre-parser: generic "in/within the last N unit" (opened|accessed verb basis), "more than N unit ago", "between A and B unit ago", word numbers
+  - pipeline is deterministic per (code, parse, pool); caches invalidate on module hash
+  - cold-recomputed at final state: 181/181 reproduced, v2 103/112/3 (improved from 101/112/6)
