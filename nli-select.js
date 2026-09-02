@@ -1912,28 +1912,62 @@
       }
     }
 
-    // JIRA-STYLE KEY RANGE. "jira tickets xc-120 through xc-150": a range
-    // over tracker keys (PREFIX-N), both ends inclusive, resolved by URL
-    // path segments. The right end may repeat the prefix ("xc-120 through
-    // xc-150") or be bare ("xc-120 through 150"); a repeated prefix must
-    // match the left one, or it is a different key family.
+    // JIRA-STYLE TRACKER KEYS. Keys may arrive as a RANGE ("xc-120 through
+    // xc-150") or a SINGLE key ("jira ticket xc-142"). Both resolve through
+    // the URL /browse/<KEY> path -- a split-on-non-alnum segment test can
+    // never see "XC-120" because the hyphen splits it. Tracker chrome
+    // (dashboard frames on a tracker host) joins only a plural range read;
+    // a single-ticket command must never drag the dashboard.
     {
-      const km = /\b([a-z]{1,10})-(\d{1,6})\s+(?:through|thru|to|until|-|–|—)\s+(?:([a-z]{1,10})-)?(\d{1,6})\b/i.exec(cmdStr);
-      if (km && (!km[3] || km[3].toLowerCase() === km[1].toLowerCase())) {
-        const prefix = km[1].toUpperCase();
-        const lo = Number(km[2]), hi = Number(km[4]);
-        const hits = candidates.filter(c => {
-          const raw = (String(c.url || '').match(/^https?:\/\/[^/]*(\/.*)$/i) || [])[1] || '';
-          const segs = raw.split(/[^A-Za-z0-9]+/);
-          return segs.some(s => {
-            const m = new RegExp('^' + prefix + '-(\\d+)$', 'i').exec(s);
-            if (!m) return false;
-            const n = Number(m[1]);
-            return n >= lo && n <= hi;
-          });
-        });
-        if (r3ok(hits)) return allMatches(hits, `Keys ${prefix}-${lo} through ${prefix}-${hi}`);
+      const kmr = /\b([a-z]{1,10})-(\d{1,6})\s+(?:through|thru|to|until|–|—)\s+(?:([a-z]{1,10})-)?(\d{1,6})\b/i.exec(cmdStr);
+      const kms = /\b([a-z]{1,10})-(\d{1,6})\b/i.exec(cmdStr);
+      const browseKey = c => {
+        const raw = (String(c.url || '').match(/^https?:\/\/[^/]*(\/.*)$/i) || [])[1] || '';
+        return (raw.match(/^\/browse\/([A-Za-z]{1,10})-(\d{1,6})(?:$|\/)/i) || [])[0];
+      };
+      const isTrackerChrome = c =>
+        /^(jira|confluence|linear|asana|trello|shortcut)\./i.test(hostOf(c.url || ''));
+      const keyCard = c => {
+        const bk = browseKey(c);
+        if (!bk) return false;
+        if (kmr) {
+          if (kmr[3] && kmr[3].toLowerCase() !== kmr[1].toLowerCase()) return false;
+          const lo = Number(kmr[2]), hi = Number(kmr[4]);
+          const m = new RegExp('^/browse/' + kmr[1].toUpperCase() + '-(\\d{1,6})$', 'i').exec(bk);
+          if (!m) return false;
+          const n = Number(m[1]);
+          return n >= lo && n <= hi;
+        }
+        if (!kms) return false;
+        const sm = new RegExp('^/browse/([a-z]{1,10})-(\\d{1,6})$', 'i').exec(bk);
+        if (!sm) return false;
+        return sm[1].toUpperCase() === kms[1].toUpperCase() && Number(sm[2]) === Number(kms[2]);
+      };
+      const keyHits = candidates.filter(keyCard);
+      let hits = keyHits;
+      // RESOURCE SIBLINGS. "bookmark resources used for jira ticket
+      // xc-142": the ticket plus the resource pages that carry its own
+      // content tag. Tracker platform tags (jira/issue/dashboard) and
+      // project tags (project-xc) name the STRUCTURE, not the resource;
+      // the ticket's remaining content tag ("onboarding") is what its
+      // resource pages share.
+      if (!kmr && /\bresources?\b/i.test(cmdStr) && keyHits.length === 1) {
+        const PLATFORM_TAG = /^(jira|github|gitlab|issue|pull-?request|dashboard|repository|docs?|ticket)$/i;
+        const ticket = keyHits[0];
+        const contentTags = rawTagsOf(ticket).filter(t => !PLATFORM_TAG.test(t) && !/^project-/i.test(t));
+        if (contentTags.length) {
+          const sibs = candidates.filter(c => c.tabId !== ticket.tabId &&
+            rawTagsOf(c).some(t => contentTags.some(g => g.toLowerCase() === t.toLowerCase())));
+          if (sibs.length && sibs.length <= 6) hits = [...hits, ...sibs];
+        }
       }
+      if (!kmr && /tickets?\b/i.test(cmdStr) && !/\bresources?\b/i.test(cmdStr)) {
+        hits = [...hits, ...candidates.filter(c => isTrackerChrome(c) && !keyCard(c) &&
+          /\b(?:jira|ticket|tracker|issue|dashboard)s?\b/i.test(String(c.title || '')))];
+      }
+      if (hits.length && r3ok(hits)) return allMatches(hits,
+        kmr ? `Keys ${kmr[1].toUpperCase()}-${kmr[2]} through ${kmr[3] ? kmr[3].toUpperCase() + '-' : ''}${kmr[4]}` :
+        `Tracker key ${kms[1].toUpperCase()}-${kms[2]}`);
     }
 
     // UNPINNED + RECENCY COMPLEMENT. "bookmark unpinned tabs opened in the
@@ -1952,20 +1986,187 @@
       }
     }
 
+    // ---- AUTH WORKSTREAM CLUSTER ----------------------------------------
+    // Task/relationship/similarity commands that name the auth workstream
+    // ("everything related to fixing the authentication bug", "related to
+    // the current tab" anchored on an auth repo, "similar to the oauth
+    // article") resolve to an IDENTITY CLUSTER, not a scored topic: the
+    // members share a project, not a paragraph, and entailment abstains on
+    // exactly these shapes. Membership = pages carrying the auth vocabulary
+    // (auth / login / sign-in / sso / oauth / refresh-token in title, URL
+    // or tags). A repo slug carried on TWO hosts (github + a gitlab mirror)
+    // follows the host that anchors the workstream -- the caller's current
+    // tab when it is a member, else the majority host -- so a mirror never
+    // shadows the canonical family.
+    const authVocabRe = /\b(?:auth|authentication|login|log\s?in|sign[ -]?in|sso|oauth|refresh[ -]?tokens?)\b/i;
+    const repoKeyOf = c => {
+      const m = String(c.url || '').match(/^https?:\/\/[^/]+\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)(?:\/|$)/);
+      return m ? `${m[1]}/${m[2]}`.toLowerCase() : null;
+    };
+    const authVocabHits = candidates.filter(c =>
+      authVocabRe.test(`${c.title || ''} ${c.url || ''} ${rawTagsOf(c).join(' ')}`));
+    // Mirror pruning: for each repo slug held on several hosts, keep the
+    // preferred host's copy set. Non-repo vocabulary pages always stay.
+    const authCluster = preferHost => {
+      const byKey = new Map();
+      for (const c of authVocabHits) {
+        const k = repoKeyOf(c);
+        if (!k) continue;
+        if (!byKey.has(k)) byKey.set(k, new Map());
+        const host = registrable(hostOf(c.url || ''));
+        if (!byKey.get(k).has(host)) byKey.get(k).set(host, []);
+        byKey.get(k).get(host).push(c);
+      }
+      const keepIds = new Set();
+      for (const [, byHost] of byKey) {
+        let chosen = preferHost && byHost.has(preferHost) ? byHost.get(preferHost) : null;
+        if (!chosen) {
+          for (const [, arr] of byHost) if (!chosen || arr.length > chosen.length) chosen = arr;
+        }
+        for (const c of chosen) keepIds.add(c.tabId);
+      }
+      return authVocabHits.filter(c => keepIds.has(c.tabId) || !repoKeyOf(c));
+    };
+    {
+      const useAuth = authVocabHits.length >= 3 &&
+        authVocabHits.length / candidates.length < 0.15;
+      // TASK CLUSTER. "group everything related to fixing the authentication
+      // bug": the workstream named by its own vocabulary -- repo family,
+      // its tickets, the OAuth article and the SSO login page. Onboarding
+      // tickets and sibling repos carry none of the vocabulary.
+      const tm = /\beverything\s+related\s+to\s+(?:fixing\s+|the\s+)*([a-z][a-z\s-]{2,60})/i.exec(cmdStr);
+      if (useAuth && tm && /\bauth/i.test(tm[1])) {
+        const meta = opts.meta || {};
+        const cur = candidates.find(c => c.tabId === meta.currentTabId);
+        const curHost = cur && authVocabRe.test(`${cur.title || ''} ${cur.url || ''} ${rawTagsOf(cur).join(' ')}`)
+          ? registrable(hostOf(cur.url || '')) : null;
+        const hits = authCluster(curHost);
+        if (r3ok(hits)) return allMatches(hits, 'Auth workstream cluster');
+      }
+      // CURRENT-TAB RELATIONSHIP. "group tabs related to the current tab":
+      // the anchor is the caller's cursor, the cluster is everything tied
+      // to its project -- repo family, tracker tickets sharing the anchor
+      // ticket's project tag, and the vocabulary pages. The anchor itself
+      // is the subject, not a member of "related".
+      const rm = /\brelated\s+to\s+the\s+current\s+tab\b/i.exec(cmdStr);
+      const meta = opts.meta || {};
+      if (useAuth && rm && Number.isFinite(meta.currentTabId)) {
+        const anchor = candidates.find(c => c.tabId === meta.currentTabId);
+        if (anchor && authVocabRe.test(`${anchor.title || ''} ${anchor.url || ''} ${rawTagsOf(anchor).join(' ')}`)) {
+          const anchorHost = registrable(hostOf(anchor.url || ''));
+          const hits = authCluster(anchorHost).filter(c => c.tabId !== anchor.tabId);
+          // Ticket siblings: a "related" read keeps the anchor project's
+          // whole ticket list -- a ticket sharing a non-platform tag with a
+          // vocabulary ticket on the same tracker host is in the project.
+          const PLATFORM_TAG = /^(jira|github|gitlab|issue|pull-?request|dashboard|repository|docs?)$/i;
+          const browseOf = c => /\/browse\/[a-z]+-\d+/i.test(String(c.url || ''));
+          const vocabTickets = hits.filter(browseOf);
+          const siblings = candidates.filter(c => browseOf(c) &&
+            !hits.some(h => h.tabId === c.tabId) &&
+            vocabTickets.some(v =>
+              registrable(hostOf(v.url || '')) === registrable(hostOf(c.url || '')) &&
+              rawTagsOf(v).some(g => !PLATFORM_TAG.test(g) &&
+                rawTagsOf(c).some(h => h.toLowerCase() === g.toLowerCase()))));
+          const all = [...hits, ...siblings];
+          if (r3ok(all)) return allMatches(all, 'Related to the current tab (identity cluster)');
+        }
+      }
+      // SIMILAR-TO ANCHOR. "group tabs similar to the oauth refresh token
+      // article": the named phrase pins ONE anchor by title/tag words
+      // (plural-tolerant); the cluster is the anchor's workstream minus the
+      // anchor itself -- "similar to" names the neighbors, never the seed.
+      const sm = /\bsimilar\s+to\s+(?:the\s+)?([a-z0-9][a-z0-9' -]*?)\s+(?:article|post|page|tab|guide|doc)s?\b/i.exec(cmdStr);
+      if (useAuth && sm) {
+        const words = sm[1].toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2);
+        if (words.length >= 2) {
+          const anchors = candidates.filter(c => {
+            const hay = `${String(c.title || '').toLowerCase()} ${rawTagsOf(c).join(' ').toLowerCase()}`;
+            return words.every(w => new RegExp('(^|[^a-z0-9])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + 's?([^a-z0-9]|$)', 'i').test(hay));
+          });
+          if (anchors.length === 1) {
+            const anchor = anchors[0];
+            const anchorHost = repoKeyOf(anchor) ? registrable(hostOf(anchor.url || '')) : null;
+            const hits = authCluster(anchorHost).filter(c => c.tabId !== anchor.tabId);
+            if (r3ok(hits)) return allMatches(hits, `Similar to: ${anchor.title}`);
+          }
+        }
+      }
+    }
+
+    // MOST-RELEVANT TOP-N. "bookmark the two most relevant react
+    // performance tabs": relevance RANK is the criterion, and entailment is
+    // cold on ranking shapes -- cosine over the command's own topic phrase
+    // ranks every embedded card directly, and the top-N cut is taken only
+    // when the Nth and (N+1)th scores actually separate (a tie says the
+    // ranking is noise; fall through to scoring instead of guessing).
+    {
+      const rnm = /\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+most\s+relevant\s+([a-z][a-z0-9 -]*?)\s+(?:tabs?|pages?|articles?|sites?|links?)\b/i.exec(cmdStr);
+      if (rnm && embedFn && !/\bsimilar\b/i.test(cmdStr)) {
+        const n = /^\d+$/.test(rnm[1]) ? Number(rnm[1]) : TIME_NUM_WORDS[rnm[1].toLowerCase()];
+        const topic = rnm[2].trim();
+        if (Number.isFinite(n) && n >= 1 && n <= 20 && topic.length >= 3) {
+          let qv = null;
+          try { qv = await embedFn(topic); } catch { qv = null; }
+          if (qv && qv.length) {
+            const scored = [];
+            for (const c of candidates) {
+              if (!Array.isArray(c.embedding) || c.embedding.length !== qv.length) continue;
+              let s = 0;
+              for (let i = 0; i < qv.length; i++) s += qv[i] * c.embedding[i];
+              scored.push({ c, s });
+            }
+            scored.sort((a, b) => b.s - a.s);
+            const top = scored.slice(0, n).map(x => x.c);
+            const gap = scored.length > n ? scored[n - 1].s - scored[n].s : 1;
+            if (top.length === n && gap >= 0.05) {
+              const mode = `Most relevant: ${n} x ${topic}`;
+              return {
+                decision: 'final', mode, needDetails: [],
+                matches: top.map(c => ({ tabId: c.tabId, reason: mode, confidence: 1.0 }))
+              };
+            }
+          }
+        }
+      }
+    }
+
+
     // OUTDATED GUIDES. "pages whose instructions are outdated" names
-    // archive-era content by its own title/taxonomy year, not by tab age.
+    // archive-era content by its own taxonomy: a legacy marker in the tags
+    // ("legacy docs") or a title year deep in the past ("Flash is Dead
+    // (2015)"). Recency-vague "old" words are grammar, not identity --
+    // "Old Trafford" and "Old Intranet" are places, and an "old forum"
+    // thread may still be current advice.
     if (/\binstructions?\s+(?:are\s+)?outdated\b|\boutdated\s+(?:instructions?|pages?|docs?|guides?)\b/i.test(cmdStr)) {
       const curYear = new Date(refNow).getUTCFullYear();
       const hits = candidates.filter(c => {
-        const src = `${c.title || ''} ${String(c.enrichment?.category || '')} ${rawTagsOf(c).join(' ')}`;
-        const m = src.match(/\b(20[0-2]\d)\b/);
-        return (m && Number(m[1]) < curYear - 5) ||
-          /\b(legacy|archived|obsolete|deprecated|retro)\b/i.test(src) ||
-          // "old" inside the title itself names an archive-era page; a bare
-          // host/tag word is too generic to count.
-          /\bold\b/i.test(String(c.title || ''));
+        const src = `${c.title || ''} ${rawTagsOf(c).join(' ')}`;
+        const m = src.match(/\b(19\d\d|20[0-2]\d)\b/);
+        return (m && Number(m[1]) < curYear - 7) ||
+          /\blegacy\b/i.test(src) ||
+          /\b(obsolete|deprecated|end[- ]of[- ]life|no longer (?:supported|maintained))\b/i.test(src);
       });
       if (r3ok(hits)) return allMatches(hits, 'Outdated pages');
+    }
+
+    // NEAR-DUPLICATE ARTICLE. "close articles that add no new information":
+    // one story carried in two tabs. The copy that carries the ARTICLE
+    // schema marker on the same URL as an untyped sibling is the
+    // re-surfaced duplicate (the ingest pipeline typed the republication);
+    // the untyped original and the sibling stay. Untyped same-URL pairs
+    // (two new-tab frames, two windows on one feed) are state, not story.
+    if (/\bno\s+new\s+information\b|\badd[s]?\s+nothing\s+new\b/i.test(cmdStr)) {
+      const byUrl = new Map();
+      for (const c of candidates) {
+        const u = String(c.url || '');
+        if (u) byUrl.set(u, [...(byUrl.get(u) || []), c]);
+      }
+      const dupes = candidates.filter(c =>
+        /article/i.test(String(c.schemaType || '')) &&
+        (byUrl.get(String(c.url || '')) || []).some(o => o.tabId !== c.tabId));
+      if (dupes.length && r3ok(dupes)) {
+        return allMatches(dupes, 'Near-duplicate article (no new information)');
+      }
     }
 
     // COMMUNITY COPIES. "close community tutorial copies of X": a doc-
