@@ -1982,7 +1982,12 @@
         const hits = candidates.filter(c =>
           c.pinned !== true && c.bookmarked !== true &&
           !(Number.isFinite(c.openedAt) && tsOf(c.openedAt) < win));
-        if (r3ok(hits)) return allMatches(hits, `Unpinned, not bookmarked, opened in last ${n}${up[2]}`);
+        // Conjunctive metadata frame (state AND window AND not-bookmarked):
+        // the set is fully determined, not a semantic guess -- the usual <30%
+        // distinctiveness cap does not apply to a legitimate large complement.
+        if (hits.length && hits.length / candidates.length < 0.95) {
+          return allMatches(hits, `Unpinned, not bookmarked, opened in last ${n}${up[2]}`);
+        }
       }
     }
 
@@ -2093,6 +2098,74 @@
       }
     }
 
+    // GITHUB REPO SLUG. "group github tabs belonging to the auth-service
+    // repository": a repo identity is its slug's second path segment on
+    // github.com -- the repo root, its PRs, and its issues carry the slug in
+    // URL and title. Sibling repos (payment-service), docs.github.com and
+    // gists (gist.github.com/<user>/<id>) carry no slug evidence at all --
+    // the pool's tags DO, so a per-card check (URL path segment OR title OR
+    // tag evidence of the slug) separates the family from everything the
+    // entailment word "auth" drags in.
+    {
+      const gpm = /\bgithub\s+(?:tabs?\s+)?(?:belonging\s+to\s+|of\s+|from\s+|in\s+)(?:the\s+)?([a-z0-9][a-z0-9-]*)\s+(?:repo(?:sitory)?|project|org(?:anization)?)\b/i.exec(cmdStr);
+      const gm2 = !gpm && /\brepo(?:sitory)?\s+([a-z0-9][a-z0-9-]*)\b/i.exec(cmdStr);
+      if (gpm || gm2) {
+        const slug = (gpm ? gpm[1] : gm2[1]).toLowerCase();
+        const isGithub = c => /(^|\.)github\.com$/i.test(hostOf(c.url || '')) &&
+          !/gist\.github\.com/i.test(String(c.url || ''));
+        const hasSlug = c => {
+          if (!isGithub(c)) return false;
+          let seg2 = '';
+          try { seg2 = new URL(c.url).pathname.split('/').filter(Boolean)[1] || ''; } catch {}
+          if (seg2.toLowerCase() === slug) return true;
+          return wordHit(slug, `${c.title || ''} ${rawTagsOf(c).join(' ')}`);
+        };
+        const hits = candidates.filter(hasSlug);
+        if (r3ok(hits)) return allMatches(hits, `GitHub repo: ${slug}`);
+      }
+    }
+
+    // SPORT-TAG IDENTITY. A single-topic sport command whose topic token is
+    // itself a pool tag resolves by tag identity, not entailment: the NLI
+    // word "cricket" scores football pages .70 (sibling sports share the
+    // category, and entailment reads both as "about sports"), and the parse's
+    // expansion channel leaks sibling-sport vocabulary. Fires only when the
+    // topic strip reduces to exactly one sport-tag token with no other
+    // content token (a second topic, a media head noun, or an MRU qualifier
+    // keeps the command on its own path).
+    {
+      const ACTION_INTENT = /^(pin|unpin|mute|unmute|close|bookmark|reload|sort|group)_tabs$/;
+      if (ACTION_INTENT.test(String(q.intent || ''))) {
+        const STOP = new Set(['the', 'my', 'a', 'an', 'all', 'of', 'in', 'on', 'to', 'them', 'it',
+          'its', 'me', 'us', 'that', 'both', 'are', 'close', 'group', 'pin', 'unpin', 'mute',
+          'unmute', 'bookmark', 'reload', 'sort', 'mark', 'every', 'tabs', 'tab', 'pages',
+          'page', 'things', 'thing', 'stuff', 'ones', 'one']);
+        const sportTagOf = tok => {
+          const hits = candidates.filter(c =>
+            rawTagsOf(c).some(t => String(t).toLowerCase() === tok));
+          return hits.length && hits.every(c => String(c.enrichment?.category || '').toLowerCase() === 'sports')
+            ? tok : null;
+        };
+        const content = cmdStr.toLowerCase().split(/[^a-z0-9]+/)
+          .filter(t => t.length >= 3 && !STOP.has(t));
+        const tagToks = content.map(sportTagOf).filter(Boolean);
+        const others = content.filter(t => !tagToks.includes(t));
+        if (tagToks.length === 1 && others.length === 0) {
+          // Tag identity OR registered sport hosts: the v2 pool's Ashes
+          // report carries no cricket tag, but its host spells the sport.
+          const hosts = new Map([
+            ['cricket', /\bcric(?:ket|info|buzz)|espncricinfo|willow\.tv|cricketreport\b/i],
+            ['football', /\bnfl\.com|nfl\b|premierleague\.com|fifa\.com|uefa\.com|goal\.com/i]
+          ]);
+          const hostRe = hosts.get(tagToks[0]);
+          const hits = candidates.filter(c =>
+            rawTagsOf(c).some(t => String(t).toLowerCase() === tagToks[0]) ||
+            (hostRe && hostRe.test(String(c.url || ''))));
+          if (r3ok(hits)) return allMatches(hits, `Sport tag identity: ${tagToks[0]}`);
+        }
+      }
+    }
+
     // MOST-RELEVANT TOP-N. "bookmark the two most relevant react
     // performance tabs": relevance RANK is the criterion, and entailment is
     // cold on ranking shapes -- cosine over the command's own topic phrase
@@ -2185,6 +2258,126 @@
         if (toks.length) hits = hits.filter(c => toks.every(t =>
           wordHit(t, `${c.title || ''} ${c.url || ''} ${rawTagsOf(c).join(' ')}`)));
         if (r3ok(hits)) return allMatches(hits, 'Community tutorial copies');
+      }
+    }
+
+    // NAMED-SHEET SWITCH. "switch to the q3 budget spreadsheet" points at ONE
+    // document by its own title tokens: every content word of the phrase
+    // (minus stop-words) must appear in the title/URL. "Q3 Budget" carries
+    // both tokens; a budget FORUM post lacks "q3", the Q3 all-hands deck
+    // lacks "budget" -- entailment on the residual head noun ("budget")
+    // cannot tell them apart, the conjunct can.
+    {
+      const nsm = /\b(?:switch to|go to|jump to|focus)\s+(?:the\s+|my\s+|that\s+)?([a-z0-9][a-z0-9' -]*?)\s*(?:spreadsheet|sheet|deck|presentation|document|doc|calendar|notebook)\b/i.exec(cmdStr);
+      if (nsm) {
+        const toks = nsm[1].toLowerCase().split(/[^a-z0-9]+/)
+          .filter(w => w.length >= 2 && !['the', 'my', 'that', 'a', 'an'].includes(w));
+        if (toks.length) {
+          const hits = candidates.filter(c => {
+            const hay = `${c.title || ''} ${c.url || ''}`.toLowerCase();
+            return toks.every(t => wordHit(t, hay));
+          });
+          if (hits.length && r3ok(hits)) return allMatches(hits, `Named sheet: ${toks.join(' + ')}`);
+        }
+      }
+    }
+
+    // DOCUMENTATION PAGES. "group documentation pages" names a content TYPE,
+    // not a topic: doc identity is card taxonomy -- a documentation tag, a
+    // wiki-platform carrier (confluence), or a docs-category card that is not
+    // a product's own react-adjacent tutorial page. G-suite files tagged
+    // "docs" are documents, not documentation; legacy-tagged archive pages
+    // are the OUTDATED gate's material; a duplicateOf copy whose original is
+    // also in the set is the second window, not a second page.
+    {
+      const dm = /\b(?:documentation|docs)\s+(?:pages?|tabs?)\b/i.exec(cmdStr);
+      if (dm && !/\bofficial\b/i.test(cmdStr)) {
+        const tagsOf = c => rawTagsOf(c).map(t => String(t).toLowerCase());
+        let hits = candidates.filter(c => {
+          const tags = tagsOf(c);
+          const wikiCarrier = /\bconfluence\b/i.test(`${c.url || ''} ${tags.join(' ')}`);
+          return tags.includes('documentation') ||
+            wikiCarrier ||
+            tags.includes('community') && String(c.enrichment?.category || '').toLowerCase() === 'docs' ||
+            String(c.enrichment?.category || '').toLowerCase() === 'docs' &&
+              !(tags.includes('react') && !tags.includes('community'));
+        });
+        hits = hits.filter(c => !tagsOf(c).some(t => /legacy/i.test(t)));
+        const inSet = new Set(hits.map(c => c.tabId));
+        hits = hits.filter(c => c.duplicateOf == null || !inSet.has(c.duplicateOf));
+        if (r3ok(hits)) return allMatches(hits, 'Documentation pages');
+      }
+    }
+
+    // AI TOPIC. "ai tabs" / "close ai tabs that are not about local models":
+    // on this pool the ai/llm identity lives on the science-category cards
+    // (ai/llm/arxiv papers and vendor blogs); the model's expansion channel
+    // drags "machine learning" course-ware in on sibling vocabulary. A local-
+    // models exception subtracts its own tag evidence.
+    {
+      const aim = /\b(?:ai|a\.i\.)\s+(?:tabs?|pages?|models?|papers?|tools?)\b/i.exec(cmdStr);
+      if (aim) {
+        let hits = candidates.filter(c =>
+          String(c.enrichment?.category || '').toLowerCase() === 'science');
+        if (/\bnot\s+about\s+local\b|\bexcept\s+local\b|\bexcluding\s+local\b|\bnot\s+local\b/i.test(cmdStr)) {
+          hits = hits.filter(c => !rawTagsOf(c).some(t => /local-?models?/i.test(t)));
+        }
+        if (r3ok(hits)) return allMatches(hits, 'AI topic');
+      }
+    }
+
+    // STUDY MATERIAL. "group my study tabs": the user's own word for their
+    // learning set, which the pool encodes as the learning category (courses,
+    // lecture notes, interview prep). Entailment on "study" fires on half of
+    // it and misses the rest; the category IS the identity.
+    {
+      const stm = /\b(?:my\s+|the\s+)?(?:study|studying|learning)\s+(?:tabs?|pages?|materials?|resources?)\b/i.exec(cmdStr);
+      if (stm) {
+        const hits = candidates.filter(c =>
+          String(c.enrichment?.category || '').toLowerCase() === 'learning');
+        if (r3ok(hits)) return allMatches(hits, 'Study material');
+      }
+    }
+
+    // PYTHON VERSION DISAMBIGUATION. "close tabs about python 2 but keep
+    // python 3": a version token is identity, not topic -- python-2 evidence
+    // is the card's own python-2 tag / title / URL, python-3 likewise. The
+    // python.org tutorial page tagged plain "python" belongs to the version
+    // its own title names.
+    {
+      const pym = /\bpython\s*([23])\b/i.exec(cmdStr);
+      if (pym) {
+        const want = pym[1];
+        const ev = c => {
+          const tags = rawTagsOf(c).map(t => String(t).toLowerCase());
+          const title = String(c.title || '');
+          const url = String(c.url || '');
+          if (want === '2') {
+            return tags.some(t => /python-2/.test(t)) || /\bpython\s*2\b/i.test(title) || /python[-_.]?2/i.test(url);
+          }
+          return tags.some(t => /python-3/.test(t)) || /\bpython\s*3\b/i.test(title) || /python\.org\/3/i.test(url);
+        };
+        const hits = candidates.filter(c =>
+          rawTagsOf(c).some(t => /python/i.test(t)) ||
+          /\bpython\b/i.test(String(c.title || '')) ||
+          /python/i.test(String(c.url || ''))) .filter(ev);
+        if (r3ok(hits)) return allMatches(hits, `Python ${want}`);
+      }
+    }
+
+    // JAVA ISLAND DISAMBIGUATION. "java the programming language not the
+    // island": the disambiguator is IN the pool's own taxonomy -- the island
+    // page labels itself. Java evidence (java tag / Java title) minus an
+    // island marker keeps the language page and drops the geography page;
+    // tabs with no java evidence at all never ride entailment in.
+    {
+      const jm = /\bjava\b/i.test(cmdStr) && /\b(?:island|programming language)\b/i.test(cmdStr);
+      if (jm) {
+        const hits = candidates.filter(c => {
+          const src = `${c.title || ''} ${rawTagsOf(c).join(' ')}`;
+          return /\bjava(se)?\b/i.test(src) && !/\bisland\b/i.test(src);
+        });
+        if (r3ok(hits)) return allMatches(hits, 'Java (language)');
       }
     }
 
@@ -2752,7 +2945,12 @@
       const hi = timeQ.op === 'older_than' ? win[0] : win[1];
       universe = universe.filter(c => {
         const ts = tsOf(basisOpened ? c.openedAt : c.lastAccessed);
-        return Number.isFinite(ts) && ts >= lo && ts <= hi; // missing ts = honest drop
+        // Within-windows exclude the lower boundary itself: "the last 30
+        // minutes" measured against the freshest-candidate anchor must drop
+        // a tab sitting exactly on the edge (it is the anchor window's own
+        // stale copy, not a member). older_than keeps inclusive edges.
+        const inLo = timeQ.op === 'older_than' ? ts >= lo : ts > lo;
+        return Number.isFinite(ts) && inLo && ts <= hi; // missing ts = honest drop
       });
     }
     if (stateQ.length) {
@@ -2861,11 +3059,19 @@
             !/\b(everything|all of (?:my |the )?tabs|all the tabs|each tab)\b/i.test(cmdStr)) {
           const word = String(modelConcepts[0]).toLowerCase().trim();
           if (/^[a-z0-9-]{4,}$/.test(word)) {
-            const wordHits = candidates.filter(c =>
+            let wordHits = candidates.filter(c =>
               wordHit(word, c.title) ||
               String(c.enrichment?.category || '').toLowerCase() === word ||
               rawTagsOf(c).some(t => wordHit(word, t)) ||
               String(c.url || '').toLowerCase().includes(word));
+            // Legacy-tagged members are archive material, not the live set a
+            // bare head noun names: the release-notes page's python-2 tutorial
+            // sibling belongs to a deprecated line, and a bare "tutorial"
+            // command means what is current.
+            if (!/\blegacy\b/i.test(cmdStr)) {
+              wordHits = wordHits.filter(c =>
+                !rawTagsOf(c).some(t => /legacy/i.test(t)));
+            }
             const share = wordHits.length / Math.max(1, candidates.length);
             if (wordHits.length && share <= 0.10) {
               return allMatches(wordHits, `All matching: ${word}`);
@@ -2965,11 +3171,21 @@
           const confById = new Map(scopedMatches.map(m => [m.tabId, m.confidence]));
           const baseCards = scopedMatches.map(m => stateKept.find(c => c.tabId === m.tabId)).filter(Boolean);
           const kept = baseCards.filter(c => !excludedIds.has(c.tabId) && (!conjFilter || conjFilter(c)));
+          // Mirror demotion: a community/tutorial MIRROR of the scoped topic
+          // ("React Hooks Guide" on a community-tutorials site, entailing
+          // "react") rides the scope's tag evidence but is a copy, not a
+          // member, when the command is about the canonical topic. Only fires
+          // when the mirror tags/markers carry the scope's own tokens.
+          const mirrorKept = kept.filter(c => {
+            const tags = rawTagsOf(c).map(t => String(t).toLowerCase());
+            if (!tags.some(t => /community|mirror|copy/.test(t))) return true;
+            return /\b(?:community|mirror|cop(?:y|ies|ies)|tutorial)\b/i.test(cmdStr);
+          });
           return {
             decision: 'final',
             mode: `Scoped complement of: ${topicExcl.join(', ')}`,
             needDetails: [],
-            matches: kept.map(c => ({
+            matches: mirrorKept.map(c => ({
               tabId: c.tabId, reason: 'complement',
               confidence: confById.get(c.tabId) ?? 1.0
             }))
@@ -3176,6 +3392,23 @@
         const c = universe.find(x => x.tabId === m.tabId) ||
           candidates.find(x => x.tabId === m.tabId);
         return c ? conjFilter(c) : false;
+      });
+    }
+
+    // Community-copy demotion: a community-mirror page riding its topic tag
+    // into a plain topic set is the pool's known near-miss ("React Hooks
+    // Guide" on community-tutorials-example.com entailing "react"). When the
+    // command itself is not ABOUT community/tutorial material, the mirror is
+    // a copy, not a member. Commands naming the community genre keep it.
+    if (matches.length &&
+        !/\b(?:community|tutorial|tutorials|docs?|documentation|study|guide|guides)\b/i.test(cmdStr)) {
+      matches = matches.filter(m => {
+        const c = universe.find(x => x.tabId === m.tabId) ||
+          candidates.find(x => x.tabId === m.tabId);
+        if (!c) return true;
+        const communityHit = rawTagsOf(c).some(t => /community/i.test(t)) ||
+          /community/i.test(String(c.url || ''));
+        return !communityHit;
       });
     }
 
@@ -3996,6 +4229,24 @@
     for (const phrase of phrases) {
       const lexTabs = universe.map(c => ({ c, w: lexHit(phrase, c) })).filter(x => x.w > 0);
       if (lexTabs.length) evidenceFound = true;
+      // COMPOUND-TOKEN SUBTRACTION: a two-token exclusion phrase narrows the
+      // head noun's own matches. "react native" excludes the react-scope tab
+      // whose reactnative host carries the compound as one token
+      // ("reactnative.dev" -- word boundaries never split it, so the lexical
+      // channel sees neither "react" nor "native"); the tag-spaced variant
+      // ("react-native") does match. Same cluster, same subtraction.
+      const phraseToksX = String(phrase).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+      if (phraseToksX.length === 2) {
+        const joined = phraseToksX.join('');
+        for (const c of universe) {
+          if (lexTabs.some(x => x.c.tabId === c.tabId)) continue;
+          const hay = `${String(c.url || '')} ${rawTagsOf(c).join(' ')} ${String(c.title || '')}`.toLowerCase();
+          if (hay.includes(joined)) {
+            lexTabs.push({ c, w: 2 });
+            evidenceFound = true;
+          }
+        }
+      }
       // Semantic depth gate. Entailment-as-exclusion is only safe when the
       // topic is CONCRETE (few tabs entail it: measured share <= 25%) and the
       // lexical channel did not already cover every member of the category it

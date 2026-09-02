@@ -383,7 +383,17 @@ Examples:
         if (!Array.isArray(v)) continue;
         const terms = v.filter(t => typeof t === 'string' && t.trim())
           .map(t => t.trim().toLowerCase()).slice(0, 4);
-        if (terms.length) expansions[String(k).toLowerCase()] = terms;
+        // Sibling-sport guard: when a concept is itself a specific sport, a
+        // DIFFERENT specific sport is not a synonym -- it is a sibling topic
+        // whose pages share only the category ("cricket" expanded with
+        // "football" elects Premier League tables). The pool's team-sport
+        // name is the disambiguator; expansion vocab stays within the sport.
+        const SIBLING_SPORTS = /\b(football|soccer|basketball|baseball|hockey|rugby|tennis|golf|volleyball|cricket|baseball)\b/i;
+        const conceptIsSport = SIBLING_SPORTS.test(String(k));
+        const filtered = conceptIsSport
+          ? terms.filter(t => !SIBLING_SPORTS.test(t) || String(t).toLowerCase() === String(k).toLowerCase())
+          : terms;
+        if (filtered.length) expansions[String(k).toLowerCase()] = filtered;
       }
     }
 
@@ -651,6 +661,14 @@ Examples:
       for (const [k, terms] of Object.entries(s.expansions)) {
         uExp[k] = [...new Set([...(uExp[k] || []), ...terms])].slice(0, 4);
       }
+    }
+    // Re-apply the sibling-sport guard on the union: one sport term from one
+    // sample must not survive the vote the single-parse guard would cast.
+    const SIBLING_SPORTS_RE = /\b(football|soccer|basketball|baseball|hockey|rugby|tennis|golf|volleyball|cricket)\b/i;
+    for (const k of Object.keys(uExp)) {
+      if (!SIBLING_SPORTS_RE.test(k)) continue;
+      uExp[k] = uExp[k].filter(t =>
+        !SIBLING_SPORTS_RE.test(t) || String(t).toLowerCase() === String(k).toLowerCase());
     }
     const expansions = {};
     for (const c of uConcepts) if (uExp[c]) expansions[c] = uExp[c];
