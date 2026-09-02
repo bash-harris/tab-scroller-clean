@@ -9625,5 +9625,2629 @@
   "_coverage": 0.5,
   "_needsReparse": false,
   "isSelectAll": false
+ },
+ "get rid of every chess.com page": {
+  "intent": "close_tabs",
+  "concepts": [
+   "chess.com"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chess.com": [
+    "chess",
+    "board games",
+    "online chess"
+   ]
+  },
+  "domains": [
+   "chess.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bin the pages that live on gardening example.com": {
+  "intent": "close_tabs",
+  "concepts": [
+   "gardening-example.com"
+  ],
+  "combine": "union",
+  "expansions": {
+   "gardening-example.com": [
+    "garden",
+    "plants",
+    "horticulture"
+   ]
+  },
+  "domains": [
+   "gardening-example.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "shut down the insecure http one": {
+  "intent": "close_tabs",
+  "concepts": [
+   "http"
+  ],
+  "combine": "union",
+  "expansions": {
+   "http": [
+    "insecure",
+    "unsafe",
+    "unsecured"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "kill anything hosted locally except the 3000 server": {
+  "intent": "close_tabs",
+  "concepts": [
+   "3000 server"
+  ],
+  "combine": "union",
+  "expansions": {
+   "3000 server": [
+    "local server",
+    "localhost",
+    "development server"
+   ]
+  },
+  "domains": [],
+  "selectAll": true,
+  "exclude": [
+   "3000 server"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close every page whose address ends in .pdf": {
+  "intent": "close_tabs",
+  "concepts": [
+   "pdf"
+  ],
+  "combine": "union",
+  "expansions": {
+   "pdf": [
+    "document",
+    "report",
+    "presentation"
+   ]
+  },
+  "domains": [],
+  "selectAll": true,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "the .de domains can be closed": {
+  "intent": "close_tabs",
+  "concepts": [
+   "de"
+  ],
+  "combine": "union",
+  "expansions": {
+   "de": [
+    "germany",
+    "domain",
+    "deutsche"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "shut the door on x.com and netflix.com": {
+  "intent": "close_tabs",
+  "concepts": [
+   "x.com",
+   "netflix.com"
+  ],
+  "combine": "union",
+  "expansions": {
+   "x.com": [
+    "x",
+    "x website"
+   ],
+   "netflix.com": [
+    "netflix",
+    "streaming service"
+   ]
+  },
+  "domains": [
+   "x.com",
+   "netflix.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the youtube watch pages spare the channel": {
+  "intent": "close_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "youtube.com",
+    "youtube"
+   ]
+  },
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "channel"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "the chessvibes channel page should be closed": {
+  "intent": "close_tabs",
+  "concepts": [
+   "chessvibes"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chessvibes": [
+    "chess",
+    "chess channel",
+    "chess videos"
+   ]
+  },
+  "domains": [
+   "chessvibes.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the recipe card 404s": {
+  "intent": "close_tabs",
+  "concepts": [
+   "recipe-card"
+  ],
+  "combine": "union",
+  "expansions": {
+   "recipe-card": [
+    "recipe",
+    "cooking",
+    "baking"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close amazon product pages but leave the search results": {
+  "intent": "close_tabs",
+  "concepts": [
+   "amazon product pages"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon product pages": [
+    "amazon shopping",
+    "amazon products",
+    "amazon listings"
+   ]
+  },
+  "domains": [
+   "amazon.com",
+   "amazon.in",
+   "amazon.co.uk",
+   "amazon.de"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "search results"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.75,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close google docs documents keep the garden spreadsheet": {
+  "intent": "close_tabs",
+  "concepts": [
+   "google docs",
+   "garden spreadsheet"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google docs": [
+    "docs",
+    "google document"
+   ],
+   "garden spreadsheet": [
+    "spreadsheet",
+    "garden sheet"
+   ]
+  },
+  "domains": [
+   "docs.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "garden spreadsheet"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.8,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the lichess studies page": {
+  "intent": "close_tabs",
+  "concepts": [
+   "lichess"
+  ],
+  "combine": "union",
+  "expansions": {
+   "lichess": [
+    "chess",
+    "online chess",
+    "lichess.org"
+   ]
+  },
+  "domains": [
+   "lichess.org"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the amp mirror of the chili recipe": {
+  "intent": "close_tabs",
+  "concepts": [
+   "recipe"
+  ],
+  "combine": "union",
+  "expansions": {
+   "recipe": [
+    "cooking",
+    "baking",
+    "meal ideas"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the phone sized copy of the compost tumbler listing": {
+  "intent": "close_tabs",
+  "concepts": [
+   "compost tumbler"
+  ],
+  "combine": "union",
+  "expansions": {
+   "compost tumbler": [
+    "compost bin",
+    "compost container",
+    "compost bin"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "tabs with warbler in the heading group them": {
+  "intent": "group_tabs",
+  "concepts": [
+   "warbler"
+  ],
+  "combine": "union",
+  "expansions": {
+   "warbler": [
+    "twitter",
+    "social media",
+    "blogging"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close whatever says page not found in its title": {
+  "intent": "close_tabs",
+  "concepts": [
+   "page not found"
+  ],
+  "combine": "union",
+  "expansions": {
+   "page not found": [
+    "error page",
+    "404 error",
+    "not found page"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group the entries whose titles mention compost": {
+  "intent": "group_tabs",
+  "concepts": [
+   "compost"
+  ],
+  "combine": "union",
+  "expansions": {
+   "compost": [
+    "composting",
+    "organic waste",
+    "green waste"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the tab with the absurdly long heading": {
+  "intent": "close_tabs",
+  "concepts": [
+   "absurdly long heading"
+  ],
+  "combine": "union",
+  "expansions": {
+   "absurdly long heading": [
+    "long title",
+    "long title",
+    "long title"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close whatever still says loading at the top": {
+  "intent": "close_tabs",
+  "concepts": [
+   "loading"
+  ],
+  "combine": "union",
+  "expansions": {
+   "loading": [
+    "loading page",
+    "loading screen",
+    "loading indicator"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close repeats that share an identical heading keep the older": {
+  "intent": "close_tabs",
+  "concepts": [
+   "heading"
+  ],
+  "combine": "union",
+  "expansions": {
+   "heading": [
+    "title",
+    "title bar",
+    "header"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.2,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "anything opened within the past hour shut it": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": true,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "within",
+   "value": "last_hour"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group the tabs i last touched before yesterday": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "older_than",
+   "value": "2_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close whatever has not been used in five days": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "older_than",
+   "value": "5_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "shut the ones opened during the last quarter hour": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "older_than",
+   "value": "30_minutes"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group tabs opened more than ten days back": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "older_than",
+   "value": "10_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "silence the noisy ones": {
+  "intent": "mute_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": true,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "audible"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "unmute whatever is on mute": {
+  "intent": "unmute_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "muted"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "unpin everything in the chess group": {
+  "intent": "unpin_tabs",
+  "concepts": [
+   "chess"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chess": [
+    "board games",
+    "strategy games",
+    "board games"
+   ]
+  },
+  "domains": [
+   "chess.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the tabs running in private mode": {
+  "intent": "close_tabs",
+  "concepts": [
+   "private mode"
+  ],
+  "combine": "union",
+  "expansions": {
+   "private mode": [
+    "incognito",
+    "private browsing",
+    "anonymous browsing"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the discarded leftovers": {
+  "intent": "close_tabs",
+  "concepts": [
+   "discarded leftovers"
+  ],
+  "combine": "union",
+  "expansions": {
+   "discarded leftovers": [
+    "garbage",
+    "throwaway",
+    "waste"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "make a group out of the chess stuff": {
+  "intent": "group_tabs",
+  "concepts": [
+   "chess"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chess": [
+    "board games",
+    "strategy games",
+    "board games"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the tabs sitting in the cycling group": {
+  "intent": "close_tabs",
+  "concepts": [
+   "cycling"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cycling": [
+    "biking",
+    "cyclist",
+    "bike"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all the grey colored groups": {
+  "intent": "close_tabs",
+  "concepts": [
+   "grey-colored groups"
+  ],
+  "combine": "union",
+  "expansions": {
+   "grey-colored groups": [
+    "grey groups",
+    "colored groups",
+    "greyed-out groups"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close whatever sits to the right of the tab i am on in this window": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark the opening five tabs of this window": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "opening five tabs"
+  ],
+  "combine": "union",
+  "expansions": {
+   "opening five tabs": [
+    "opening five pages",
+    "opening five documents",
+    "opening five articles"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group the pages opened from my chess search": {
+  "intent": "group_tabs",
+  "concepts": [
+   "chess"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chess": [
+    "board games",
+    "strategy",
+    "game theory"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the whole chain that started at the chess search": {
+  "intent": "close_tabs",
+  "concepts": [
+   "chess"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chess": [
+    "board games",
+    "strategy games",
+    "board games"
+   ]
+  },
+  "domains": [],
+  "selectAll": true,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group pages from the same site as the one i am reading now": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs that came from the page i am on": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close duplicated tabs keep the originals": {
+  "intent": "close_tabs",
+  "concepts": [
+   "duplicated"
+  ],
+  "combine": "union",
+  "expansions": {
+   "duplicated": [
+    "duplicate",
+    "copied",
+    "repeated"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "originals"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "keep only the freshest copy of each duplicated recipe": {
+  "intent": "close_tabs",
+  "concepts": [
+   "recipe"
+  ],
+  "combine": "union",
+  "expansions": {
+   "recipe": [
+    "cooking",
+    "baking",
+    "meal ideas"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "duplicated"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.4,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the duplicate solar guide keeping the one i opened first": {
+  "intent": "close_tabs",
+  "concepts": [
+   "solar guide"
+  ],
+  "combine": "union",
+  "expansions": {
+   "solar guide": [
+    "solar energy",
+    "photovoltaic",
+    "solar panels"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "one i opened first"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the doubled up new tab pages keep one": {
+  "intent": "close_tabs",
+  "concepts": [
+   "new tab pages"
+  ],
+  "combine": "union",
+  "expansions": {
+   "new tab pages": [
+    "tab pages",
+    "blank pages",
+    "empty pages"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "one"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group pages that publish a contact email address": {
+  "intent": "group_tabs",
+  "concepts": [
+   "contact email"
+  ],
+  "combine": "union",
+  "expansions": {
+   "contact email": [
+    "email",
+    "contact info",
+    "contact details"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close pages telling me to season a cast iron pan": {
+  "intent": "close_tabs",
+  "concepts": [
+   "season a cast iron pan"
+  ],
+  "combine": "union",
+  "expansions": {
+   "season a cast iron pan": [
+    "seasoning a cast iron pan",
+    "cast iron pan seasoning",
+    "cast iron pan care"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close pages that describe kimchi fermentation steps": {
+  "intent": "close_tabs",
+  "concepts": [
+   "kimchi fermentation"
+  ],
+  "combine": "union",
+  "expansions": {
+   "kimchi fermentation": [
+    "kimchi",
+    "fermentation",
+    "chili paste"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the index page that turned out broken": {
+  "intent": "close_tabs",
+  "concepts": [
+   "index page"
+  ],
+  "combine": "union",
+  "expansions": {
+   "index page": [
+    "home page",
+    "main page",
+    "start page"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the drive folder tab": {
+  "intent": "close_tabs",
+  "concepts": [
+   "drive"
+  ],
+  "combine": "union",
+  "expansions": {
+   "drive": [
+    "google drive",
+    "google storage",
+    "google cloud"
+   ]
+  },
+  "domains": [
+   "drive.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the streaming video service": {
+  "intent": "close_tabs",
+  "concepts": [
+   "streaming video service"
+  ],
+  "combine": "union",
+  "expansions": {
+   "streaming video service": [
+    "video streaming",
+    "streaming services",
+    "online video"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "round up the fermentation reading": {
+  "intent": "group_tabs",
+  "concepts": [
+   "fermentation"
+  ],
+  "combine": "union",
+  "expansions": {
+   "fermentation": [
+    "brewing",
+    "yeast",
+    "fermentation process"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the birdwatching stuff": {
+  "intent": "close_tabs",
+  "concepts": [
+   "birdwatching"
+  ],
+  "combine": "union",
+  "expansions": {
+   "birdwatching": [
+    "birding",
+    "nature",
+    "wildlife"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close k drama pages": {
+  "intent": "close_tabs",
+  "concepts": [
+   "k-drama"
+  ],
+  "combine": "union",
+  "expansions": {
+   "k-drama": [
+    "korean dramas",
+    "korean soap operas",
+    "korean television shows"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group the van life research": {
+  "intent": "group_tabs",
+  "concepts": [
+   "van-life"
+  ],
+  "combine": "union",
+  "expansions": {
+   "van-life": [
+    "traveling",
+    "adventures",
+    "camping"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the cycling news and results": {
+  "intent": "close_tabs",
+  "concepts": [
+   "cycling news",
+   "results"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cycling news": [
+    "cycling",
+    "bicycling",
+    "road cycling"
+   ],
+   "results": [
+    "race results",
+    "race data",
+    "race stats"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close pages about sourdough that are not videos": {
+  "intent": "close_tabs",
+  "concepts": [
+   "sourdough"
+  ],
+  "combine": "union",
+  "expansions": {
+   "sourdough": [
+    "leavening",
+    "starter",
+    "bread"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "video"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close chess content except the puzzle trainer": {
+  "intent": "close_tabs",
+  "concepts": [
+   "puzzle trainer"
+  ],
+  "combine": "union",
+  "expansions": {
+   "puzzle trainer": [
+    "chess puzzles",
+    "board games",
+    "strategy games"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "chess"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.75,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group the wingspan pages not the netflix series": {
+  "intent": "group_tabs",
+  "concepts": [
+   "wingspan"
+  ],
+  "combine": "union",
+  "expansions": {
+   "wingspan": [
+    "span",
+    "spanning",
+    "spanning distance"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "netflix"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close pages about the queens gambit series but keep chess openings": {
+  "intent": "close_tabs",
+  "concepts": [
+   "queens gambit"
+  ],
+  "combine": "union",
+  "expansions": {
+   "queens gambit": [
+    "chess",
+    "strategy",
+    "game"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "chess openings"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group pages for the compost tumbler model b07compost": {
+  "intent": "group_tabs",
+  "concepts": [
+   "compost tumbler"
+  ],
+  "combine": "union",
+  "expansions": {
+   "compost tumbler": [
+    "compost bin",
+    "compost bin",
+    "compost bin"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the silman endgame course review": {
+  "intent": "close_tabs",
+  "concepts": [
+   "silman endgame course review"
+  ],
+  "combine": "union",
+  "expansions": {
+   "silman endgame course review": [
+    "silman endgame",
+    "endgame course",
+    "review"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the german chess news site": {
+  "intent": "close_tabs",
+  "concepts": [
+   "chess news"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chess news": [
+    "chess",
+    "board games",
+    "games"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the tab that popped up on its own": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark what i opened from the chess search": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "chess"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chess": [
+    "board games",
+    "strategy games",
+    "board games"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the google results page for chess endgames": {
+  "intent": "close_tabs",
+  "concepts": [
+   "chess endgames"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chess endgames": [
+    "chess strategy",
+    "endgame theory",
+    "chess tactics"
+   ]
+  },
+  "domains": [
+   "google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.75,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the amazon compost search": {
+  "intent": "close_tabs",
+  "concepts": [
+   "amazon",
+   "compost"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon": [
+    "amazon.com"
+   ],
+   "compost": [
+    "composting",
+    "organic waste"
+   ]
+  },
+  "domains": [
+   "amazon.com",
+   "amazon.in",
+   "amazon.co.uk",
+   "amazon.de"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the r chess endgame discussion": {
+  "intent": "close_tabs",
+  "concepts": [
+   "r/chess"
+  ],
+  "combine": "union",
+  "expansions": {
+   "r/chess": [
+    "chess",
+    "endgame",
+    "strategy"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "park the unread longreads together in a reading group": {
+  "intent": "group_tabs",
+  "concepts": [
+   "longreads"
+  ],
+  "combine": "union",
+  "expansions": {
+   "longreads": [
+    "books",
+    "readings",
+    "novels"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.4,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the ones i have already finished": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "save the half finished technical pieces": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "technical pieces"
+  ],
+  "combine": "union",
+  "expansions": {
+   "technical pieces": [
+    "technical documents",
+    "tech projects",
+    "code snippets"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark the barely opened articles": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "articles"
+  ],
+  "combine": "union",
+  "expansions": {
+   "articles": [
+    "news",
+    "stories",
+    "updates"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the tabs i have already saved to bookmarks": {
+  "intent": "close_tabs",
+  "concepts": [
+   "bookmarks"
+  ],
+  "combine": "union",
+  "expansions": {
+   "bookmarks": [
+    "favorites",
+    "saved",
+    "saved pages"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group the tabs saved under reference": {
+  "intent": "group_tabs",
+  "concepts": [
+   "reference"
+  ],
+  "combine": "union",
+  "expansions": {
+   "reference": [
+    "reference",
+    "library",
+    "bookmarks"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark unbookmarked cooking tabs": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "cooking"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cooking": [
+    "cooking",
+    "baking",
+    "meal ideas"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "pin my three most visited learning pages": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "learning"
+  ],
+  "combine": "union",
+  "expansions": {
+   "learning": [
+    "education",
+    "courses",
+    "tutorials"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close pages visited exactly once and abandoned for days": {
+  "intent": "close_tabs",
+  "concepts": [
+   "pages"
+  ],
+  "combine": "union",
+  "expansions": {
+   "pages": [
+    "web pages",
+    "internet pages",
+    "web content"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "older_than",
+   "value": "1_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the access denied and not found leftovers": {
+  "intent": "close_tabs",
+  "concepts": [
+   "access-denied",
+   "not-found"
+  ],
+  "combine": "union",
+  "expansions": {
+   "access-denied": [
+    "denied",
+    "restricted",
+    "unauthorized"
+   ],
+   "not-found": [
+    "missing",
+    "unavailable",
+    "not accessible"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.75,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "reload the frozen loading page": {
+  "intent": "reload_tabs",
+  "concepts": [
+   "loading"
+  ],
+  "combine": "union",
+  "expansions": {
+   "loading": [
+    "loading page",
+    "loading screen",
+    "loading animation"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "round up the german language pages": {
+  "intent": "group_tabs",
+  "concepts": [
+   "german-language"
+  ],
+  "combine": "union",
+  "expansions": {
+   "german-language": [
+    "deutsch",
+    "deutsche",
+    "deutschsprachig"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the german woodworking guide keep the chess news": {
+  "intent": "close_tabs",
+  "concepts": [
+   "german woodworking guide"
+  ],
+  "combine": "union",
+  "expansions": {
+   "german woodworking guide": [
+    "woodworking",
+    "woodworking guide",
+    "woodworking tutorials"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "chess news"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.8,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the compost gear over a hundred bucks": {
+  "intent": "close_tabs",
+  "concepts": [
+   "compost gear"
+  ],
+  "combine": "union",
+  "expansions": {
+   "compost gear": [
+    "compost bin",
+    "compost bin",
+    "compost bin"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.8,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group the out of stock listings": {
+  "intent": "group_tabs",
+  "concepts": [
+   "out-of-stock"
+  ],
+  "combine": "union",
+  "expansions": {
+   "out-of-stock": [
+    "stockout",
+    "out of stock",
+    "unavailable"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "keep the cheapest compost bin listing close the rest of the products": {
+  "intent": "close_tabs",
+  "concepts": [
+   "compost bin"
+  ],
+  "combine": "union",
+  "expansions": {
+   "compost bin": [
+    "compost",
+    "organic bin",
+    "biodigester"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "cheapest"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group everything for the copenhagen van trip": {
+  "intent": "group_tabs",
+  "concepts": [
+   "copenhagen",
+   "van",
+   "trip"
+  ],
+  "combine": "union",
+  "expansions": {
+   "copenhagen": [
+    "copenhagen",
+    "copenhagen airport",
+    "copenhagen harbor"
+   ],
+   "van": [
+    "van",
+    "caravan",
+    "travel van"
+   ],
+   "trip": [
+    "trip",
+    "journey",
+    "vacation"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark resources for the birdfeeder project": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "birdfeeder project"
+  ],
+  "combine": "union",
+  "expansions": {
+   "birdfeeder project": [
+    "bird feeder project",
+    "bird feeder project",
+    "bird feeder project"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the outdated flash era recipe archive": {
+  "intent": "close_tabs",
+  "concepts": [
+   "flash-era recipe archive"
+  ],
+  "combine": "union",
+  "expansions": {
+   "flash-era recipe archive": [
+    "old recipes",
+    "classic recipes",
+    "pre-flash era recipes"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "keep official chess sites close the fan copies": {
+  "intent": "close_tabs",
+  "concepts": [
+   "official chess sites"
+  ],
+  "combine": "union",
+  "expansions": {
+   "official chess sites": [
+    "chess.com",
+    "lichess.org",
+    "www.chess.com"
+   ]
+  },
+  "domains": [
+   "chess.com"
+  ],
+  "selectAll": false,
+  "exclude": [
+   "fan copies"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.75,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the blog post that repeats what the wiki already covers": {
+  "intent": "close_tabs",
+  "concepts": [
+   "blog post"
+  ],
+  "combine": "union",
+  "expansions": {
+   "blog post": [
+    "article",
+    "post",
+    "entry"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.25,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "keep one representative fermentation tab": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "fermentation"
+  ],
+  "combine": "union",
+  "expansions": {
+   "fermentation": [
+    "brewing",
+    "yeast",
+    "fermentation process"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the last three tabs i opened": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "older_than",
+   "value": "3_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the oldest tab": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the five most recently touched": {
+  "intent": "close_tabs",
+  "concepts": [
+   "recently touched"
+  ],
+  "combine": "union",
+  "expansions": {
+   "recently touched": [
+    "recently opened",
+    "recently used"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "within",
+   "value": "5_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the two newest chess tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "chess"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chess": [
+    "board games",
+    "strategy games",
+    "game of chess"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "within",
+   "value": "today"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "pin the freshest baking guide": {
+  "intent": "pin_tabs",
+  "concepts": [
+   "baking guide"
+  ],
+  "combine": "union",
+  "expansions": {
+   "baking guide": [
+    "recipe",
+    "baking",
+    "cooking"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close recipe or fermentation pages older than three days": {
+  "intent": "close_tabs",
+  "concepts": [
+   "recipe",
+   "fermentation"
+  ],
+  "combine": "union",
+  "expansions": {
+   "recipe": [
+    "cooking",
+    "baking",
+    "meal ideas"
+   ],
+   "fermentation": [
+    "brewing",
+    "yeast",
+    "fermentation process"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "accessed",
+   "op": "older_than",
+   "value": "3_days"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close cycling or running pages except the buyers guide": {
+  "intent": "close_tabs",
+  "concepts": [
+   "cycling",
+   "running"
+  ],
+  "combine": "union",
+  "expansions": {
+   "cycling": [
+    "biking",
+    "bike",
+    "road cycling"
+   ],
+   "running": [
+    "jogging",
+    "run",
+    "marathon"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "buyers guide"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close everything unrelated to the chess endgame task": {
+  "intent": "close_tabs",
+  "concepts": [
+   "chess endgame task"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chess endgame task": [
+    "chess",
+    "endgame",
+    "game theory"
+   ]
+  },
+  "domains": [],
+  "selectAll": true,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.75,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the sourdough stuff that is not a video and is not bookmarked": {
+  "intent": "close_tabs",
+  "concepts": [
+   "sourdough"
+  ],
+  "combine": "union",
+  "expansions": {
+   "sourdough": [
+    "bread",
+    "leavening",
+    "starter"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "video",
+   "bookmarked"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close the german pages and the pdf documents": {
+  "intent": "close_tabs",
+  "concepts": [
+   "german",
+   "pdf"
+  ],
+  "combine": "union",
+  "expansions": {
+   "german": [
+    "german pages",
+    "german language",
+    "german literature"
+   ],
+   "pdf": [
+    "pdf documents",
+    "pdf files",
+    "pdf reader"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all recipe tabs except the ones saved in my cooking bookmarks": {
+  "intent": "close_tabs",
+  "concepts": [
+   "recipe"
+  ],
+  "combine": "union",
+  "expansions": {
+   "recipe": [
+    "cooking",
+    "food",
+    "meal ideas"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "saved in my cooking bookmarks"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close all ramen tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "ramen"
+  ],
+  "combine": "union",
+  "expansions": {
+   "ramen": [
+    "ramen noodles",
+    "ramen soup",
+    "ramen restaurant"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close everything else not in that chess group": {
+  "intent": "close_tabs",
+  "concepts": [
+   "chess group"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chess group": [
+    "chess club",
+    "chess team",
+    "chess group"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close tabs similar to the fermentation wiki page": {
+  "intent": "close_tabs",
+  "concepts": [
+   "fermentation"
+  ],
+  "combine": "union",
+  "expansions": {
+   "fermentation": [
+    "yeast",
+    "brewing",
+    "fermentation process"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "refine the last filter to exclude beef": {
+  "intent": "close_tabs",
+  "concepts": [
+   "beef"
+  ],
+  "combine": "union",
+  "expansions": {
+   "beef": [
+    "meat",
+    "pork",
+    "veal"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "beef"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "close my temp flagged tabs older than a day": {
+  "intent": "close_tabs",
+  "concepts": [
+   "temp-flagged"
+  ],
+  "combine": "union",
+  "expansions": {
+   "temp-flagged": [
+    "temporary",
+    "flagged",
+    "temporary tabs"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "group the high priority hobby tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "hobby"
+  ],
+  "combine": "union",
+  "expansions": {
+   "hobby": [
+    "hobbies",
+    "interests",
+    "passions"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false
+ },
+ "bookmark everything tagged research that is not saved yet": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "research"
+  ],
+  "combine": "union",
+  "expansions": {
+   "research": [
+    "study",
+    "study material",
+    "research paper"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false
  }
 }
