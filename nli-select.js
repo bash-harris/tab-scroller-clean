@@ -622,7 +622,7 @@
         const pred = facetPredicateFor(concept, cmdLower);
         if (pred && typeof facetOf === 'function') {
           const f = facetOf(c);
-          if (f && pred(f)) return true;
+          if (f && pred(f) && facetUsable(c)) return true;
         }
       }
     }
@@ -647,6 +647,12 @@
   const MIN = 60000, HOUR = 3600000, DAY = 86400000;
   function timeWindow(value, now) {
     const v = String(value || '').toLowerCase();
+    // Two-sided window "A_B_<unit>": opened between A and B <unit>s ago.
+    const two = v.match(/^(\d+)_(\d+)_(minutes?|hours?|days?|weeks?)$/);
+    if (two) {
+      const mult = { minute: MIN, minutes: MIN, hour: HOUR, hours: HOUR, day: DAY, days: DAY, week: 7 * DAY, weeks: 7 * DAY }[two[3]];
+      return [now - Number(two[2]) * mult, now - Number(two[1]) * mult];
+    }
     const rel = v.match(/^(\d+)_(minutes?|hours?|days?|weeks?)$/);
     if (rel) {
       const mult = { minute: MIN, minutes: MIN, hour: HOUR, hours: HOUR, day: DAY, days: DAY, week: 7 * DAY, weeks: 7 * DAY }[rel[2]];
@@ -745,7 +751,75 @@
       .filter(s => ['pinned', 'unpinned', 'audible', 'muted', 'duplicate'].includes(s))
       .slice(0, 3);
   }
+  // Word-number normalization (one..twelve) for time expressions.
+  const TIME_NUM_WORDS = { one: 1, a: 1, an: 1, two: 2, three: 3, few: 3, four: 4, five: 5,
+    six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 };
+
+  // TIME PRE-PARSER. The LLM's time slot is unreliable on "in the last N
+  // <unit>" (it guesses older_than), on "more than N <unit>s ago" (it picks
+  // the wrong N), and on two-sided "between A and B <unit>s ago" (it has no
+  // slot at all). These are deterministic regex shapes over the raw command:
+  // when one matches confidently it OVERRIDES the model's time slot entirely.
+  // Usage verbs pick the basis: used/looked at/viewed/visited = accessed;
+  // opened/created/from = opened. Explicit "older than" frames elsewhere keep
+  // the existing rescueTime behavior -- this only runs when its own shape
+  // matches, and an explicit unit number here beats the model's guess.
+  function parseTimeFromCommand(cmd) {
+    const s = String(cmd || '');
+    const usageBasis = /\b(?:used|looked at|looked|viewed|view|visited|visit|read|accessed|seen)\b/i.test(s)
+      ? 'accessed' : null;
+    const openedBasis = /\b(?:opened|created|from)\b/i.test(s) ? 'opened' : null;
+    const basis = usageBasis || openedBasis || 'accessed';
+
+    let m;
+    // "in/within the last N <unit>" -> recency window. Also bare
+    // "in the last <word number>" ("in seven days").
+    m = s.match(/\b(?:in|within)\s+the\s+last\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s*(minutes?|mins?|hours?|hrs?|days?|weeks?)\b/i);
+    if (m) {
+      const n = /^\d+$/.test(m[1]) ? Number(m[1]) : TIME_NUM_WORDS[m[1].toLowerCase()];
+      const unit = m[2].toLowerCase().replace(/^(mins|hrs)$/, m => m === 'mins' ? 'minutes' : 'hours').replace(/s$/, '');
+      const mult = unit === 'minute' ? MIN : unit === 'hour' ? HOUR : unit === 'day' ? DAY : 7 * DAY;
+      return { basis: usageBasis || basis, op: 'within', value: `${n * mult / MIN}_minutes` };
+    }
+    // "more than N <unit>(s) ago" -> older_than horizon.
+    m = s.match(/\bmore\s+than\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty)\s*(minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?)\s+ago\b/i);
+    if (m) {
+      const n = /^\d+$/.test(m[1]) ? Number(m[1]) : TIME_NUM_WORDS[m[1].toLowerCase()];
+      let unit = m[2].toLowerCase();
+      let spanMin = null;
+      if (/^min/.test(unit)) spanMin = n;
+      else if (/^h/.test(unit)) spanMin = n * 60;
+      else if (/^day/.test(unit)) spanMin = n * 1440;
+      else if (/^week/.test(unit)) spanMin = n * 10080;
+      else if (/^month/.test(unit)) spanMin = n * 43200;
+      else if (/^year/.test(unit)) spanMin = n * 525600;
+      if (n > 0 && spanMin) {
+        // Keep an integer count with the largest clean unit (mirrors the
+        // existing value vocabulary; months normalize to weeks via /7).
+        return { basis: openedBasis || usageBasis || 'accessed', op: 'older_than', value: `${spanMin}_minutes` };
+      }
+    }
+    // "between A and B <unit>s ago" -> two-sided window.
+    m = s.match(/\bbetween\s+(a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|\d+)\s+and\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|\d+)\s*(minutes?|mins?|hours?|hrs?|days?|weeks?)\s+ago\b/i);
+    if (m) {
+      const wordN = x => /^\d+$/.test(x) ? Number(x) : TIME_NUM_WORDS[x.toLowerCase()];
+      let lo = wordN(m[1]), hi = wordN(m[2]);
+      const unit = m[3].toLowerCase();
+      const mult = /^min/.test(unit) ? 1 : /^h/.test(unit) ? 60 : /^day/.test(unit) ? 1440 : 10080;
+      if (Number.isFinite(lo) && Number.isFinite(hi)) {
+        if (lo > hi) { const t = lo; lo = hi; hi = t; }
+        return { basis: openedBasis || usageBasis || 'accessed', op: 'within', value: `${lo * mult}_${hi * mult}_minutes` };
+      }
+    }
+    return null;
+  }
+
   function rescueTime(cmd, q) {
+    // Confident command-shape match overrides the model's time slot: the
+    // pre-parser only fires on explicit N+unit frames, where the wording is
+    // self-contained and the parser's guess adds risk, not signal.
+    const pre = parseTimeFromCommand(cmd);
+    if (pre) return pre;
     if (q.time && q.time.value) {
       // Direction correction: "in/within the last X" is a recency window, no
       // matter what the model guessed -- an older-than horizon there would
@@ -887,6 +961,13 @@
     if (/\b(clean ?up|tidy( up)?|my mess|this mess|junk|declutter)\b/i.test(cmdStr) &&
         !/\b(tab|page)\b/i.test(cmdStr)) {
       return { decision: 'final', mode: 'abstain_vague_command', matches: [], needDetails: [] };
+    }
+
+    // UNNAMED-PROVENANCE. "tabs i copied code from" points at a source the
+    // command never names -- no operable referent exists, and scored matching
+    // would elect every code-adjacent tab in the pool. Abstain instead.
+    if (/\bi\s+(?:copied|cloned|forked|grabbed|downloaded|saved)\s+(?:[a-z-]+\s+){0,2}from\s*$/i.test(cmdStr)) {
+      return { decision: 'final', mode: 'abstain_unnamed_source', matches: [], needDetails: [] };
     }
 
     // OPERATOR 1 -- REST-PARTITION. A multi-group partition WITH a rest cue
@@ -1043,12 +1124,108 @@
     //     narrows a topic, and the category is only part of it;
     //   - except/unless state carve-outs are HONORED here (pinned/audible/
     //     muted), not treated as narrowing.
+    const ACTION_HEAD_RE = /\b(?:close|closing|group|grouping|bookmark|bookmarking|save|saving|mute|muting|unmute|pin|pinning|unpin|reload|find|switch|open|sort|show|focus|search|reveal|highlight|organize|organise|collect|gather)\b/i;
+    // HOST-BRAND LITERAL. "close medium tabs": the head noun IS a site's own
+    // host label (medium.com) -- a brand address, not a topic. Entailment on
+    // the brand word drifts (the article is ABOUT browser extensions, hosted
+    // ON medium), so the brand resolves as an exact host-label membership
+    // test. Guards mirror the category gate: no pre-modifier, no trailing
+    // qualifier clause, no conjunction (compound commands belong to the union
+    // gates), the label must be DISTINCTIVE (< 30% of the pool's host
+    // labels), and -- critically -- a word that names tab CONTENT more often
+    // than it names a host ("fastmcp" on pages ABOUT fastmcp) is a topic
+    // word, not a publisher: the title df must not exceed the host df. A
+    // guarded miss falls through unchanged.
+    {
+      const hbm = /\b([a-z][a-z-]{2,15})\s+(?:tabs?|pages?)\b/i.exec(cmdStr);
+      if (hbm && !/\s+(?:and|or)\s+/i.test(cmdStr)) {
+        const word = hbm[1].toLowerCase();
+        const prefix = cmdStr.slice(0, hbm.index).trim();
+        const prefixLast = prefix.split(/[^a-z0-9-]+/).filter(Boolean).pop();
+        const preMod = !!prefixLast && !ACTION_HEAD_RE.test(prefixLast);
+        const tail = cmdStr.slice(hbm.index + hbm[0].length);
+        const hasQualifier = /\b(?:about|from|with|that|which|in|above|under|over|priced|published|involving|related|belonging|inside|within|except|unless|other|whose|without)\b/i.test(tail);
+        if (!preMod && !hasQualifier && word.length >= 4) {
+          const hostHits = candidates.filter(c => hostLabels(c).includes(word));
+          const titleHits = candidates.filter(c => wordHit(word, c.title));
+          if (hostHits.length && titleHits.length <= hostHits.length &&
+              hostHits.length / candidates.length < 0.30) {
+            return allMatches(hostHits, `Host: ${word}`);
+          }
+        }
+      }
+    }
+
+    // GEO-QUALIFIED NEWS. "close news pages about india": a news-genre page
+    // narrowed by a geo entity. The entity must bind to the candidate's own
+    // identity (tag, title word, or host label); the genre is the ingest-time
+    // news category. Entailment reads "news about india" onto ANY news page
+    // -- and onto cricket pages titled with the country -- so the conjunct
+    // resolves deterministically or not at all.
+    {
+      const gnm = /\bnews\s+(?:pages?|tabs?|sites?|stories?|articles?)\s+about\s+([a-z][a-z-]{2,20})\b/i.exec(cmdStr);
+      if (gnm) {
+        const geo = gnm[1].toLowerCase();
+        const hits = candidates.filter(c => {
+          if (String(c.enrichment?.category || '').toLowerCase() !== 'news') return false;
+          return rawTagsOf(c).some(t => wordHit(geo, t)) ||
+            wordHit(geo, c.title) ||
+            String(hostOf(c.url || '')).includes(geo);
+        });
+        if (hits.length && hits.length / candidates.length < 0.30) {
+          return allMatches(hits, `News about ${geo}`);
+        }
+      }
+    }
+
+    // TOPIC-QUALIFIED NEWS. "group sports news tabs": a compound head noun --
+    // news-GENRE coverage of a TOPIC, not the union of both words (expansion
+    // terms otherwise elect each half of the pool). Resolve the conjunct
+    // deterministically: the topic token must hit the candidate's own
+    // identity AND the candidate must read as news coverage (news category,
+    // news tag, or coverage wording in the title).
+    {
+      const tnm = /\b([a-z][a-z-]{2,15})\s+news\s+(?:tabs?|pages?|sites?|stories?|articles?|updates?)\b/i.exec(cmdStr);
+      if (tnm && tnm[1].toLowerCase() !== 'close') {
+        const topic = tnm[1].toLowerCase();
+        const stemT = stem(topic);
+        const coverageHit = c => String(c.enrichment?.category || '').toLowerCase() === 'news' ||
+          rawTagsOf(c).some(t => wordHit('news', t)) ||
+          /\b(?:news|report|live|scorecard|updates)\b/i.test(String(c.title || ''));
+        const topicHit = c => String(c.enrichment?.category || '').toLowerCase() === topic ||
+          rawTagsOf(c).some(t => stem(String(t).toLowerCase()) === stemT) ||
+          wordHit(topic, c.title) || urlPathOf(c).includes(stemT);
+        const hits = candidates.filter(c => topicHit(c) && coverageHit(c));
+        if (hits.length && hits.length / candidates.length < 0.30) {
+          return allMatches(hits, `${topic} news`);
+        }
+      }
+    }
+
+    // WEATHER CONJUNCT. "group my bengaluru weather tabs": weather-GENRE
+    // pages about a place. A place tag alone elects the maps page, so the
+    // weather word must bind to the SAME candidate.
+    {
+      const wtm = /\b([a-z][a-z-]{2,15})\s+weather\s+(?:tabs?|pages?|sites?|forecast\w*)\b/i.exec(cmdStr) ||
+        /\bweather\s+(?:tabs?|pages?|sites?|forecast\w*)\b/i.exec(cmdStr);
+      if (wtm) {
+        const place = wtm[1] ? wtm[1].toLowerCase() : null;
+        const weatherHit = c => rawTagsOf(c).some(t => wordHit('weather', t)) ||
+          /\b(?:weather|forecast)\b/i.test(String(c.title || '')) ||
+          String(c.enrichment?.category || '').toLowerCase() === 'weather';
+        const placeHit = c => !place || rawTagsOf(c).some(t => wordHit(place, t)) ||
+          wordHit(place, c.title) || String(c.url || '').toLowerCase().includes(place);
+        const hits = candidates.filter(c => weatherHit(c) && placeHit(c));
+        if (hits.length && hits.length / candidates.length < 0.30) {
+          return allMatches(hits, place ? `${place} weather` : 'Weather pages');
+        }
+      }
+    }
     {
       const catm = cmdStr.match(/\b([a-z][a-z-]{2,15})\s+(?:tabs?|pages?)\b/i);
       // Pre-modifier veto: "close DUPLICATE news tabs" -- a word between the
       // action verb and the category ("duplicate", "old", "unpinned") is a
       // modifier the category gate would silently drop.
-      const ACTION_HEAD_RE = /\b(?:close|closing|group|grouping|bookmark|bookmarking|save|saving|mute|muting|unmute|pin|pinning|unpin|reload|find|switch|open|sort|show|focus|search|reveal|highlight|organize|organise|collect|gather)\b/i;
       let preMod = false;
       if (catm) {
         const prefix = cmdStr.slice(0, catm.index).trim();
@@ -1426,6 +1603,24 @@
       }
     }
 
+    // NOT-BOOKMARKED TOPIC. "tabs that are not bookmarked and are about
+    // research": the topic names the user's own taxonomy (userTag), and the
+    // bookmarked flag carves out what is already saved. Semantic scoring on
+    // "research" would elect every paper and article in the pool; the tag
+    // field IS what the command's "about research" refers to here.
+    {
+      const nbm = /\bnot\s+(?:been\s+)?bookmarked\b/i.exec(cmdStr);
+      if (nbm) {
+        const am = /\babout\s+([a-z][a-z-]{2,20})\b/i.exec(cmdStr.slice(nbm.index));
+        if (am) {
+          const topic = am[1].toLowerCase();
+          const hits = candidates.filter(c => c.bookmarked !== true &&
+            String(c.userTag || '').toLowerCase().split(/[^a-z0-9]+/).includes(topic));
+          if (r3ok(hits)) return allMatches(hits, `Not bookmarked, tagged ${topic}`);
+        }
+      }
+    }
+
     // USER TAG. "tagged X" / "marked as X" names the user's own tag field.
     {
       const utm = /\btagged\s+(?:as\s+)?([a-z0-9][a-z0-9-]*)\b/i.exec(cmdStr);
@@ -1604,31 +1799,45 @@
     }
 
     // WINDOW SCOPED STATE. "muted tabs in window 2" / "ungrouped tabs in
-    // window 2": an explicit numbered window scope composed with a tab-state
-    // or grouping predicate.
+    // window 2" / "all unpinned tabs in this window": an explicit window
+    // scope (numbered, or the caller's current window) composed with a
+    // tab-state or grouping predicate.
     {
-      const wsm = /\bin\s+window\s+(\d+)\b/i.exec(cmdStr);
-      if (wsm && !/\bwindow\s+(\d+)\s+except\b/i.test(cmdStr) &&
+      const wsmN = /\bin\s+window\s+(\d+)\b/i.exec(cmdStr);
+      const wsmThis = !wsmN && /\bin\s+(?:this|the\s+current)\s+window\b/i.test(cmdStr);
+      if ((wsmN || wsmThis) && !/\bwindow\s+(\d+)\s+except\b/i.test(cmdStr) &&
           !/\b(?:dev|developer)\s+tools?\b/i.test(cmdStr)) {
-        const wid = Number(wsm[1]);
-        const inWin = candidates.filter(c => c.windowId === wid);
-        if (inWin.length) {
-          let hits = null;
-          let reason = '';
-          if (/\bungrouped\b/i.test(cmdStr)) {
-            hits = inWin.filter(c => !c.groupId);
-            reason = `Ungrouped tabs in window ${wid}`;
-          } else if (/\bmuted\b/i.test(cmdStr)) {
-            hits = inWin.filter(c => c.muted === true);
-            reason = `Muted tabs in window ${wid}`;
-          } else if (/\bpinned\b/i.test(cmdStr)) {
-            hits = inWin.filter(c => c.pinned === true);
-            reason = `Pinned tabs in window ${wid}`;
-          } else if (/\baudible|playing\b/i.test(cmdStr)) {
-            hits = inWin.filter(c => c.audible === true);
-            reason = `Audible tabs in window ${wid}`;
+        const wid = wsmN ? Number(wsmN[1])
+          : (opts.meta && Number.isFinite(opts.meta.currentWindowId) ? opts.meta.currentWindowId : NaN);
+        const capShare = wsmN ? 0.30 : 0.95;
+        if (Number.isFinite(wid)) {
+          const inWin = candidates.filter(c => c.windowId === wid);
+          if (inWin.length) {
+            let hits = null;
+            let reason = '';
+            if (/\bungrouped\b/i.test(cmdStr)) {
+              hits = inWin.filter(c => !c.groupId);
+              reason = `Ungrouped tabs in window ${wid}`;
+            } else if (/\bunpinned\b/i.test(cmdStr)) {
+              hits = inWin.filter(c => c.pinned !== true);
+              reason = `Unpinned tabs in window ${wid}`;
+            } else if (/\bmuted\b/i.test(cmdStr)) {
+              hits = inWin.filter(c => c.muted === true);
+              reason = `Muted tabs in window ${wid}`;
+            } else if (/\bpinned\b/i.test(cmdStr)) {
+              hits = inWin.filter(c => c.pinned === true);
+              reason = `Pinned tabs in window ${wid}`;
+            } else if (/\baudible|playing\b/i.test(cmdStr)) {
+              hits = inWin.filter(c => c.audible === true);
+              reason = `Audible tabs in window ${wid}`;
+            }
+            // The cap is scoped to the window for "this window" commands: a
+            // window's unpinned majority is a real state filter, not
+            // select-all drift.
+            if (hits && hits.length && hits.length / candidates.length < capShare) {
+              return allMatches(hits, reason);
+            }
           }
-          if (hits && r3ok(hits)) return allMatches(hits, reason);
         }
       }
     }
@@ -1705,12 +1914,14 @@
 
     // JIRA-STYLE KEY RANGE. "jira tickets xc-120 through xc-150": a range
     // over tracker keys (PREFIX-N), both ends inclusive, resolved by URL
-    // path segments.
+    // path segments. The right end may repeat the prefix ("xc-120 through
+    // xc-150") or be bare ("xc-120 through 150"); a repeated prefix must
+    // match the left one, or it is a different key family.
     {
-      const km = /\b([a-z]{1,10})-(\d{1,6})\s+(?:through|thru|to|until|-|–|—)\s+(\d{1,6})\b/i.exec(cmdStr);
-      if (km) {
+      const km = /\b([a-z]{1,10})-(\d{1,6})\s+(?:through|thru|to|until|-|–|—)\s+(?:([a-z]{1,10})-)?(\d{1,6})\b/i.exec(cmdStr);
+      if (km && (!km[3] || km[3].toLowerCase() === km[1].toLowerCase())) {
         const prefix = km[1].toUpperCase();
-        const lo = Number(km[2]), hi = Number(km[3]);
+        const lo = Number(km[2]), hi = Number(km[4]);
         const hits = candidates.filter(c => {
           const raw = (String(c.url || '').match(/^https?:\/\/[^/]*(\/.*)$/i) || [])[1] || '';
           const segs = raw.split(/[^A-Za-z0-9]+/);
@@ -1922,13 +2133,21 @@
 
     // LOGIN/AUTH WALLS AND FORM PAGES as the NAMED target ("close login
     // pages", "asking me to sign in", "forms and login tabs"). isLoginWall
-    // is the ingest-time wall detector; "forms" resolves through page text.
+    // is the ingest-time wall detector; "forms" resolves through the card's
+    // own form identity -- a form tag, a form-shaped title, or an on-site
+    // search form (a site's /s?k= results page IS a search form). Search
+    // ENGINE result pages are read-only lists, not forms, and a bare "form"
+    // word in body text ("team form" on a league table) is not a form page.
     if (/\b(?:login|log\s?in|sign\s?in)\s+(?:pages?|screens?|walls?)\b|\bforms?\s+(?:and\s+)?(?:login|log\s?in|sign\s?in)\b|(?:login|log\s?in|sign\s?in)\s+(?:and\s+)?forms?\b|\b(?:asking|prompting|requesting)\s+(?:me\s+|us\s+|users?\s+)?to\s+(?:sign\s?in|log\s?in)\b/i.test(cmdStr)) {
       const wantsForms = /\bforms?\b/i.test(cmdStr);
+      const isSearchEngine = c => /(google|bing|duckduckgo|yahoo|ecosia|ask)\./i.test(hostOf(c.url || ''));
+      const formPage = c =>
+        rawTagsOf(c).some(t => wordHit('form', t)) ||
+        wordHit('form', String(c.title || '')) ||
+        (/\/s\?|\?q=|\/search\b/i.test(String(c.url || '')) && !isSearchEngine(c));
       let hits = candidates.filter(c => isLoginWall(c));
       if (wantsForms) {
-        const formPages = candidates.filter(c => wordHit('form', String(c.mainText || c.pseudoDoc || '')) && !isLoginWall(c));
-        hits = [...hits, ...formPages];
+        hits = [...hits, ...candidates.filter(c => formPage(c) && !isLoginWall(c))];
       }
       if (r3ok(hits)) return allMatches(hits, wantsForms ? 'Login and form pages' : 'Login pages');
     }
@@ -1992,7 +2211,10 @@
     // OFFICIAL DOCUMENTATION. "official documentation about X": doc identity
     // (curated official marker or a docs-category page on a developer/docs
     // host) narrowed by X's own tokens. Community articles and tutorials
-    // riding shared vocabulary are excluded by the marker itself.
+    // riding shared vocabulary are excluded by the marker itself. A
+    // docs-category page whose OWN tag vocabulary names X (fastmcp.dev pages
+    // tag themselves fastmcp) carries dedicated-property identity even
+    // without the official marker or a docs.* host prefix.
     {
       const odm = /\bofficial\s+documentation\b(?:\s+about\s+([^,;.]+))?/i.exec(cmdStr);
       if (odm) {
@@ -2003,6 +2225,10 @@
           (String(c.enrichment?.category || '').toLowerCase() === 'docs' &&
             /(^|\.)(developer|docs|learn)\./i.test(hostOf(c.url || ''))));
         if (xToks.length) {
+          const taggedDocs = candidates.filter(c =>
+            String(c.enrichment?.category || '').toLowerCase() === 'docs' &&
+            xToks.some(t => rawTagsOf(c).some(tag => wordHit(t, tag))));
+          hits = [...new Map([...hits, ...taggedDocs].map(c => [c.tabId, c])).values()];
           hits = hits.filter(c => xToks.every(t =>
             wordHit(t, `${c.title || ''} ${c.url || ''} ${rawTagsOf(c).join(' ')} ${String(c.enrichment?.category || '')}`)));
         }
@@ -2199,7 +2425,7 @@
     {
       let conj = null;
       const c1 = cmdStr.match(/\b(?:tabs?|pages?)\s+containing\s+([^,;.]+)$/i);
-      const c2 = cmdStr.match(/\b(?:tabs?|pages?)\b[^,;]{0,48}?\b(?:that\s+|which\s+)?contains?\s+([^,;.]+?)(?=\s+(?:but|that|which|except|are|is)\b|$)/i);
+      const c2 = cmdStr.match(/\b(?:tabs?|pages?)\b[^,;]{0,48}?\b(?:that\s+|which\s+)?(?:contains?|mentions?|discuss(?:es)?|covers?|talks?\s+about)\s+([^,;.]+?)(?=\s+(?:but|that|which|except|are|is)\b|$)/i);
       const c3 = cmdStr.match(/\b(?:tabs?|pages?)\s+with\s+([^,;.]+)$/i);
       if (c1) conj = c1[1];
       else if (c2) conj = c2[1];
@@ -2424,6 +2650,27 @@
         : universe;
 
       if (wantsAll && !topicExcl.length) {
+        // LITERAL-HEAD ALL: "bookmark tutorial tabs" parsed as selectAll with
+        // a leftover concept is a false select-all -- the head noun IS the
+        // criterion. When the concept token appears in >= 1 candidate but
+        // far from all of them, the parse misread a topic command as
+        // select-all; resolve the topic literally instead of handing the
+        // universe to a destructive action.
+        if (modelConcepts.length === 1 &&
+            !/\b(everything|all of (?:my |the )?tabs|all the tabs|each tab)\b/i.test(cmdStr)) {
+          const word = String(modelConcepts[0]).toLowerCase().trim();
+          if (/^[a-z0-9-]{4,}$/.test(word)) {
+            const wordHits = candidates.filter(c =>
+              wordHit(word, c.title) ||
+              String(c.enrichment?.category || '').toLowerCase() === word ||
+              rawTagsOf(c).some(t => wordHit(word, t)) ||
+              String(c.url || '').toLowerCase().includes(word));
+            const share = wordHits.length / Math.max(1, candidates.length);
+            if (wordHits.length && share <= 0.10) {
+              return allMatches(wordHits, `All matching: ${word}`);
+            }
+          }
+        }
         return allMatches(stateKept, stateExcl.length ? `All except ${stateExcl.join('/')}` : 'Command targets all tabs');
       }
 
@@ -2443,12 +2690,15 @@
         // sides (the same topic emitted as BOTH concept and exclusion ->
         // plus selectAll), the user's intent is the plain
         // complement; scoping would subtract the topic from itself and select
-        // nothing.
+        // nothing. Token-set EQUALITY, not overlap: a NARROWER exclusion
+        // ("react" scoped by "react native", "python 2" kept against
+        // "python 3") is a legitimate scoped subtraction -- only overlap
+        // made every such command a whole-universe complement.
         const scopeInvalid = scopeConcepts.some(c => {
-          const ct = String(c).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+          const ct = String(c).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).sort().join(' ');
           return topicExcl.some(p => {
-            const pt = String(p).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
-            return ct.some(t => pt.includes(t)) || pt.some(t => ct.includes(t));
+            const pt = String(p).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).sort().join(' ');
+            return ct === pt;
           });
         });
         // Command-rescued scope: a quantified topic between the quantifier and
@@ -2825,13 +3075,21 @@
     // the oil-price brief beside it).
     if (
       q.concepts && q.concepts.length === 1 &&
-      /\b(the|that|my)\s+[a-z0-9'-]+(\s+[a-z0-9'-]+){0,3}\s+(page|story|article|video|mix|stream|guide|recipe|repo|document|doc|tutorial|tab|news|post)\b/i.test(cmdStr) &&
+      /\b(the|that|my)\s+[a-z0-9'-]+(\s+[a-z0-9'-]+){0,3}\s+(page|story|article|video|mix|stream|guide|recipe|repo|document|doc|tutorial|tab|news|post|spreadsheet|sheet|dashboard|calendar|deck|presentation|notes?|report|chart)\b/i.test(cmdStr) &&
       !/\b(all|every|both)\b/i.test(cmdStr) &&
       matches.length > 1
     ) {
       const bestC = matches[0].confidence;
       const withinMargin = matches.filter(m => m.confidence >= bestC - 0.15);
-      const phrase = q.concepts[0];
+      // Prefer the command's OWN noun phrase: the parser may have kept only
+      // the head of it ("budget" for "the q3 budget spreadsheet"), and the
+      // full phrase ("q3" + "budget") is what separates the named page from
+      // a sibling sharing one word. Fall back to the concept phrase.
+      const phm = cmdStr.match(/\b(?:the|that|my)\s+((?:[a-z0-9'-]+\s+){0,3})(?:page|story|article|video|mix|stream|guide|recipe|repo|document|doc|tutorial|tab|news|post|spreadsheet|sheet|dashboard|calendar|deck|presentation|notes?|report|chart)\b/i);
+      const phraseToks = phm
+        ? phm[1].toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length >= 3)
+        : [];
+      const phrase = phraseToks.length ? phraseToks.join(' ') : q.concepts[0];
       const conceptToksSingular = String(phrase).toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length >= 3);
       const scored = withinMargin.map(m => {
         const card = universe.find(c => c.tabId === m.tabId);
@@ -3009,7 +3267,7 @@
         if (facetOf) {
           const pred = facetPredicateFor(concept, cmdLower);
           const f = facetOf(c);
-          if (f && pred && pred(f)) best = Math.max(best, 0.70);
+          if (f && pred && pred(f) && facetUsable(c)) best = Math.max(best, 0.70);
         }
         for (const term of (q.expansions && q.expansions[concept]) || []) {
           const t = String(term).toLowerCase();
@@ -3117,6 +3375,14 @@
       return e.test;
     }
     return null;
+  }
+
+  // Facet usability veto: an AUTO-OPENED promotional popup ("Special Offer!
+  // You Won a Prize") is ad junk riding commerce vocabulary, not a page the
+  // user shops at -- its facet must never elect it into a storefront set.
+  function facetUsable(c) {
+    return !(c.autoOpened === true &&
+      /\b(?:popup|promo|offer|prize|winner|lottery|claim|deal\s+alert)\b/i.test(String(c.title || '') + ' ' + rawTagsOf(c).join(' ')));
   }
 
   function canonOf(concept) {
@@ -3299,7 +3565,7 @@
         // suppress the elect for that concept (lexical paths unaffected).
         const facetPred = facetPredicateFor(conceptLower, cmdLower);
         const fObj = facetOf ? facetOf(c) : null;
-        const facetHit = !!(facetPred && fObj && facetPred(fObj));
+        const facetHit = !!(facetPred && fObj && facetPred(fObj) && facetUsable(c));
         if (conceptWords.length === 1) {
           // EXACT equality only: a "videos"-vs-"video" stem match would let
           // the tag "video" elect under the concept "videos", dragging a
