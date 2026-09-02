@@ -86,6 +86,7 @@ const candidates = pool.tabs.map(t => {
     windowId: t.windowId,
     groupId: t.groupId,
     groupName: t.groupId ? groupById.get(t.groupId).name : null,
+    groupColor: t.groupId ? groupById.get(t.groupId).color : null,
     index: t.index,
     scrollPct: t.scrollPct,
     watchPct: t.watchPct,
@@ -223,7 +224,9 @@ const CAT_NAMES = {
       hit = true; cacheHits++;
     } else {
       const t1 = Date.now();
-      res = await NliSelect.select(c.command, candidates, query ? { query } : {});
+      res = await NliSelect.select(c.command, candidates, query ? {
+        query, meta: { currentTabId: 10, currentWindowId: 1 }
+      } : {});
       nliElapsed = Date.now() - t1;
       nliMs += nliElapsed;
       resultCache[rkey] = {

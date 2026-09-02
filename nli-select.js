@@ -746,7 +746,15 @@
       .slice(0, 3);
   }
   function rescueTime(cmd, q) {
-    if (q.time && q.time.value) return q.time;
+    if (q.time && q.time.value) {
+      // Direction correction: "in/within the last X" is a recency window, no
+      // matter what the model guessed -- an older-than horizon there would
+      // invert the command's own frame.
+      if (q.time.op === 'older_than' && /\b(?:in|within)\s+the\s+last\b/i.test(cmd)) {
+        return { basis: q.time.basis, op: 'within', value: q.time.value };
+      }
+      return q.time;
+    }
     let m = cmd.match(/\bolder than\s+(?:a\s+)?(\w+)\s+(minute|hour|day|week|month)s?\b/i) ||
       cmd.match(/\b(?:open|opened|inactive|idle)\s+(?:for\s+)?more than\s+(?:a\s+)?(\w+)\s+(minute|hour|day|week|month)s?\b/i);
     if (m) {
@@ -1375,6 +1383,668 @@
       }
     }
 
+    // ---- STRUCTURED-FIELD GATES --------------------------------------------
+    // Commands that name a STRUCTURED tab field (bookmark state, bookmark
+    // folder, user tag, priority, deadline, visit counter, reading/watch
+    // progress, opener chain, window/index position, commerce fields) are
+    // metadata predicates, not topics: entailment scores tab TEXT and cannot
+    // reach any of these. Each gate is inert unless its own distinctiveness
+    // check passes (>= 1 hit, < 30% of the pool); a guarded miss falls
+    // through to the normal pipeline unchanged.
+    const r3ok = hits => hits.length > 0 && hits.length / candidates.length < 0.30;
+    const r3Currency = { rupees: 'INR', rupee: 'INR', inr: 'INR', dollars: 'USD', dollar: 'USD',
+      usd: 'USD', euros: 'EUR', euro: 'EUR', eur: 'EUR', pounds: 'GBP', pound: 'GBP', gbp: 'GBP' };
+
+    // BOOKMARKED FLAG. "close tabs that are already bookmarked" names the
+    // bookmark flag itself. An exclusion frame ("except already bookmarked
+    // pages") is the complement path's business -- vetoed here.
+    {
+      const bmm = /\balready\s+bookmarked\b/i.exec(cmdStr);
+      if (bmm) {
+        const before = cmdStr.slice(Math.max(0, bmm.index - 40), bmm.index);
+        if (!/\b(?:except|other\s+than|apart\s+from|without|not)\b/i.test(before)) {
+          const hits = candidates.filter(c => c.bookmarked === true);
+          if (r3ok(hits)) return allMatches(hits, 'Already bookmarked');
+        }
+      }
+    }
+
+    // BOOKMARK FOLDER. "bookmarked under research" names a folder label --
+    // an exact metadata field, matched case-insensitively over the folder
+    // values present in the pool.
+    {
+      const bfm = /\bbookmarked\s+(?:under|in|inside)\s+(?:the\s+|my\s+|our\s+)?([a-z0-9][a-z0-9' -]*?)(?:\s+(?:folders?|bookmarks?|groups?))?\s*(?:tabs?|pages?)?\s*$/i.exec(cmdStr);
+      if (bfm) {
+        const folder = bfm[1].trim().toLowerCase();
+        if (folder.length >= 3) {
+          const hits = candidates.filter(c => {
+            const f = String(c.bookmarkFolder || '').toLowerCase();
+            return f && (f === folder || wordHit(folder, f) || wordHit(f, folder));
+          });
+          if (r3ok(hits)) return allMatches(hits, `Bookmarked under: ${folder}`);
+        }
+      }
+    }
+
+    // USER TAG. "tagged X" / "marked as X" names the user's own tag field.
+    {
+      const utm = /\btagged\s+(?:as\s+)?([a-z0-9][a-z0-9-]*)\b/i.exec(cmdStr);
+      if (utm) {
+        const tag = utm[1].toLowerCase();
+        const hits = candidates.filter(c => {
+          const u = String(c.userTag || '').toLowerCase();
+          if (!u) return false;
+          return u === tag || u.replace(/[^a-z0-9]/g, '') === tag.replace(/[^a-z0-9]/g, '') ||
+            u.split(/[^a-z0-9]+/).includes(tag);
+        });
+        if (r3ok(hits)) return allMatches(hits, `Tagged: ${tag}`);
+      }
+    }
+
+    // TEMPORARY TABS. "temporary" maps to the user's temp-style tag (prefix
+    // family temp/temporary), not a topic.
+    if (/\btemporary\b/i.test(cmdStr)) {
+      const hits = candidates.filter(c => {
+        const u = String(c.userTag || '').toLowerCase();
+        return u && (u === 'temp' || u === 'temporary' || u.startsWith('temp'));
+      });
+      if (r3ok(hits)) return allMatches(hits, 'Temporary (user tag)');
+    }
+
+    // PRIORITY. "high priority tabs" names the priority field value.
+    {
+      const prm = /\b(high|low|medium|urgent|critical)\s+priority\b/i.exec(cmdStr);
+      if (prm) {
+        const lvl = /^(high|urgent|critical)$/i.test(prm[1]) ? 'high' : /^low$/i.test(prm[1]) ? 'low' : 'medium';
+        const hits = candidates.filter(c => String(c.priority || '').toLowerCase() === lvl);
+        if (r3ok(hits)) return allMatches(hits, `${lvl} priority`);
+      }
+    }
+
+    // DEADLINE. "due this week" / "due in N days" names the deadline field.
+    if (/\bdue\s+(?:this|within\s+the\s+next|in\s+the\s+next)\s+(?:week|7\s*days?)\b|\bdue\s+(?:in|within)\s+(\d+)\s*days?\b/i.test(cmdStr)) {
+      const hits = candidates.filter(c => Number.isFinite(c.deadlineDays) && c.deadlineDays >= 0 && c.deadlineDays <= 7);
+      if (r3ok(hits)) return allMatches(hits, 'Due within a week');
+    }
+
+    // VISIT-ONCE STALE. "visited only once and not used today" composes the
+    // visit counter with a recency bound. The pool anchors to relative
+    // times, so "today" reads as the last half-day window -- a wall-clock
+    // midnight would flake depending on when the pool is scored.
+    if (/\bvisited\s+(?:only\s+)?once\b/i.test(cmdStr) &&
+        /\bnot\s+(?:been\s+)?used\s+(?:it\s+)?today\b|\bhavent\s+used\b|haven'?t\s+used\b/i.test(cmdStr)) {
+      const startDay = refNow - 12 * HOUR;
+      const hits = candidates.filter(c => c.visitCount === 1 &&
+        Number.isFinite(tsOf(c.lastAccessed)) && tsOf(c.lastAccessed) < startDay);
+      if (r3ok(hits)) return allMatches(hits, 'Visited once, not used today');
+    }
+
+    // READING/WATCH PROGRESS. scrollPct/watchPct/estReadMin are ingest-time
+    // progress facts; the command's own phrasing selects the predicate.
+    {
+      if (/\bunread\b/i.test(cmdStr)) {
+        const hits = candidates.filter(c => c.scrollPct != null && c.scrollPct === 0);
+        if (r3ok(hits)) return allMatches(hits, 'Unread (never scrolled)');
+      }
+      if (/\b(?:scrolled|scroll(?:ed)?)\s+(?:down\s+)?to\s+the\s+(?:bottom|end)\b|\breached\s+the\s+(?:bottom|end)\b/i.test(cmdStr)) {
+        const hits = candidates.filter(c => c.scrollPct != null && c.scrollPct >= 100);
+        if (r3ok(hits)) return allMatches(hits, 'Scrolled to the bottom');
+      }
+      if (/\b(?:have\s+|already\s+)?finished\s+(?:watching|viewing)\b|\bwatched\s+(?:it\s+)?(?:fully|completely|to\s+the\s+end)\b/i.test(cmdStr)) {
+        const hits = candidates.filter(c => c.watchPct != null && c.watchPct >= 100);
+        if (r3ok(hits)) return allMatches(hits, 'Finished watching');
+      }
+      if (/\b(?:have\s+|already\s+)?finished\b|\bdone\s+reading\b/i.test(cmdStr) &&
+          !/\b(?:not|never|n't)\s+(?:been\s+)?finished\b|\bhavent\s+finished\b|haven'?t\s+finished\b/i.test(cmdStr) &&
+          /\barticles?\b|\breading\b|\bstories?\b|\bposts?\b/i.test(cmdStr)) {
+        const hits = candidates.filter(c => c.scrollPct != null && c.scrollPct >= 100);
+        if (r3ok(hits)) return allMatches(hits, 'Finished reading');
+      }
+      if (/\bpartially\s+read\b|\bhalf[- ]read\b/i.test(cmdStr)) {
+        const hits = candidates.filter(c => c.scrollPct != null && c.scrollPct > 0 && c.scrollPct < 100);
+        if (r3ok(hits)) {
+          const narrowed = hits.filter(c => c.estReadMin == null || c.estReadMin >= 10);
+          return allMatches(narrowed.length ? narrowed : hits, 'Partially read');
+        }
+      }
+      if (/\b(?:long|technical)\s+(?:articles?|reads?|pieces?)\b/i.test(cmdStr) &&
+          /\bhavent\s+finished\b|haven'?t\s+finished\b|\bnot\s+finished\b|\bunfinished\b/i.test(cmdStr)) {
+        const hits = candidates.filter(c => c.estReadMin != null && c.estReadMin >= 10 &&
+          (c.scrollPct == null || c.scrollPct < 100));
+        if (r3ok(hits)) return allMatches(hits, 'Long, unfinished');
+      }
+    }
+
+    // COMMERCE FIELDS. Structured product facts -- currency, price threshold,
+    // stock, shipping, rating -- that entailment cannot compare.
+    {
+      const cm = /\bpriced\s+in\s+([a-z]{3,7})\b/i.exec(cmdStr);
+      if (cm) {
+        const cur = r3Currency[cm[1].toLowerCase()] ||
+          (/^[a-z]{3}$/i.test(cm[1]) ? cm[1].toUpperCase() : null);
+        if (cur) {
+          const hits = candidates.filter(c => String(c.currency || '').toUpperCase() === cur);
+          if (r3ok(hits)) return allMatches(hits, `Priced in ${cur}`);
+        }
+      }
+      const pmm = /\b(above|over|more\s+than|higher\s+than|greater\s+than|under|below|less\s+than|cheaper\s+than)\s+([\d,]+(?:\.\d+)?)\s*(rupees?|rupee|inr|usd|dollars?|dollar|euros?|euro|eur|gbp|pounds?|pound)\b/i.exec(cmdStr);
+      if (pmm) {
+        const n = Number(pmm[2].replace(/,/g, ''));
+        if (Number.isFinite(n) && n > 0) {
+          const dir = /^(?:above|over|more|higher|greater)/i.test(pmm[1]);
+          const cur = r3Currency[pmm[3].toLowerCase()] || null;
+          if (cur) {
+            const hits = candidates.filter(c => {
+              if (!Number.isFinite(c.price)) return false;
+              if (String(c.currency || '').toUpperCase() !== cur) return false;
+              return dir ? c.price > n : c.price < n;
+            });
+            if (r3ok(hits)) return allMatches(hits, `Price ${dir ? '>' : '<'} ${n} ${cur}`);
+          }
+        }
+      }
+      if (/\bin[-\s]?stock\b/i.test(cmdStr) && !/\bout\s+of\s+stock\b/i.test(cmdStr)) {
+        const hits = candidates.filter(c => c.inStock === true);
+        if (r3ok(hits)) return allMatches(hits, 'In stock');
+      }
+      if (/\bout\s+of\s+stock\b|\bunavailable\b|\bdiscontinued\b/i.test(cmdStr)) {
+        const hits = candidates.filter(c => c.inStock === false);
+        if (r3ok(hits)) return allMatches(hits, 'Out of stock');
+      }
+      if (/\bship(?:s|ping)?\s+to\s+india\b/i.test(cmdStr)) {
+        const negated = /\b(?:do(?:es)?\s+not|dont|don't|not|never)\b[^;]{0,20}\bship/i.test(cmdStr);
+        const hits = candidates.filter(c => negated ? c.shipsToIndia === false : c.shipsToIndia === true);
+        if (r3ok(hits)) return allMatches(hits, negated ? 'Does not ship to India' : 'Ships to India');
+      }
+      const rmm = /\brating\s+(?:above|over|higher\s+than|greater\s+than|more\s+than|under|below|less\s+than)\s+([\d.]+)\b/i.exec(cmdStr);
+      // Scope guard: the threshold applies only when the command does not
+      // name a narrower product class whose universe must be resolved
+      // semantically first (a bare "products with rating above 4" can own
+      // the pool; "in-stock laptops" cannot).
+      const narrowerClass = /\b(?:laptops?|phones?|headphones?|books?|shoes?|watches?|cameras?)\b/i.test(cmdStr);
+      if (rmm && !narrowerClass) {
+        const n = Number(rmm[1]);
+        if (Number.isFinite(n)) {
+          const dir = !/^(?:under|below|less)/i.test(rmm[0]);
+          const hits = candidates.filter(c => Number.isFinite(c.rating) && (dir ? c.rating > n : c.rating < n));
+          if (r3ok(hits)) return allMatches(hits, `Rating ${dir ? '>' : '<'} ${n}`);
+        }
+      }
+    }
+
+    // WINDOW-INDEX POSITION. "tabs to the right of the current tab in this
+    // window" / "the first five tabs in this window" are positional
+    // predicates over the window's tab order. Anchored via opts.meta
+    // {currentTabId, currentWindowId}; falls through gracefully when absent.
+    // "Right of" = later in the window's tab list AND a higher index (both
+    // orderings the browser exposes), never a pinned tab.
+    {
+      const meta = opts.meta || {};
+      const wm = /\b(?:to\s+the\s+right\s+of|right\s+of)\s+the\s+current\s+tabs?\b/i.test(cmdStr);
+      const fm = /\bfirst\s+(one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+tabs?\b/i.exec(cmdStr);
+      if ((wm || fm) && /\bin\s+this\s+window\b/i.test(cmdStr)) {
+        const inWin = Number.isFinite(meta.currentWindowId)
+          ? candidates.filter(c => c.windowId === meta.currentWindowId)
+          : [];
+        const pos = new Map(candidates.map((c, i) => [c.tabId, i]));
+        if (wm && Number.isFinite(meta.currentTabId)) {
+          const cur = candidates.find(c => c.tabId === meta.currentTabId);
+          if (cur && inWin.length) {
+            const hits = inWin.filter(c => pos.get(c.tabId) > pos.get(cur.tabId) &&
+              c.index > cur.index && c.pinned !== true);
+            if (hits.length) return allMatches(hits, 'Right of the current tab');
+          }
+        }
+        if (fm && inWin.length) {
+          const n = ({one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10})[fm[1].toLowerCase()] || parseInt(fm[1], 10) || 0;
+          const hits = [...inWin].sort((a, b) => a.index - b.index).slice(0, n);
+          if (n > 0 && hits.length) return allMatches(hits, `First ${n} tabs in window`);
+        }
+      }
+    }
+
+    // WINDOW SCOPED STATE. "muted tabs in window 2" / "ungrouped tabs in
+    // window 2": an explicit numbered window scope composed with a tab-state
+    // or grouping predicate.
+    {
+      const wsm = /\bin\s+window\s+(\d+)\b/i.exec(cmdStr);
+      if (wsm && !/\bwindow\s+(\d+)\s+except\b/i.test(cmdStr) &&
+          !/\b(?:dev|developer)\s+tools?\b/i.test(cmdStr)) {
+        const wid = Number(wsm[1]);
+        const inWin = candidates.filter(c => c.windowId === wid);
+        if (inWin.length) {
+          let hits = null;
+          let reason = '';
+          if (/\bungrouped\b/i.test(cmdStr)) {
+            hits = inWin.filter(c => !c.groupId);
+            reason = `Ungrouped tabs in window ${wid}`;
+          } else if (/\bmuted\b/i.test(cmdStr)) {
+            hits = inWin.filter(c => c.muted === true);
+            reason = `Muted tabs in window ${wid}`;
+          } else if (/\bpinned\b/i.test(cmdStr)) {
+            hits = inWin.filter(c => c.pinned === true);
+            reason = `Pinned tabs in window ${wid}`;
+          } else if (/\baudible|playing\b/i.test(cmdStr)) {
+            hits = inWin.filter(c => c.audible === true);
+            reason = `Audible tabs in window ${wid}`;
+          }
+          if (hits && r3ok(hits)) return allMatches(hits, reason);
+        }
+      }
+    }
+
+    // OPENER CHAIN. "tabs opened from the X page" / "tabs opened from the X
+    // search": resolve the named root page by distinctive title/url-word
+    // match against the pool, then collect candidates whose opener chain
+    // (transitive) reaches it. The root itself is not a member. Falls
+    // through when no root resolves or the chain is empty.
+    {
+      const om = /\bopened\s+from\s+(?:the\s+|my\s+|this\s+)?(.+)$/i.exec(cmdStr);
+      if (om) {
+        const phrase = om[1].trim().toLowerCase()
+          .replace(/\b(?:pages?|tabs?|links?|results?)\b/g, ' ');
+        const toks = phrase.split(/[^a-z0-9]+/).filter(w => w.length >= 3 && w !== 'the');
+        if (toks.length) {
+          const roots = candidates.filter(c => {
+            const hay = `${c.title || ''} ${c.url || ''} ${String(c.enrichment?.category || '')}`.toLowerCase();
+            return toks.every(t => hay.includes(t));
+          });
+          if (roots.length) {
+            const rootIds = new Set(roots.map(r => r.tabId));
+            const childByOpener = new Map();
+            for (const c of candidates) {
+              if (c.opener == null) continue;
+              if (!childByOpener.has(c.opener)) childByOpener.set(c.opener, []);
+              childByOpener.get(c.opener).push(c);
+            }
+            const descendants = new Set();
+            const stack = [...rootIds];
+            while (stack.length) {
+              const id = stack.pop();
+              for (const ch of (childByOpener.get(id) || [])) {
+                if (!descendants.has(ch.tabId)) { descendants.add(ch.tabId); stack.push(ch.tabId); }
+              }
+            }
+            const hits = candidates.filter(c => descendants.has(c.tabId));
+            if (r3ok(hits)) return allMatches(hits, 'Opened from named page');
+          }
+        }
+      }
+    }
+
+    // AUTO-OPENED POPUPS. "tabs automatically opened by websites" names the
+    // auto-opened session flag, not a topic.
+    if (/\bautomatically\s+opened\b|\bopened\s+automatically\b|\bauto[- ]?opened\b/i.test(cmdStr)) {
+      const hits = candidates.filter(c => c.autoOpened === true);
+      if (r3ok(hits)) return allMatches(hits, 'Automatically opened');
+    }
+
+    // LANGUAGE. "tabs in german" names the page language field, an
+    // ingest-time ISO code, not a topic.
+    {
+      const LANGS = { german: 'de', deutsch: 'de', french: 'fr', spanish: 'es', italian: 'it',
+        japanese: 'ja', chinese: 'zh', russian: 'ru', portuguese: 'pt', dutch: 'nl', korean: 'ko', hindi: 'hi' };
+      const lm = /\bin\s+(german|deutsch|french|spanish|italian|japanese|chinese|russian|portuguese|dutch|korean|hindi)\b/i.exec(cmdStr);
+      if (lm && candidates.some(c => c.lang)) {
+        const code = LANGS[lm[1].toLowerCase()];
+        let hits = candidates.filter(c => String(c.lang || '').toLowerCase() === code);
+        // Reference/wiki qualification: when the command also names a page
+        // class, the language filter narrows within it ("reference wiki tabs
+        // in german" keeps German wikis, not every German page).
+        const qual = /\b(reference|wiki|encyclopedia|documentation|docs?)\b/i.test(cmdStr);
+        if (qual) {
+          const inClass = hits.filter(c => {
+            const hay = `${c.title || ''} ${c.url || ''} ${String(c.enrichment?.category || '')} ${rawTagsOf(c).join(' ')}`.toLowerCase();
+            return /\bwiki\b|\bencyclopedia\b|\breference\b|wikipedia/.test(hay);
+          });
+          if (inClass.length) hits = inClass;
+        }
+        if (r3ok(hits)) return allMatches(hits, `Language: ${lm[1].toLowerCase()}`);
+      }
+    }
+
+    // JIRA-STYLE KEY RANGE. "jira tickets xc-120 through xc-150": a range
+    // over tracker keys (PREFIX-N), both ends inclusive, resolved by URL
+    // path segments.
+    {
+      const km = /\b([a-z]{1,10})-(\d{1,6})\s+(?:through|thru|to|until|-|–|—)\s+(\d{1,6})\b/i.exec(cmdStr);
+      if (km) {
+        const prefix = km[1].toUpperCase();
+        const lo = Number(km[2]), hi = Number(km[3]);
+        const hits = candidates.filter(c => {
+          const raw = (String(c.url || '').match(/^https?:\/\/[^/]*(\/.*)$/i) || [])[1] || '';
+          const segs = raw.split(/[^A-Za-z0-9]+/);
+          return segs.some(s => {
+            const m = new RegExp('^' + prefix + '-(\\d+)$', 'i').exec(s);
+            if (!m) return false;
+            const n = Number(m[1]);
+            return n >= lo && n <= hi;
+          });
+        });
+        if (r3ok(hits)) return allMatches(hits, `Keys ${prefix}-${lo} through ${prefix}-${hi}`);
+      }
+    }
+
+    // UNPINNED + RECENCY COMPLEMENT. "bookmark unpinned tabs opened in the
+    // last 24 hours except already bookmarked pages": a state-qualified
+    // window whose complement is named in metadata, not semantics.
+    {
+      const up = /\b(?:unpinned\s+|non-?pinned\s+)?tabs?\b[^;]{0,80}\b(?:opened|created)\s+in\s+the\s+last\s+(\d+)\s*(minutes?|hours?|days?)\b/i.exec(cmdStr);
+      if (up && /\bunpinned\b/i.test(cmdStr) && /\bexcept\s+already\s+bookmarked\b/i.test(cmdStr)) {
+        const n = Number(up[1]);
+        const mult = up[2].toLowerCase().startsWith('minute') ? MIN : up[2].toLowerCase().startsWith('hour') ? HOUR : DAY;
+        const win = refNow - n * mult;
+        const hits = candidates.filter(c =>
+          c.pinned !== true && c.bookmarked !== true &&
+          !(Number.isFinite(c.openedAt) && tsOf(c.openedAt) < win));
+        if (r3ok(hits)) return allMatches(hits, `Unpinned, not bookmarked, opened in last ${n}${up[2]}`);
+      }
+    }
+
+    // OUTDATED GUIDES. "pages whose instructions are outdated" names
+    // archive-era content by its own title/taxonomy year, not by tab age.
+    if (/\binstructions?\s+(?:are\s+)?outdated\b|\boutdated\s+(?:instructions?|pages?|docs?|guides?)\b/i.test(cmdStr)) {
+      const curYear = new Date(refNow).getUTCFullYear();
+      const hits = candidates.filter(c => {
+        const src = `${c.title || ''} ${String(c.enrichment?.category || '')} ${rawTagsOf(c).join(' ')}`;
+        const m = src.match(/\b(20[0-2]\d)\b/);
+        return (m && Number(m[1]) < curYear - 5) ||
+          /\b(legacy|archived|obsolete|deprecated|retro)\b/i.test(src) ||
+          // "old" inside the title itself names an archive-era page; a bare
+          // host/tag word is too generic to count.
+          /\bold\b/i.test(String(c.title || ''));
+      });
+      if (r3ok(hits)) return allMatches(hits, 'Outdated pages');
+    }
+
+    // COMMUNITY COPIES. "close community tutorial copies of X": a doc-
+    // category page whose taxonomy SAYS community, riding a keyword that
+    // also names official pages. The community marker is the discriminator.
+    {
+      const ccm = /\bcommunity\s+(?:tutorial\s+)?(?:copies?|versions?|mirrors?)\b|\bcommunity\s+((?:[a-z0-9-]+\s+){0,3})\b/i.exec(cmdStr);
+      if (ccm && /\bcommunity\b/i.test(cmdStr) && /\b(?:copies?|versions?|mirrors?|tutorials?)\b/i.test(cmdStr)) {
+        const topicM = /\bcopies\s+of\s+(?:the\s+|my\s+)?([a-z0-9][a-z0-9' -]*)/i.exec(cmdStr);
+        const toks = (topicM ? topicM[1] : '')
+          .toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length >= 3 && w !== 'docs');
+        let hits = candidates.filter(c =>
+          rawTagsOf(c).some(t => /community/i.test(t)) ||
+          String(c.enrichment?.category || '').toLowerCase() === 'docs' &&
+            /community/i.test(String(c.title || '')));
+        if (toks.length) hits = hits.filter(c => toks.every(t =>
+          wordHit(t, `${c.title || ''} ${c.url || ''} ${rawTagsOf(c).join(' ')}`)));
+        if (r3ok(hits)) return allMatches(hits, 'Community tutorial copies');
+      }
+    }
+
+    // UNREPLIED/UNARCHIVED SEMANTIC HOLDOUTS are the semantic path's
+    // business; nothing deterministic to add here.
+
+    // ERROR-HEALTH SHAPES. "tabs that failed to load" / "error pages" name
+    // browser failure state and error-page URL/title shapes, not topics.
+    if (/\bfailed\s+to\s+load\b|\bfailed\s+loading\b|\bload(?:ing)?\s+failures?\b|\berror\s+pages?\b/i.test(cmdStr)) {
+      const hits = candidates.filter(c => {
+        const t = String(c.title || '');
+        const u = String(c.url || '');
+        return /^err_/i.test(t) || /\b404\b/.test(t) ||
+          /\bnot\s+found\b/i.test(t) || /\b404\b/.test(u);
+      });
+      if (r3ok(hits)) return allMatches(hits, 'Failed to load / error pages');
+    }
+
+    // SEARCH-ENGINE URL SHAPE. "google search pages" / "tabs from search
+    // engines" name a URL convention (/search, /s?k= SERPs), not a topic.
+    // A negation frame ("but not search pages") silences the gate.
+    {
+      const isSerp = c => {
+        const u = String(c.url || '');
+        if (!/\/search|\?q=|\bs\?k=/i.test(u)) return false;
+        return /(google|bing|duckduckgo|search|yahoo|ecosia)\./i.test(hostOf(u)) || /\/search/.test(u);
+      };
+      const serpMention = /\bsearch\s+(?:engines?|pages?|results?\s+pages?)\b/i.exec(cmdStr);
+      if (serpMention) {
+        const before = cmdStr.slice(Math.max(0, serpMention.index - 30), serpMention.index);
+        if (!/\b(?:but\s+not|except|excluding|other\s+than)\b/i.test(before)) {
+          let hits = candidates.filter(isSerp);
+          if (/\bgoogle\b/i.test(cmdStr)) hits = hits.filter(c => /google/i.test(String(c.url || '')));
+          if (r3ok(hits)) return allMatches(hits, 'Search engine result pages');
+        }
+      }
+    }
+
+    // INCIGNITO. "mute incognito tabs" names the session privacy flag.
+    if (/\bincognito\b|\bprivate\s+browsing\b/i.test(cmdStr)) {
+      const hits = candidates.filter(c => c.incognito === true);
+      if (r3ok(hits)) return allMatches(hits, 'Incognito tabs');
+    }
+
+    // DISCARDED. "close discarded tabs (except pinned ones)" names the
+    // memory-saver state flag.
+    if (/\bdiscarded\b/i.test(cmdStr)) {
+      let hits = candidates.filter(c => c.discarded === true);
+      if (/\bexcept\b[^;]{0,20}\bpinned\b/i.test(cmdStr)) hits = hits.filter(c => c.pinned !== true);
+      if (r3ok(hits)) return allMatches(hits, 'Discarded tabs');
+    }
+
+    // GROUP COLOR. "tabs in grey colored groups" names the group's color
+    // label -- group metadata, not a topic.
+    {
+      const gcm = /\b((?:light|dark)?(?:grey|gray|blue|green|orange|cyan|purple|red|yellow|pink))\s+colou?red\s+groups?\b|\bgroups?\s+colou?red\s+((?:light|dark)?(?:grey|gray|blue|green|orange|cyan|purple|red|yellow|pink))\b|\bin\s+(?:the\s+)?((?:light|dark)?(?:grey|gray|blue|green|orange|cyan|purple|red|yellow|pink))\s+groups?\b/i.exec(cmdStr);
+      if (gcm) {
+        const color = String(gcm[1] || gcm[2] || gcm[3] || '').toLowerCase()
+          .replace(/^light|^dark/, '').replace('gray', 'grey');
+        if (color) {
+          const hits = candidates.filter(c => {
+            const gc = String(c.groupColor || '').toLowerCase().replace('gray', 'grey');
+            return gc && gc === color;
+          });
+          if (r3ok(hits)) return allMatches(hits, `${color} groups`);
+        }
+      }
+    }
+
+    // DUPLICATE CENSUS. "tabs whose title is identical to another open tab"
+    // is a cross-tab comparison (title census), not a per-tab property.
+    // Duplicates sharing an exact title keep the OLDEST by opened time; tabs
+    // whose titles differ are never members, whatever their URL overlap.
+    {
+      const dm = /\b(?:titles?|name)\s+is\s+identical\s+to\s+another\b|\bidentical\s+titles?\b|\bsame\s+titles?\b/i.exec(cmdStr);
+      if (dm) {
+        const byTitle = new Map();
+        for (const c of candidates) {
+          const t = String(c.title || '').trim().toLowerCase();
+          if (!t) continue;
+          if (!byTitle.has(t)) byTitle.set(t, []);
+          byTitle.get(t).push(c);
+        }
+        const rank = c => { const o = tsOf(c.openedAt); return Number.isFinite(o) ? o : Infinity; };
+        const hits = [];
+        for (const group of byTitle.values()) {
+          if (group.length < 2) continue;
+          const sorted = [...group].sort((a, b) => rank(a) - rank(b));
+          // Keep-oldest semantics with the pool's own copy-markers: a tab
+          // flagged duplicateOf onto a same-title sibling IS the known
+          // second copy -- close it, keep the originals. In a group with no
+          // flagged copies the pool's first-seen tab is the original and
+          // the rest are silent duplicates.
+          const linked = group.filter(c => c.duplicateOf != null &&
+            group.some(g => g.tabId === c.duplicateOf));
+          if (linked.length) {
+            for (const c of linked) hits.push(c);
+          } else {
+            const first = group.reduce((a, b) => (b.tabId < a.tabId ? b : a));
+            for (const c of group) if (c !== first) hits.push(c);
+          }
+        }
+        if (r3ok(hits)) return allMatches(hits, 'Identical-title duplicates (oldest kept)');
+      }
+    }
+
+    // LONG TITLES. "tabs with unusually long titles": a title far beyond the
+    // pool's median length is an outlier, a relative measure no entailment
+    // pass can make. Fires when an outlier exists at 2x median and the
+    // command's length word is distinctive of that outlier set.
+    if (/\b(?:unusually\s+)?long\s+titles?\b|\bvery\s+long\s+(?:titles?|names?)\b/i.test(cmdStr)) {
+      const lens = candidates.map(c => String(c.title || '').length).sort((a, b) => a - b);
+      const med = lens.length ? lens[Math.floor(lens.length / 2)] : 0;
+      if (med > 0) {
+        const hits = candidates.filter(c => String(c.title || '').length > med * 3);
+        if (r3ok(hits)) return allMatches(hits, 'Unusually long titles');
+      }
+    }
+
+    // EMAIL ADDRESS IN CONTENT. "pages containing an email address" is a
+    // pattern test over page text, not a topic.
+    if (/\bemail\s+address(?:es)?\b|\bemails?\b[^,.;]{0,20}\b(?:containing|contains?|in|inside|with)\b/i.test(cmdStr) &&
+        /\b(?:contain|contains|containing|with|in|inside|having)\b/i.test(cmdStr)) {
+      const emailRe = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i;
+      const hits = candidates.filter(c => emailRe.test(String(c.mainText || '')) || emailRe.test(String(c.title || '')));
+      if (r3ok(hits)) return allMatches(hits, 'Contains an email address');
+    }
+
+    // PUBLICATION YEAR. "pages published before 2020" names the page's own
+    // published date -- content metadata, not the tab's lifetime.
+    {
+      const ym = /\bpublished\s+before\s+(19\d\d|20\d\d)\b/i.exec(cmdStr);
+      if (ym) {
+        const cutoff = Number(ym[1]);
+        const hits = candidates.filter(c => {
+          const y = (() => {
+            if (c.datePublished) { const p = Date.parse(c.datePublished); if (Number.isFinite(p)) return new Date(p).getUTCFullYear(); }
+            const src = `${c.title || ''} ${c.url || ''} ${c.mainText || ''}`;
+            const m = src.match(/\b(19\d\d|20\d\d)\b/);
+            return m ? Number(m[1]) : null;
+          })();
+          return y != null && y < cutoff;
+        });
+        if (r3ok(hits)) return allMatches(hits, `Published before ${cutoff}`);
+      }
+    }
+
+    // LOGIN/AUTH WALLS AND FORM PAGES as the NAMED target ("close login
+    // pages", "asking me to sign in", "forms and login tabs"). isLoginWall
+    // is the ingest-time wall detector; "forms" resolves through page text.
+    if (/\b(?:login|log\s?in|sign\s?in)\s+(?:pages?|screens?|walls?)\b|\bforms?\s+(?:and\s+)?(?:login|log\s?in|sign\s?in)\b|(?:login|log\s?in|sign\s?in)\s+(?:and\s+)?forms?\b|\b(?:asking|prompting|requesting)\s+(?:me\s+|us\s+|users?\s+)?to\s+(?:sign\s?in|log\s?in)\b/i.test(cmdStr)) {
+      const wantsForms = /\bforms?\b/i.test(cmdStr);
+      let hits = candidates.filter(c => isLoginWall(c));
+      if (wantsForms) {
+        const formPages = candidates.filter(c => wordHit('form', String(c.mainText || c.pseudoDoc || '')) && !isLoginWall(c));
+        hits = [...hits, ...formPages];
+      }
+      if (r3ok(hits)) return allMatches(hits, wantsForms ? 'Login and form pages' : 'Login pages');
+    }
+
+    // WINDOW-SCOPED COMPLEMENT. "close all tabs in window 3 except the
+    // leetcode one": everything-else destruction scoped to an explicit
+    // numbered window, with a named survivor resolved lexically.
+    {
+      const wcm = /\bwindow\s+(\d+)\s+except\b/i.exec(cmdStr);
+      if (wcm && /\bclose\b/i.test(cmdStr)) {
+        const wid = Number(wcm[1]);
+        const inWin = candidates.filter(c => c.windowId === wid);
+        const em = /\bexcept\s+(?:the\s+|my\s+|our\s+)?(.+)$/i.exec(cmdStr);
+        if (inWin.length && em) {
+          const toks = em[1].toLowerCase().split(/[^a-z0-9]+/)
+            .filter(t => t.length >= 3 && !['the', 'and', 'one', 'ones', 'tabs?', 'page', 'pages', 'window'].includes(t));
+          const survivors = toks.length ? inWin.filter(c =>
+            toks.every(t => wordHit(t, `${c.title || ''} ${c.url || ''} ${rawTagsOf(c).join(' ')} ${String(c.enrichment?.category || '')}`))) : [];
+          if (survivors.length && survivors.length < inWin.length) {
+            const keep = new Set(survivors.map(c => c.tabId));
+            const hits = inWin.filter(c => !keep.has(c.tabId));
+            if (r3ok(hits)) return allMatches(hits, `Window ${wid} except ${em[1].trim()}`);
+          }
+        }
+      }
+    }
+
+    // DEV-TOOLING SCOPE. "dev tools tabs in window N": within the named
+    // window, dev-tooling identity = dev/coding category or a dev-named
+    // group; everything else in the window is out of scope.
+    {
+      const dw = /\b(?:dev(?:eloper)?\s+tools?|developer\s+tooling)\b[^;]{0,40}\bwindow\s+(\d+)\b|\bwindow\s+(\d+)\b[^;]{0,40}\bdev(?:eloper)?\s+tools?\b/i.exec(cmdStr);
+      if (dw) {
+        const wid = Number(dw[1] || dw[2]);
+        const inWin = candidates.filter(c => c.windowId === wid);
+        if (inWin.length) {
+          const hits = inWin.filter(c => {
+            const cat = String(c.enrichment?.category || '').toLowerCase();
+            const g = String(c.groupName || '').toLowerCase();
+            return cat === 'dev' || cat === 'coding' || /^dev/.test(g);
+          });
+          if (r3ok(hits)) return allMatches(hits, `Dev tools in window ${wid}`);
+        }
+      }
+    }
+
+    // SAME SITE AS CURRENT TAB. "tabs from the same website as the current
+    // tab": a registrable-domain comparison against the caller's cursor.
+    if (/\bsame\s+(?:website|site|domain|origin)\s+as\s+the\s+current\b/i.test(cmdStr) &&
+        opts.meta && opts.meta.currentTabId != null) {
+      const cur = candidates.find(c => c.tabId === opts.meta.currentTabId);
+      if (cur) {
+        const reg = registrable(hostOf(cur.url || cur.domain || ''));
+        if (reg) {
+          const hits = candidates.filter(c => registrable(hostOf(c.url || c.domain || '')) === reg);
+          if (r3ok(hits)) return allMatches(hits, `Same site as current tab (${reg})`);
+        }
+      }
+    }
+
+    // OFFICIAL DOCUMENTATION. "official documentation about X": doc identity
+    // (curated official marker or a docs-category page on a developer/docs
+    // host) narrowed by X's own tokens. Community articles and tutorials
+    // riding shared vocabulary are excluded by the marker itself.
+    {
+      const odm = /\bofficial\s+documentation\b(?:\s+about\s+([^,;.]+))?/i.exec(cmdStr);
+      if (odm) {
+        const xToks = (odm[1] || '').toLowerCase().split(/[^a-z0-9]+/)
+          .filter(w => w.length >= 3 && !['the', 'and', 'for', 'about'].includes(w));
+        let hits = candidates.filter(c =>
+          rawTagsOf(c).some(t => /official/i.test(t)) ||
+          (String(c.enrichment?.category || '').toLowerCase() === 'docs' &&
+            /(^|\.)(developer|docs|learn)\./i.test(hostOf(c.url || ''))));
+        if (xToks.length) {
+          hits = hits.filter(c => xToks.every(t =>
+            wordHit(t, `${c.title || ''} ${c.url || ''} ${rawTagsOf(c).join(' ')} ${String(c.enrichment?.category || '')}`)));
+        }
+        if (r3ok(hits)) return allMatches(hits, 'Official documentation');
+      }
+    }
+
+    // CORE-SITE SCOPE. "close tabs from google.com but not google docs
+    // sheets or maps": when a bare two-label domain scope names surface
+    // words that match SUBDOMAIN labels of that family, the user means the
+    // brand's own site -- every other subdomain surface of the family is a
+    // different product, not "from google.com".
+    {
+      const gsm = /\bfrom\s+([a-z0-9-]+\.[a-z0-9-]+)\s+but\s+not\s+(.+)$/i.exec(cmdStr);
+      if (gsm) {
+        const scope = gsm[1].toLowerCase().replace(/^www\./, '');
+        if (scope.split('.').length === 2) {
+          const brand = scope.split('.')[0];
+          const fam = candidates.filter(c => registrable(hostOf(c.url || c.domain || '')) === scope);
+          const subLabels = new Set(fam.map(c => String(hostOf(c.url || c.domain || '')).split('.')[0].toLowerCase()));
+          const words = gsm[2].toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+          const surfWord = w => words.includes(w);
+          const isSurface = c => {
+            const host = String(hostOf(c.url || c.domain || '')).toLowerCase();
+            if (surfWord(host.split('.')[0])) return true;
+            let path = '';
+            try { path = new URL(c.url || '').pathname.toLowerCase(); } catch {}
+            return path.split('/').some(seg => seg && surfWord(seg));
+          };
+          if (fam.length && words.some(w => subLabels.has(w))) {
+            const hits = fam.filter(c => {
+              const s0 = String(hostOf(c.url || c.domain || '')).split('.')[0].toLowerCase();
+              return (s0 === 'www' || s0 === brand) && !isSurface(c);
+            });
+            if (hits.length && hits.length < fam.length && r3ok(hits)) {
+              return allMatches(hits, `Core ${scope} site (surface subdomains excluded)`);
+            }
+          }
+        }
+      }
+    }
+
     // FREQUENCY RANK. "pin my five most frequently visited tabs" ranks by a
     // browser counter (chrome.tabs visitCount) -- not a topic, not a
     // timestamp. Rank by the counter, limit N; tabs without the counter rank
@@ -1875,6 +2545,15 @@
 
     // Qualifier-only commands (recency or tab-state is the entire target set) are
     // fully defined by their filters -- no topic scoring required.
+    // STATE-WORD CONCEPTS: when the model's only concept IS the state the cue
+    // machinery already filtered on ("muted", "duplicate"), the state IS the
+    // criterion -- entailment on the state word adds nothing and abstains on
+    // exactly the tabs the filter already named.
+    const stateOnlyConcepts = modelConcepts.length > 0 &&
+      modelConcepts.every(c => /^(pinned|unpinned|muted|audible|duplicates?)$/i.test(String(c).toLowerCase().trim()));
+    if (stateOnlyConcepts && stateQ.length && !timeQ && !exclude.length) {
+      return allMatches(universe, 'Qualifier match (state)');
+    }
     if (!modelConcepts.length && (timeQ || stateQ.length || (domains.length && universe.length))) {
       return allMatches(universe, 'Qualifier match');
     }
