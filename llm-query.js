@@ -42,10 +42,52 @@
   // Every example and quoted fragment below was written FRESH for this file:
   // none of them may share a command string with bench/golden-set.jsonl, or the
   // parser memorizes its own benchmark instead of learning the shapes.
+  const QUALIFIER_TEMPLATE = `{"intent":"<intent>","concepts":["<topic>"],"combine":"union"|"intersection","expansions":{"<topic>":["<related term>"]},"domains":["<host>"],"selectAll":false,"exclude":[],"time":null,"state":[],"confidence":0.0-1.0}
+Plus OPTIONAL slot fields, added ONLY when the command itself signals them
+(absent = no signal, never guessed):
+"urlShape":{"site":"...","section":"..."},"rank":{"by":"...","order":"...","n":N,"from":"..."},"retain":{"per":"...","keep":"..."},"dedupe":{"canonical":true},"scope":{"hostExact":true,"window":"..."},"anchor":{"phrase":"..."},"answerable":true
+
+Slots:
+- urlShape when the command names a site-structural concept. site one of:
+  youtube, github, leetcode, amazon, google-docs, reddit, wikipedia, arxiv.
+  section one of: watch, shorts, channel, pull, issue, blob, tree, discuss,
+  contest, product, search, cart, tag-page, user. Derive ONLY from the
+  command text: "video pages but not channel pages" -> site youtube,
+  section watch (the carved-out "channel" is exclude, never the section);
+  "pull request tabs" -> site github, section pull; "shorts" -> site
+  youtube, section shorts. A bare site with no structural word gives
+  {"site":"..."} alone.
+- rank for superlatives and rankings: "first/last N tabs" -> by position,
+  from start/end; "oldest/newest N" -> by opened, order asc/desc;
+  "most recently used N" -> by accessed, order desc; "top N" -> by
+  relevance, order desc. n is the integer count.
+- retain for keep-one-per shapes: "keep one per domain" -> per domain;
+  "all but the newest tab from each site" -> per domain, keep newest.
+  keep one of: oldest, newest, first, last, bookmarked, pinned.
+- dedupe: canonical true when duplicates must match even across tracking
+  params, fragments, or mobile variants ("even if utm params differ").
+- scope: hostExact true when an exact host is named as the scope
+  ("docs.github.com only"), not a brand family. window one of: current,
+  1, 2, 3, all -- only when a window is named.
+- anchor: for "similar to X" / "related to X" / "like the X article", the
+  distinctive words identifying the anchor tab, max 8 words.
+- answerable: false ONLY when the command cannot be answered from a pool
+  of live tabs at all -- it references prior conversation ("those tabs",
+  "the last filter") with no context, or the destructive scope is
+  genuinely underspecified. When in doubt, omit (answerable).
+
+Examples:`;
+
+  const SLOT_EXAMPLES = `
+"mute every youtube shorts tab" -> {"intent":"mute_tabs","concepts":[],"combine":"union","expansions":{},"domains":["youtube.com"],"selectAll":false,"exclude":[],"time":null,"state":[],"urlShape":{"site":"youtube","section":"shorts"},"confidence":0.9}
+"close the five oldest wikipedia pages" -> {"intent":"close_tabs","concepts":[],"combine":"union","expansions":{},"domains":["wikipedia.org"],"selectAll":false,"exclude":[],"time":null,"state":[],"rank":{"by":"opened","order":"asc","n":5},"confidence":0.9}
+"close tabs related to the sourdough starter guide" -> {"intent":"close_tabs","concepts":[],"combine":"union","expansions":{},"domains":[],"selectAll":false,"exclude":[],"time":null,"state":[],"anchor":{"phrase":"sourdough starter guide"},"confidence":0.85}`;
+
   const SYSTEM = `You convert a browser-tab command into JSON. You never see the tabs.
 
 Return ONLY this JSON, no prose:
-{"intent":"<intent>","concepts":["<topic>"],"combine":"union"|"intersection","expansions":{"<topic>":["<related term>"]},"domains":["<host>"],"selectAll":false,"exclude":[],"time":null,"state":[],"confidence":0.0-1.0}
+${QUALIFIER_TEMPLATE}
+${SLOT_EXAMPLES}
 
 intent is exactly one of: close_tabs, group_tabs, bookmark_tabs, pin_tabs,
 unpin_tabs, mute_tabs, unmute_tabs, reload_tabs, sort_tabs, open_tabs,
@@ -319,6 +361,228 @@ Examples:
   const TIME_ENUMS = new Set(['last_hour', 'today', 'yesterday', 'this_week', 'last_week']);
   const STATE_ENUMS = ['pinned', 'unpinned', 'audible', 'muted', 'duplicate'];
 
+  // ---- SLOT SCHEMA V2 ------------------------------------------------------
+  //
+  // Additive structured slots the selector can execute generically in a later
+  // round. Every field is optional (absent = no signal), enum-closed, and
+  // mechanically validated: a slot field that is off-vocabulary or mistyped is
+  // DROPPED alone, never fail the whole parse. Old cached parses simply lack
+  // the fields, so the schema costs the existing pipeline nothing.
+  const URL_SITES = new Set(['youtube', 'github', 'leetcode', 'amazon',
+    'google-docs', 'reddit', 'wikipedia', 'arxiv']);
+  const URL_SECTIONS = new Set(['watch', 'shorts', 'channel', 'pull', 'issue',
+    'blob', 'tree', 'discuss', 'contest', 'product', 'search', 'cart',
+    'tag-page', 'user']);
+  const RANK_BY = new Set(['opened', 'accessed', 'position', 'relevance', 'frequency']);
+  const RANK_ORDER = new Set(['asc', 'desc']);
+  const RANK_FROM = new Set(['start', 'end']);
+  const RETAIN_PER = new Set(['domain', 'category', 'group', 'window', 'url']);
+  const RETAIN_KEEP = new Set(['oldest', 'newest', 'first', 'last', 'bookmarked', 'pinned']);
+  const SCOPE_WINDOWS = new Set(['current', '1', '2', '3', 'all']);
+  const SLOT_KEYS = ['urlShape', 'rank', 'retain', 'dedupe', 'scope', 'anchor', 'answerable'];
+
+  // The model's slot output is untrusted: validate each field against its
+  // closed enum and keep only what survives. A single bad field dies alone.
+  function validateSlots(raw) {
+    const r = raw || {};
+    const out = {};
+    if (r.urlShape && typeof r.urlShape === 'object') {
+      const u = {};
+      if (URL_SITES.has(r.urlShape.site)) u.site = r.urlShape.site;
+      if (URL_SECTIONS.has(r.urlShape.section)) u.section = r.urlShape.section;
+      if (u.site || u.section) out.urlShape = u;
+    }
+    if (r.rank && typeof r.rank === 'object') {
+      const k = {};
+      if (RANK_BY.has(r.rank.by)) k.by = r.rank.by;
+      if (RANK_ORDER.has(r.rank.order)) k.order = r.rank.order;
+      const n = Number(r.rank.n);
+      if (r.rank.n !== null && r.rank.n !== '' && Number.isInteger(n) && n >= 1 && n <= 100) k.n = n;
+      if (RANK_FROM.has(r.rank.from)) k.from = r.rank.from;
+      if (k.by || k.n !== undefined) out.rank = k;
+    }
+    if (r.retain && typeof r.retain === 'object') {
+      const k = {};
+      if (RETAIN_PER.has(r.retain.per)) k.per = r.retain.per;
+      if (RETAIN_KEEP.has(r.retain.keep)) k.keep = r.retain.keep;
+      if (k.per || k.keep) out.retain = k;
+    }
+    if (r.dedupe && typeof r.dedupe === 'object' && r.dedupe.canonical === true) {
+      out.dedupe = { canonical: true };
+    }
+    if (r.scope && typeof r.scope === 'object') {
+      const k = {};
+      if (r.scope.hostExact === true) k.hostExact = true;
+      const w = String(r.scope.window === null || r.scope.window === undefined ? '' : r.scope.window);
+      if (SCOPE_WINDOWS.has(w)) k.window = w;
+      if (k.hostExact !== undefined || k.window !== undefined) out.scope = k;
+    }
+    if (typeof r.anchor === 'object' && r.anchor !== null) {
+      const phrase = String(r.anchor.phrase || '').trim().replace(/\s+/g, ' ');
+      const words = phrase.split(' ').filter(Boolean);
+      if (phrase && words.length <= 8 && phrase.length <= 60) out.anchor = { phrase };
+    }
+    if (typeof r.answerable === 'boolean') out.answerable = r.answerable;
+    return out;
+  }
+
+  // Deterministic slot cues over the raw command text -- the rescue half of
+  // the contract, mirroring how qualifier cues are parsed beside the model
+  // downstream: when the command's own vocabulary names a slot shape
+  // confidently, the parse carries the slot even if the model's lap missed
+  // it. Cue-backed shapes only; ambiguous text emits nothing. Applied in
+  // reconcile() to fill ABSENT slots; a validated model slot is never
+  // overwritten.
+  const SLOT_NUM_WORDS = { one: 1, a: 1, an: 1, two: 2, three: 3, four: 4,
+    five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11,
+    twelve: 12 };
+  function slotNum(w) {
+    if (/^\d+$/.test(w)) return Number(w);
+    return SLOT_NUM_WORDS[String(w).toLowerCase()] || null;
+  }
+
+  // Standalone structural words that name a site by themselves ("issue tabs",
+  // "blob view" are GitHub vocabulary). Sections needing a site word nearby
+  // (watch/video, search, product, cart...) are NOT listed: without a named
+  // site they are too generic to bind.
+  const SLOT_STANDALONE_SECTION = {
+    issue: 'github', pull: 'github', blob: 'github', tree: 'github',
+    shorts: 'youtube', channel: 'youtube', watch: 'youtube',
+    contest: 'leetcode', cart: 'amazon', discuss: 'reddit'
+  };
+  const SLOT_SECTION_RE = [
+    [/shorts?\b/, 'shorts'], [/\bchannels?\b/, 'channel'],
+    [/pull requests?\b|\bpr (tabs?|pages?)\b/, 'pull'], [/\bissues?\b/, 'issue'],
+    [/\bblob\b/, 'blob'], [/\btrees?\b/, 'tree'], [/\bdiscussion|\bdiscuss\b/, 'discuss'],
+    [/\bcontests?\b/, 'contest'], [/\bproducts?\b/, 'product'],
+    [/\bsearch\b/, 'search'], [/\bcart\b/, 'cart'],
+    [/\btags?\b/, 'tag-page'], [/\busers?\b/, 'user'],
+    [/\bvideos?\b/, 'watch']
+  ];
+
+  function slotsFromCommand(cmd) {
+    const s = String(cmd || '').toLowerCase();
+    if (!s.trim()) return {};
+    const slots = {};
+
+    // Exclusion clauses are carved-out material: a section cue after "but
+    // not" / "except" / "apart from" / "other than" names the survivor, not
+    // the acted-on scope. Cut the clause before section detection; the
+    // exception token itself flows through exclude[] as before.
+    const exclM = s.match(/\b(but not|except|apart from|other than)\b/);
+    const scopePart = exclM ? s.slice(0, exclM.index) : s;
+
+    // urlShape.site
+    let site = null;
+    if (/\bgoogle docs\b/.test(s)) site = 'google-docs';
+    else if (/\byoutube\b/.test(s)) site = 'youtube';
+    else if (/\bgithub\b/.test(s)) site = 'github';
+    else if (/\bleetcode\b/.test(s)) site = 'leetcode';
+    else if (/\bamazon\b/.test(s)) site = 'amazon';
+    else if (/\breddit\b/.test(s)) site = 'reddit';
+    else if (/\bwikipedia\b/.test(s)) site = 'wikipedia';
+    else if (/\barxiv\b/.test(s)) site = 'arxiv';
+
+    // urlShape.section: cue inside the acted-on scope. A section word needs
+    // either the matching site in the command or standalone-structural
+    // status; the exception tail never elects a section.
+    let section = null;
+    for (const [re, sec] of SLOT_SECTION_RE) {
+      if (!re.test(scopePart)) continue;
+      const canonSite = SLOT_STANDALONE_SECTION[sec];
+      if (canonSite && (!site || site === canonSite)) { section = sec; break; }
+      if (!canonSite && site) { section = sec; break; }
+    }
+    if (site || section) {
+      slots.urlShape = {};
+      if (site) slots.urlShape.site = site;
+      if (section) slots.urlShape.section = section;
+    }
+
+    // rank: position ("first/last N"), age ("newest/oldest N"), recency
+    // ("N most recently used"), relevance ("top N"). The number may sit
+    // before or after the superlative word, digit or spelled out.
+    const NW = '(\\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)';
+    // "last N" is a position rank only when N does not head a temporal
+    // amount: "close tabs from the last five minutes" is a time window,
+    // never position 5. The tail rejects a unit directly after N and the
+    // range shapes a connector + second number can produce ("one or two
+    // days", "three to five minutes", "five and a half hours"); word
+    // forms up to sixty cover spelled counts. "last five tabs" still ranks.
+    const TEMPORAL_TAIL = ('(?!\\s+(?:(?:or|to|and|a|an|of)\\s+)*' +
+      '(?:(?:\\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|' +
+      'twenty|thirty|forty|fifty|sixty|half)\\s+)?' +
+      '(?:minutes?|hours?|days?|weeks?|months?|years?)\\b)');
+    let m;
+    const emitRank = (by, order, from, n) => {
+      slots.rank = { ...(slots.rank || {}), by, order, ...(from ? { from } : {}), n };
+    };
+    if ((m = s.match(new RegExp(`\\b(first|last)\\s+${NW}\\b${TEMPORAL_TAIL}`)))) {
+      emitRank('position', m[1] === 'first' ? 'asc' : 'desc', m[1] === 'first' ? 'start' : 'end', slotNum(m[2]));
+    } else if ((m = s.match(new RegExp(`\\b(newest|oldest)\\s+${NW}\\b|${NW}\\s+(newest|oldest)\\b`)))) {
+      // Branch A groups: 1=(newest|oldest) 2=N; branch B: 3=N 4=(newest|oldest)
+      const sup = m[1] || m[4], n = slotNum(m[2] || m[3]);
+      emitRank('opened', sup === 'newest' ? 'desc' : 'asc', null, n);
+    } else if ((m = s.match(new RegExp(`${NW}\\s+most recently (used|opened|accessed)\\b`)))) {
+      emitRank('accessed', 'desc', null, slotNum(m[1]));
+    } else if ((m = s.match(new RegExp(`\\btop\\s+${NW}\\b`)))) {
+      emitRank('relevance', 'desc', null, slotNum(m[1]));
+    }
+    if (slots.rank && slots.rank.n == null) delete slots.rank;
+
+    // retain: keep-one-per shapes. keep defaults to newest when the command
+    // does not say which survivor to keep.
+    const PER_RE = /\b(?:per|from each|for each|in each)\s+(domain|site|host|category|group|window|url|website)\b/;
+    if ((m = s.match(PER_RE))) {
+      const per = m[1] === 'site' || m[1] === 'host' || m[1] === 'website' ? 'domain' : m[1];
+      const keepM = s.match(/\b(oldest|newest|first|last|bookmarked|pinned)\b/);
+      slots.retain = { per, keep: keepM ? keepM[1] : 'newest' };
+    }
+
+    // dedupe: duplicate target + an explicit tolerance marker.
+    if (/\bduplicates?\b/.test(s) && /\b(even if|ignoring|regardless of|despite)\b/.test(s)) {
+      slots.dedupe = { canonical: true };
+    }
+
+    // scope: exact-host naming (3+ label dotted host, or a host pinned with
+    // "only") and named windows.
+    const hostM = s.match(/\b((?:[a-z0-9-]+\.)+)([a-z0-9-]+\.[a-z]{2,})\b/);
+    if (hostM && (hostM[0].split('.').filter(Boolean).length >= 3 || /\bonly\b/.test(s))) {
+      slots.scope = { ...(slots.scope || {}), hostExact: true };
+    }
+    if ((m = s.match(/\bin (?:the )?(?:current|this) window\b/))) {
+      slots.scope = { ...(slots.scope || {}), window: 'current' };
+    } else if ((m = s.match(/\bwindow\s*(\d)\b/)) && ['1', '2', '3'].includes(m[1])) {
+      slots.scope = { ...(slots.scope || {}), window: m[1] };
+    } else if (/\ball windows\b/.test(s)) {
+      slots.scope = { ...(slots.scope || {}), window: 'all' };
+    }
+
+    // anchor: "similar to X" / "related to X" / "like the X article".
+    // "would like" is a politeness frame, not an anchor.
+    if ((m = s.match(/\b(?:similar|related)(?:\s+(?:tabs?|pages?|ones?))?\s+to\s+(?:the |this |that )?(.+)$/))) {
+      let phrase = m[1].replace(/\s*\b(tabs?|pages?|ones?)\s*$/, '').trim().replace(/\s+/g, ' ');
+      const words = phrase.split(' ').filter(Boolean);
+      if (phrase && words.length >= 1 && words.length <= 8) {
+        slots.anchor = { phrase };
+      }
+    } else if ((m = s.match(/\blike\s+(?:the |this |that )(.+)$/))) {
+      let phrase = m[1].replace(/\s*\b(tabs?|pages?|ones?)\s*$/, '').trim().replace(/\s+/g, ' ');
+      const words = phrase.split(' ').filter(Boolean);
+      if (phrase && words.length >= 1 && words.length <= 8) {
+        slots.anchor = { phrase };
+      }
+    }
+
+    // answerable: relative-to-conversation referents with no pool evidence.
+    if (/\b(?:those|these)\s+(?:tabs?|pages?|ones)\b/.test(s) ||
+        /\bthe (?:last|previous) (?:filter|search|results?|set|batch)\b/.test(s)) {
+      slots.answerable = false;
+    }
+    return slots;
+  }
+
+
   // ---- GRAMMAR-TIGHTENED DECODE (M3, REVERTED) ----------------------------
   //
   // M3 tried constraining Ollama decoding to this JSON-Schema object. It
@@ -356,6 +620,45 @@ Examples:
         items: { type: 'string', enum: STATE_ENUMS },
         maxItems: 3
       },
+      urlShape: {
+        type: ['object', 'null'],
+        properties: {
+          site: { type: 'string', enum: [...URL_SITES] },
+          section: { type: 'string', enum: [...URL_SECTIONS] }
+        }
+      },
+      rank: {
+        type: ['object', 'null'],
+        properties: {
+          by: { type: 'string', enum: [...RANK_BY] },
+          order: { type: 'string', enum: [...RANK_ORDER] },
+          n: { type: 'integer', minimum: 1, maximum: 100 },
+          from: { type: 'string', enum: [...RANK_FROM] }
+        }
+      },
+      retain: {
+        type: ['object', 'null'],
+        properties: {
+          per: { type: 'string', enum: [...RETAIN_PER] },
+          keep: { type: 'string', enum: [...RETAIN_KEEP] }
+        }
+      },
+      dedupe: {
+        type: ['object', 'null'],
+        properties: { canonical: { type: 'boolean' } }
+      },
+      scope: {
+        type: ['object', 'null'],
+        properties: {
+          hostExact: { type: 'boolean' },
+          window: { type: 'string', enum: [...SCOPE_WINDOWS] }
+        }
+      },
+      anchor: {
+        type: ['object', 'null'],
+        properties: { phrase: { type: 'string', maxLength: 60 } }
+      },
+      answerable: { type: 'boolean' },
       confidence: { type: 'number', minimum: 0, maximum: 1 }
     },
     required: ['intent', 'concepts', 'combine', 'expansions', 'domains',
@@ -427,6 +730,10 @@ Examples:
         .slice(0, 3)
       : [];
 
+    // Slot fields validate independently: a bad field drops, the parse
+    // survives. Old cached parses lack them entirely -> {}.
+    const slots = validateSlots(raw);
+
     return {
       intent: raw.intent,
       concepts,
@@ -437,6 +744,7 @@ Examples:
       exclude,
       time,
       state,
+      ...slots,
       confidence: Number.isFinite(conf) ? Math.max(0, Math.min(1, conf)) : 0.7,
       source: 'llm'
     };
@@ -700,6 +1008,16 @@ Examples:
     merged._coverage = mcov.ratio;
     merged._needsReparse = mcov.ratio < 0.6 && merged.confidence < 0.8;
 
+    // Slots are scope facts like time/state: the head sample carries them.
+    // Deterministic command cues still fill anything the samples left
+    // absent, and rank/retain fields whose enum parts died in one reading
+    // but live in another survive as partial objects.
+    const cueSlots = slotsFromCommand(cmd);
+    for (const k of SLOT_KEYS) {
+      const v = head[k] !== undefined ? head[k] : (original[k] !== undefined ? original[k] : cueSlots[k]);
+      if (v !== undefined) merged[k] = v;
+    }
+
     const origScore = origCov.ratio * original.confidence;
     const scScore = mcov.ratio * merged.confidence;
     // Two acceptance routes:
@@ -826,6 +1144,37 @@ Examples:
         C.INTENT_VERBS.some(([v]) => new RegExp(`(^|[^a-z])${v}(?![a-z])`, 'i').test(cmd))) {
       parsed.isSelectAll = true;
     }
+
+    // Slot cues fill only ABSENT slots: a validated model slot is evidence
+    // of its own reading and is never overwritten. Old cached parses (no
+    // slot keys at all) gain cue-backed slots transparently.
+    const cueSlots = slotsFromCommand(cmd);
+    for (const k of SLOT_KEYS) {
+      if (parsed[k] === undefined && cueSlots[k] !== undefined) parsed[k] = cueSlots[k];
+    }
+    // Scope hallucination guard, mirroring literalDomains: a model that
+    // bolted scope onto a command with no host or window in its own text
+    // is inventing scope, not reading it. hostExact additionally needs the
+    // command's own exactness evidence: an actual host token with 3+ dotted
+    // labels. The old "only/just" escape was clause-blind -- "close youtube
+    // tabs in this window only" pinned the WINDOW yet still set hostExact,
+    // because "only" anywhere counted as host evidence. "only/just" is
+    // therefore no longer evidence on its own: it can only reinforce a host
+    // the command already names ("docs.google.com tabs only"), and a host
+    // strong enough to justify exactness (3+ labels) proves itself without
+    // the adverb. A bare 2-label host stays brand-family scope downstream.
+    const HOST3_RE = /\b(?:[a-z0-9-]+\.){2,}[a-z0-9-]+/i;
+    if (parsed.scope) {
+      if (parsed.scope.hostExact === true && !HOST3_RE.test(cmd)) {
+        delete parsed.scope.hostExact;
+      }
+      if (parsed.scope.window !== undefined && !/\bwindow/i.test(cmd)) {
+        delete parsed.scope.window;
+      }
+      if (parsed.scope.hostExact === undefined && parsed.scope.window === undefined) {
+        delete parsed.scope;
+      }
+    }
     return parsed;
   }
 
@@ -906,7 +1255,9 @@ Examples:
           options: {
             temperature: Number.isFinite(so.temperature) ? so.temperature : 0,
             seed: Number.isFinite(so.seed) ? so.seed : 42,
-            num_predict: 300
+            // Slot fields lengthen the reply; 300 truncated multi-slot
+            // outputs in testing, leaving validate() to drop the tail.
+            num_predict: 400
           }
         }),
         signal: ctrl.signal
@@ -918,7 +1269,7 @@ Examples:
     }
   }
 
-  const LlmQuery = { parse, decode, reconcile, validate, normalizeCommand, SYSTEM, literalDomains, coverage, JSON_SCHEMA };
+  const LlmQuery = { parse, decode, reconcile, validate, normalizeCommand, SYSTEM, literalDomains, coverage, JSON_SCHEMA, slotsFromCommand, validateSlots };
   if (typeof module !== 'undefined' && module.exports) module.exports = LlmQuery;
   if (typeof self !== 'undefined') self.LlmQuery = LlmQuery;
 })();
