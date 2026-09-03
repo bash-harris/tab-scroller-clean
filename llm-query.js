@@ -379,7 +379,11 @@ Examples:
   const RETAIN_PER = new Set(['domain', 'category', 'group', 'window', 'url']);
   const RETAIN_KEEP = new Set(['oldest', 'newest', 'first', 'last', 'bookmarked', 'pinned']);
   const SCOPE_WINDOWS = new Set(['current', '1', '2', '3', 'all']);
-  const SLOT_KEYS = ['urlShape', 'rank', 'retain', 'dedupe', 'scope', 'anchor', 'answerable'];
+  // carveout is cue-only: the model is never asked for it, validate() never
+  // produces it. It marks a carve-out construction the slot schema cannot
+  // express, forcing the slot interpreter to yield to the legacy pipeline.
+  const SLOT_KEYS = ['urlShape', 'rank', 'retain', 'dedupe', 'scope', 'anchor',
+    'answerable', 'carveout'];
 
   // The model's slot output is untrusted: validate each field against its
   // closed enum and keep only what survives. A single bad field dies alone.
@@ -423,6 +427,7 @@ Examples:
       if (phrase && words.length <= 8 && phrase.length <= 60) out.anchor = { phrase };
     }
     if (typeof r.answerable === 'boolean') out.answerable = r.answerable;
+    if (r.carveout === true) out.carveout = true;
     return out;
   }
 
@@ -471,6 +476,19 @@ Examples:
     // exception token itself flows through exclude[] as before.
     const exclM = s.match(/\b(but not|except|apart from|other than)\b/);
     const scopePart = exclM ? s.slice(0, exclM.index) : s;
+
+    // Carve-out slot: a carve-out construction in the command yields in the
+    // slot interpreter (the selector reads this slot; it runs no regex over
+    // the raw text itself). The vocabulary is deliberately the full marker
+    // set the interpreter used to veto on -- a marker that reduces to a
+    // standard exclude[] clause yields through the interpreter's exclude
+    // guard anyway, while KEEP-shaped survivors ("but keep shorts", "unless
+    // they are pinned") have no slot representation at all. When unsure,
+    // carveout=true is the safe direction: yield lets the legacy pipeline
+    // resolve the semantics.
+    if (/\b(but|except|excluding|unless|apart|other|not|never|without|keep|keeping)\b/i.test(s)) {
+      slots.carveout = true;
+    }
 
     // urlShape.site
     let site = null;

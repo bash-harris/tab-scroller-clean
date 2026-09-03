@@ -453,6 +453,280 @@
     return out;
   }
 
+  // ---- SLOT INTERPRETER (gauntlet-v2 R2) ------------------------------------
+  //
+  // Consumes the parser's slot schema v2 (query.urlShape/rank/retain/dedupe/
+  // scope/anchor/answerable). Where the slots fully own the command semantics,
+  // selection is a deterministic predicate over the pool -- entailment is
+  // neither needed nor safe (a site family is a set-membership fact, not a
+  // similarity). COMPOSITION CONTRACT: the interpreter is a Guest, never a
+  // replacement -- it yields to the legacy pipeline unless EVERY guard holds:
+  //   - concepts[] nonempty is allowed only when every concept token is slot
+  //     vocabulary (site/section/rank words); a real topic word yields.
+  //   - any exclude[] entry, or the parser's carveout slot (carve-out
+  //     constructions the slot schema cannot express), yields.
+  //   - q.domains nonempty yields (the domain fast path owns those commands).
+  //   - scope.window never selects alone; dedupe/retain need a limiter.
+  //   - rank.relevance and section 'search' skip (ambiguous).
+  //   - the site leg never fires on an empty or >= 30% of the pool set.
+  // Missing slots -> the interpreter is never reached -> byte-identical legacy.
+  const SLOT_KEYS = ['urlShape', 'rank', 'retain', 'dedupe', 'scope', 'anchor',
+    'answerable', 'carveout'];
+  const SLOT_SITE_FAMILIES = {
+    youtube: ['youtube.com', 'youtu.be'],
+    github: ['github.com'],
+    leetcode: ['leetcode.com'],
+    amazon: ['amazon.com', 'amazon.in', 'amazon.co.uk', 'amazon.de', 'amazon.co.jp',
+      'amazon.ca', 'amazon.es', 'amazon.it', 'amazon.fr', 'amazon.com.au'],
+    'google-docs': ['docs.google.com', 'drive.google.com'],
+    reddit: ['reddit.com', 'redd.it'],
+    wikipedia: ['wikipedia.org'],
+    arxiv: ['arxiv.org']
+  };
+  const SLOT_SECTION_RES = {
+    watch: /\/watch/, shorts: /\/shorts/, channel: /\/@/, pull: /\/pull/,
+    issue: /\/issues?\//, blob: /\/blob/, tree: /\/tree/,
+    discuss: /\/discuss|\/t\//, contest: /\/contest/, product: /\/dp/,
+    cart: /\/cart(?=$|[/?#])/,
+    'tag-page': /\/tags?\//, user: /\/user\//
+  };
+  // Slot vocabulary a concept token may consist of without yielding.
+  const SLOT_SITE_WORDS = {
+    youtube: ['youtube'], github: ['github'], leetcode: ['leetcode'],
+    amazon: ['amazon'], 'google-docs': ['google', 'docs', 'drive'],
+    reddit: ['reddit'], wikipedia: ['wikipedia'], arxiv: ['arxiv']
+  };
+  const SLOT_SECTION_WORDS = {
+    watch: ['watch', 'video', 'videos'], shorts: ['shorts'], channel: ['channel'],
+    pull: ['pull', 'request', 'requests'], issue: ['issue', 'issues'], blob: ['blob'],
+    tree: ['tree', 'browse'], discuss: ['discuss', 'discussion'], contest: ['contest'],
+    product: ['product', 'products'], cart: ['cart'], 'tag-page': ['tag', 'tags'], user: ['user', 'users']
+  };
+  const SLOT_RANK_WORDS = ['first', 'last', 'newest', 'oldest', 'most', 'recently',
+    'recent', 'used', 'use', 'top', 'next', 'previous', 'one', 'two', 'three', 'four',
+    'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+  const SLOT_STOP = new Set(['my', 'i', 'you', 'the', 'a', 'an', 'all', 'and', 'or', 'of',
+    'in', 'on', 'for', 'to', 'from', 'that', 'which', 'who', 'are', 'is', 'was', 'be',
+    'been', 'have', 'has', 'do', 'does', 'with', 'about', 'not', 'keep', 'but', 'except',
+    'than', 'then', 'them', 'they', 'it', 'its', 'their', 'this', 'these', 'those',
+    'tab', 'tabs', 'page', 'pages', 'close', 'group', 'mute', 'unmute', 'pin', 'unpin',
+    'bookmark', 'save', 'find', 'switch', 'open', 'sort', 'show', 'focus', 'reveal',
+    'highlight', 'reload', 'organize', 'organise', 'collect', 'gather', 'closing',
+    'grouping', 'bookmarking', 'saving', 'pinning', 's', 'every', 'each', 'both',
+    'either', 'neither', 'also', 'any']);
+  function slotHostOf(url) {
+    try { return new URL(url).hostname.toLowerCase(); } catch { return ''; }
+  }
+  function slotInFamily(c, site) {
+    const h = slotHostOf(c.url || c.domain || '');
+    return (SLOT_SITE_FAMILIES[site] || []).some(fam => h === fam || h.endsWith('.' + fam));
+  }
+  function slotInSection(c, section) {
+    const p = urlPathOf(c);
+    if (!p) return false;
+    const re = SLOT_SECTION_RES[section];
+    // Unmapped enum value: never crash, never match. The parser's section
+    // enum may grow ahead of this table (measured: 'cart' crashed here).
+    return re ? re.test(p) : false;
+  }
+  function slotRankCut(set, rank) {
+    let ranked;
+    if (rank.by === 'position') {
+      ranked = set.map((c, i) => ({ c, k: c.index != null ? c.index : i })).sort((a, b) => a.k - b.k);
+      if (rank.order === 'desc' || rank.from === 'end') ranked.reverse();
+    } else {
+      ranked = set.map(c => ({ c, k: rank.by === 'opened' ? tsOf(c.openedAt) : tsOf(c.lastAccessed) }))
+        .sort((a, b) => ((Number.isFinite(a.k) ? a.k : 0) - (Number.isFinite(b.k) ? b.k : 0)));
+      if (rank.order === 'desc') ranked.reverse();
+    }
+    return ranked.slice(0, rank.n).map(r => r.c);
+  }
+
+  /**
+   * Execute slot-bearing commands deterministically. Returns a final result
+   * object, or null to yield to the legacy pipeline. Reads ONLY the slots and
+   * the existing normalized query fields (concepts/domains) plus the pool --
+   * zero regex over the raw command: carve-out detection is the parser's
+   * carveout slot (llm-query.js slotsFromCommand).
+   */
+  function slotInterpret(candidates, q, exclude, S, meta) {
+    if (S.answerable === false) {
+      return { decision: 'final', mode: 'unanswerable', matches: [], needDetails: [] };
+    }
+    if (exclude.length || S.carveout === true) return null;
+    if (Array.isArray(q.domains) && q.domains.length) return null;
+    if ((S.urlShape || {}).section === 'search') return null; // site-search vs results-page ambiguity
+
+    const shape = S.urlShape || null;
+    const site = (shape && shape.site) || null;
+    const section = (shape && shape.section) || null;
+    const rank = S.rank || null;
+    const retain = S.retain || null;
+    const dedupe = S.dedupe || null;
+    const scope = S.scope || null;
+    const anchor = S.anchor || null;
+    const secActive = !!section && section !== 'search'; // search: site-search vs results ambiguity
+
+    // Concept-coverage gate: every concept token must be slot vocabulary. One
+    // residual token may survive as a URL-path refinement (rank legs only).
+    const covered = new Set(SLOT_STOP);
+    if (site) for (const w of SLOT_SITE_WORDS[site] || []) covered.add(w);
+    if (section) for (const w of SLOT_SECTION_WORDS[section] || []) covered.add(w);
+    if (rank) for (const w of SLOT_RANK_WORDS) covered.add(w);
+    if (dedupe) ['duplicate', 'duplicates', 'copy', 'copies'].forEach(w => covered.add(w));
+    if (anchor && !site && !rank && !retain && !dedupe) covered.add('related', 'similar');
+    const extras = [];
+    for (const cpt of q.concepts || []) {
+      for (const t of String(cpt).toLowerCase().split(/[^a-z0-9]+/)) {
+        if (t.length >= 2 && !covered.has(t)) extras.push(t);
+      }
+    }
+    if (extras.length > 1) return null;
+
+    const slotOut = (set, mode) => ({
+      decision: 'final', mode, needDetails: [],
+      matches: set.map(c => ({ tabId: c.tabId, reason: mode, confidence: 1.0 }))
+    });
+
+    // SITE/SECTION LEG -- family membership (+ optional path section), with an
+    // optional rank cut composed on top and at most one URL-path refinement
+    // token from the concepts ("leetcode problem" -> /problems/ URLs).
+    if ((site || secActive) && !anchor && !retain && !dedupe) {
+      let set = candidates.filter(c => (!site || slotInFamily(c, site)) && (!secActive || slotInSection(c, section)));
+      if (rank && rank.by && rank.n && rank.by !== 'relevance') {
+        if (extras.length === 1) {
+          if (!candidates.some(c => String(c.url || '').toLowerCase().includes(extras[0]))) return null;
+          set = set.filter(c => String(c.url || '').toLowerCase().includes(extras[0]));
+        }
+        if (!set.length) return null;
+        const out = slotRankCut(set, rank);
+        if (out.length / candidates.length >= 0.30) return null;
+        return slotOut(out, `slot urlShape ${site || ''}${section ? '/' + section : ''} + rank ${rank.by}`);
+      }
+      if (extras.length) return null;
+      if (!set.length || set.length / candidates.length >= 0.30) return null;
+      return slotOut(set, `slot urlShape ${site || ''}${section ? '/' + section : ''}`);
+    }
+
+    // RANK LEG with a window-only scope ("the first five tabs in this window").
+    if (rank && rank.by && rank.n && rank.by !== 'relevance' && !shape && scope &&
+        scope.window !== undefined && !retain && !dedupe && !anchor && !extras.length) {
+      let set = candidates;
+      if (scope.window !== 'all') {
+        const w = scope.window === 'current'
+          ? (meta.currentWindowId != null ? meta.currentWindowId : 1)
+          : Number(scope.window);
+        set = candidates.filter(c => c.windowId === w);
+      }
+      if (!set.length) return null;
+      const out = slotRankCut(set, rank);
+      if (out.length / candidates.length >= 0.30) return null;
+      return slotOut(out, `slot rank ${rank.by} in window ${scope.window}`);
+    }
+
+    // ANCHOR LEG -- "similar to X": resolve the phrase to ONE tab by
+    // distinctive-token identity (every token in the pool, DF <= 5, exactly one
+    // candidate carries them all), then take the anchor's cluster: opener chain
+    // (both directions), same registrable site, and the top-12 cosine neighbors.
+    if (anchor && anchor.phrase && !rank && !retain && !dedupe && !extras.length) {
+      const toks = String(anchor.phrase).toLowerCase().split(/[^a-z0-9]+/)
+        .filter(t => t.length >= 2 &&
+          !['the', 'a', 'an', 'my', 'this', 'that', 'current', 'same', 'other', 'previous', 'one'].includes(t));
+      if (!toks.length) return null;
+      const df = new Map();
+      for (const c of candidates) for (const t of new Set(idTokensOf(c))) df.set(t, (df.get(t) || 0) + 1);
+      if (!toks.every(t => (df.get(stem(t)) || 0) > 0 && (df.get(stem(t)) || 0) <= 5)) return null;
+      const hits = candidates.filter(c => {
+        const s = new Set(idTokensOf(c));
+        return toks.every(t => s.has(stem(t)));
+      });
+      if (hits.length !== 1) return null;
+      const a = hits[0];
+      const aHost = registrable(slotHostOf(a.url || a.domain || ''));
+      const chain = new Set([a.tabId]);
+      let grew = true;
+      while (grew) {
+        grew = false;
+        for (const c of candidates) {
+          if (chain.has(c.tabId)) continue;
+          if ((c.opener != null && chain.has(c.opener)) ||
+              candidates.some(x => x.opener === c.tabId && chain.has(x.tabId))) { chain.add(c.tabId); grew = true; }
+        }
+      }
+      let set = candidates.filter(c => chain.has(c.tabId) ||
+        registrable(slotHostOf(c.url || c.domain || '')) === aHost);
+      if (a.embedding) {
+        const others = candidates.filter(x => x.tabId !== a.tabId && x.embedding);
+        if (others.length) {
+          const cos = (x, y) => { let d = 0; const n = Math.min(x.length, y.length); for (let i = 0; i < n; i++) d += x[i] * y[i]; return d; };
+          const top12 = others.map(x => ({ x, s: cos(x.embedding, a.embedding) }))
+            .sort((p, r) => r.s - p.s).slice(0, 12).map(p => p.x.tabId);
+          set = candidates.filter(c => chain.has(c.tabId) || top12.includes(c.tabId) ||
+            registrable(slotHostOf(c.url || c.domain || '')) === aHost);
+        }
+      }
+      if (site) set = set.filter(c => slotInFamily(c, site));
+      if (!set.length || set.length / candidates.length >= 0.30) return null;
+      return slotOut(set, `slot anchor "${anchor.phrase}"`);
+    }
+
+    // RETAIN LEG -- keep one per domain within a site/section limiter.
+    if (retain && retain.per && shape && !rank && !dedupe && !anchor && !extras.length) {
+      if (retain.per !== 'domain') return null;
+      const set = candidates.filter(c => slotInFamily(c, site) && (!secActive || slotInSection(c, section)));
+      if (!set.length || set.length / candidates.length >= 0.30) return null;
+      const byHost = new Map();
+      for (const c of set) {
+        const h = registrable(slotHostOf(c.url || c.domain || ''));
+        if (!byHost.has(h)) byHost.set(h, []);
+        byHost.get(h).push(c);
+      }
+      const keepers = [];
+      for (const arr of byHost.values()) {
+        arr.sort((x, y) => {
+          if (retain.keep === 'oldest') return tsOf(x.openedAt) - tsOf(y.openedAt) || (x.index ?? 0) - (y.index ?? 0);
+          if (retain.keep === 'newest') return tsOf(y.openedAt) - tsOf(x.openedAt) || (x.index ?? 0) - (y.index ?? 0);
+          if (retain.keep === 'bookmarked') return (y.bookmarked === true) - (x.bookmarked === true);
+          if (retain.keep === 'pinned') return (y.pinned === true) - (x.pinned === true);
+          return (x.index ?? 0) - (y.index ?? 0); // first / last
+        });
+        keepers.push(retain.keep === 'last' ? arr[arr.length - 1] : arr[0]);
+      }
+      if (!keepers.length || keepers.length === set.length) return null;
+      return slotOut(keepers, `slot retain one per domain (${retain.keep})`);
+    }
+
+    // DEDUPE LEG -- canonical near-duplicates within a limiter: all but the
+    // newest of each query-stripped URL group.
+    if (dedupe && (shape || rank) && !retain && !anchor && !extras.length) {
+      let set = candidates;
+      if (shape) {
+        set = candidates.filter(c => slotInFamily(c, site) && (!secActive || slotInSection(c, section)));
+        if (!set.length || set.length / candidates.length >= 0.30) return null;
+      }
+      const canon = u => String(u || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '')
+        .split(/[?#]/)[0].replace(/\/$/, '');
+      const byUrl = new Map();
+      for (const c of set) {
+        const k = canon(c.url);
+        if (!k) continue;
+        if (!byUrl.has(k)) byUrl.set(k, []);
+        byUrl.get(k).push(c);
+      }
+      const dups = [];
+      for (const arr of byUrl.values()) {
+        if (arr.length < 2) continue;
+        arr.sort((x, y) => (tsOf(y.openedAt) || 0) - (tsOf(x.openedAt) || 0) || (x.index ?? 0) - (y.index ?? 0));
+        dups.push(...arr.slice(1));
+      }
+      if (!dups.length) return null;
+      return slotOut(dups, 'slot dedupe canonical duplicates');
+    }
+
+    // scope alone, dedupe alone, retain alone, relevance -- yield.
+    return null;
+  }
+
   // ---- Evidence-identity binding ------------------------------------------
   //
   // WHY: entailment scores a POOLED context (title + host + tags + body). A
@@ -1015,6 +1289,36 @@
       ? q.exclude.map(s => String(s).toLowerCase()).filter(Boolean).slice(0, 4)
       : [];
     const domains = Array.isArray(q.domains) ? q.domains : (det.domains || []);
+
+    // SLOT INTERPRETER (early exit): when the parse carries slot schema v2 and
+    // every composition guard holds, the slots fully own the command and a
+    // deterministic pool predicate answers it -- entailment cannot even see a
+    // host family or a /shorts/ path segment. Missing slots -> the call below
+    // returns null before touching anything -> byte-identical legacy behavior.
+    // On the deterministic floor path (no query object at all) the parser's own
+    // cue extractor is the slot source, mirroring what reconcile() does for a
+    // fresh model parse; a delivered query without slot keys (stale cache) is
+    // left untouched so cached ceiling parses behave exactly as before.
+    {
+      const _slots = {};
+      for (const _k of SLOT_KEYS) if (q[_k] !== undefined) _slots[_k] = q[_k];
+      if (!Object.keys(_slots).length && !opts.query) {
+        const _LQ = (typeof self !== 'undefined' && self.LlmQuery) ||
+          (typeof require !== 'undefined' ? require('./llm-query.js') : null);
+        if (_LQ && typeof _LQ.slotsFromCommand === 'function' && typeof _LQ.validateSlots === 'function') {
+          try {
+            const _cue = _LQ.validateSlots(_LQ.slotsFromCommand(cmdStr));
+            if (_cue && Object.keys(_cue).length) Object.assign(_slots, _cue);
+          } catch { /* cue extraction is best-effort; legacy still answers */ }
+        }
+      }
+      if (Object.keys(_slots).length) {
+        const _slotRes = slotInterpret(candidates, q, exclude, _slots,
+          (opts && opts.meta) || {});
+        if (_slotRes) return _slotRes;
+      }
+    }
+
     // State/time qualifiers: model claim must be cue-backed, cue without model
     // claim is rescued deterministically (see rescueState/rescueTime).
     const stateQ = rescueState(cmdStr, q);
