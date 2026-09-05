@@ -29,3 +29,8 @@ bench/.llm-real-cache.json
 bench/.llm-real-cache.json
 
 tests/e2e/.chrome-profile*
+
+bench/.real-v1-critic-*.js
+bench/.r6-probe.js
+bench/.v2r2-probe.js
+tests/progress.test.js
