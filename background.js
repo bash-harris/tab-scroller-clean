@@ -50,6 +50,91 @@ const pendingPlans = new Map();
 // Entries live only between CLARIFY_NEEDED and CLARIFY_CHOSEN (5 min TTL),
 // which is what guarantees a command can never clarify twice.
 const pendingClarifies = new Map();
+
+// --- MV3 SW resilience: pending plans / clarifies survive service-worker
+// idle death. The in-memory Maps evaporate after ~30s without events, which
+// made a confirmed preview fail with 'Plan expired'. Every write goes
+// through to chrome.storage.session (keys 'plan_<id>' / 'clarify_<id>',
+// createdAt-stamped); a Map miss at read time lazy-hydrates from storage.
+// TTL is 10 minutes, enforced at read; expiry deletes the stored row.
+const PENDING_TTL_MS = 10 * 60 * 1000;
+const PENDING_PLAN_PREFIX = 'plan_';
+const PENDING_CLARIFY_PREFIX = 'clarify_';
+
+async function persistPendingPlan(planId, value) {
+  pendingPlans.set(planId, value);
+  try {
+    await chrome.storage.session.set({ [PENDING_PLAN_PREFIX + planId]: { ...value, createdAt: Date.now() } });
+  } catch (e) { /* storage unavailable (plain-node test harness) */ }
+}
+
+async function persistPendingClarify(clarifyId, value) {
+  pendingClarifies.set(clarifyId, value);
+  try {
+    await chrome.storage.session.set({ [PENDING_CLARIFY_PREFIX + clarifyId]: { ...value, createdAt: Date.now() } });
+  } catch (e) { /* storage unavailable */ }
+}
+
+async function getPendingPlan(planId) {
+  if (pendingPlans.has(planId)) return pendingPlans.get(planId);
+  try {
+    const key = PENDING_PLAN_PREFIX + planId;
+    const items = await chrome.storage.session.get(key);
+    const row = items && items[key];
+    if (row && row.createdAt && Date.now() - row.createdAt <= PENDING_TTL_MS) {
+      pendingPlans.set(planId, row);
+      return row;
+    }
+    if (row) await chrome.storage.session.remove(key);
+  } catch (e) { /* storage unavailable */ }
+  return undefined;
+}
+
+async function getPendingClarify(clarifyId) {
+  if (pendingClarifies.has(clarifyId)) return pendingClarifies.get(clarifyId);
+  try {
+    const key = PENDING_CLARIFY_PREFIX + clarifyId;
+    const items = await chrome.storage.session.get(key);
+    const row = items && items[key];
+    if (row && row.createdAt && Date.now() - row.createdAt <= PENDING_TTL_MS) {
+      pendingClarifies.set(clarifyId, row);
+      return row;
+    }
+    if (row) await chrome.storage.session.remove(key);
+  } catch (e) { /* storage unavailable */ }
+  return undefined;
+}
+
+function deletePendingPlan(planId) {
+  pendingPlans.delete(planId);
+  try { chrome.storage.session.remove(PENDING_PLAN_PREFIX + planId); } catch (e) { /* storage unavailable */ }
+}
+
+function deletePendingClarify(clarifyId) {
+  pendingClarifies.delete(clarifyId);
+  try { chrome.storage.session.remove(PENDING_CLARIFY_PREFIX + clarifyId); } catch (e) { /* storage unavailable */ }
+}
+
+// tabLastActive evaporates with the SW too; hydrate it once from the live
+// tabs' lastAccessed (which persists across restarts). Live onActivated /
+// onRemoved updates still keep it fresh afterwards.
+let tabLastActiveHydrated = false;
+function ensureTabLastActive(force) {
+  if (tabLastActiveHydrated && !force) return;
+  tabLastActiveHydrated = true;
+  (async () => {
+    try {
+      const allTabs = await chrome.tabs.query({});
+      const now = Date.now();
+      for (const t of allTabs) {
+        if (!tabLastActive.has(t.id)) {
+          tabLastActive.set(t.id, t.lastAccessed || now);
+        }
+      }
+    } catch (e) { /* tabs API unavailable */ }
+  })();
+}
+
 const GROUP_COLORS = ['grey', 'blue', 'red', 'yellow', 'green', 'pink', 'purple', 'cyan', 'orange'];
 
 const thumbnailCache = new Map(); // tabId -> dataUrl
@@ -770,6 +855,33 @@ function generateTxId() {
 const transactionLog = {
   _history: [],
   _maxHistory: 50,
+  _hydrated: false,
+
+  // R5: undo history is written through to storage on every record, but
+  // nothing ever read it back — after an SW restart undo() said 'Nothing to
+  // undo'. First access after wake lazy-hydrates from
+  // chrome.storage.local 'transactionHistory', dedupes by tx id, sorts by
+  // timestamp (in-memory entries win on id conflicts).
+  ensureHistory() {
+    if (this._hydrated) return Promise.resolve(this._history);
+    this._hydrated = true;
+    return (async () => {
+      try {
+        const items = await chrome.storage.local.get({ transactionHistory: [] });
+        const stored = Array.isArray(items.transactionHistory) ? items.transactionHistory : [];
+        const seen = new Set();
+        const merged = [];
+        for (const tx of [...stored, ...this._history]) {
+          if (!tx || !tx.txId || seen.has(tx.txId)) continue;
+          seen.add(tx.txId);
+          merged.push(tx);
+        }
+        merged.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        this._history = merged.slice(-this._maxHistory);
+      } catch (e) { /* storage unavailable — in-memory history stays */ }
+      return this._history;
+    })();
+  },
 
   record(action, affectedTabIds, beforeState = {}) {
     const tx = {
@@ -783,18 +895,25 @@ const transactionLog = {
     if (this._history.length > this._maxHistory) {
       this._history.shift();
     }
-    chrome.storage.local.set({ transactionHistory: this._history.slice(-20) });
+    // Write-through runs after hydration so an early record() can never
+    // clobber stored history with a pre-hydration in-memory slice.
+    this.ensureHistory().then(() => {
+      try { chrome.storage.local.set({ transactionHistory: this._history.slice(-20) }); } catch (e) { /* storage unavailable */ }
+    });
     console.log(`[TX] Recorded: ${action} on ${affectedTabIds.length} tabs (${tx.txId})`);
     return tx;
   },
 
   getLastTransaction() {
+    this.ensureHistory().catch(() => { });
     return this._history.length > 0 ? this._history[this._history.length - 1] : null;
   },
 
   async undo() {
+    await this.ensureHistory();
     const tx = this._history.pop();
     if (!tx) return { success: false, message: 'Nothing to undo' };
+    try { chrome.storage.local.set({ transactionHistory: this._history.slice(-20) }); } catch (e) { /* storage unavailable */ }
 
     console.log(`[TX] Undoing: ${tx.action} (${tx.txId})`);
 
@@ -3336,11 +3455,16 @@ async function assignMultiGroupsCore({ windowId, buckets, restrict, senderTabId,
     const unassigned = Array.isArray(assignment.unassigned) ? assignment.unassigned.slice() : [];
     const planId = 'mg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
 
-    pendingPlans.set(planId, {
+    // R5: same URL-hash fingerprints as flat/chained previews so the mg
+    // confirm can revalidate tabs before grouping them.
+    const mgFingerprints = await capturePlanFingerprints([...assignedTabIds]);
+    await persistPendingPlan(planId, {
       intent: 'group_multi',
       buckets: activeBuckets,
       allTabIds: Array.from(assignedTabIds),
-      expiresAt: Date.now() + 5 * 60 * 1000
+      urlHash: mgFingerprints.urlHash,
+      titles: mgFingerprints.titles,
+      expiresAt: Date.now() + PENDING_TTL_MS
     });
 
     const tabDetails = {};
@@ -3404,6 +3528,47 @@ const CHAIN_STEP_VERBS = {
   pin_tabs: 'Pin', unpin_tabs: 'Unpin', mute_tabs: 'Mute', unmute_tabs: 'Unmute',
   reload_tabs: 'Reload', sort_tabs: 'Sort',
 };
+
+// R5 URL-hash revalidation: a previewed tab whose URL changed between plan
+// creation and confirm must NOT be acted on blindly. Uses the SAME hash pair
+// as card identity (self.sha256(self.normalizeUrl(url)) — the tabCards store
+// key). If a tab cannot be hashed there is no baseline and the plan runs
+// unvalidated (fail-open, pre-R5 behaviour).
+async function capturePlanFingerprints(ids) {
+  const urlHash = {};
+  const titles = {};
+  for (const id of ids) {
+    try {
+      const t = await chrome.tabs.get(id);
+      if (!t) continue;
+      titles[id] = t.title || 'Untitled';
+      if (typeof self.sha256 === 'function' && typeof self.normalizeUrl === 'function') {
+        urlHash[id] = await self.sha256(self.normalizeUrl(t.url));
+      }
+    } catch (e) { /* tab closed between planning and confirm */ }
+  }
+  return { urlHash, titles };
+}
+
+// Revalidate ONE confirmed tab against its plan-time URL hash.
+// Returns { fresh: true } or { fresh: false, changed: {id, from, to} }.
+// missing baseline / unhashable url / hash-infra unavailable -> fresh (fail-open).
+async function checkPlanTabFreshness(pending, id, tab) {
+  const expected = pending.urlHash ? pending.urlHash[id] : undefined;
+  if (!expected) return { fresh: true };
+  if (typeof self.sha256 !== 'function' || typeof self.normalizeUrl !== 'function') return { fresh: true };
+  let current = null;
+  try { current = await self.sha256(self.normalizeUrl(tab.url)); } catch (e) { /* cannot hash -> fail-open */ }
+  if (!current || current === expected) return { fresh: true };
+  return {
+    fresh: false,
+    changed: {
+      id,
+      from: (pending.titles && pending.titles[id]) || tab.title || 'Untitled',
+      to: tab.title || 'Untitled'
+    }
+  };
+}
 
 // =====================================================
 // CHAINED-PLAN EXECUTION (tool-call schema v3)
@@ -3504,11 +3669,15 @@ async function deliverCommandPlan(plan, { command, windowId, senderTabId, sendRe
   // toolForIntent (which would fall back to group_tabs over the union).
   if (plan.chained && Array.isArray(plan.steps) && plan.steps.length > 1) {
     const planId = generateTxId();
-    pendingPlans.set(planId, {
+    const chainedTabIds = [...plan.tabIds, ...(plan.uncertain || [])];
+    const fingerprints = await capturePlanFingerprints(chainedTabIds);
+    await persistPendingPlan(planId, {
       chained: true,
       intent: plan.intent,
       command,
-      tabIds: [...plan.tabIds, ...(plan.uncertain || [])],
+      tabIds: chainedTabIds,
+      urlHash: fingerprints.urlHash,
+      titles: fingerprints.titles,
       // Per-step selections frozen at planning time; EXECUTE_PLAN intersects
       // each with the user's checked subset before executing.
       steps: plan.steps.map(s => ({
@@ -3517,7 +3686,7 @@ async function deliverCommandPlan(plan, { command, windowId, senderTabId, sendRe
         params: { ...(s.params || {}) },
         carry: s.carry === true,
       })),
-      expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes TTL
+      expiresAt: Date.now() + PENDING_TTL_MS
     });
 
     if (senderTabId) {
@@ -3593,13 +3762,17 @@ async function deliverCommandPlan(plan, { command, windowId, senderTabId, sendRe
 
   if (needPreview && senderTabId) {
     const planId = generateTxId();
-    pendingPlans.set(planId, {
-      tabIds: [...plan.tabIds, ...plan.uncertain],
+    const flatTabIds = [...plan.tabIds, ...plan.uncertain];
+    const fingerprints = await capturePlanFingerprints(flatTabIds);
+    await persistPendingPlan(planId, {
+      tabIds: flatTabIds,
       intent: plan.intent,
       command,
       groupName: plan.groupName || null,
       actionParams: plan.action_params || {},
-      expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes TTL
+      urlHash: fingerprints.urlHash,
+      titles: fingerprints.titles,
+      expiresAt: Date.now() + PENDING_TTL_MS
     });
 
     const tabDetails = {};
@@ -3661,6 +3834,39 @@ async function deliverCommandPlan(plan, { command, windowId, senderTabId, sendRe
   sendResponse(result);
 }
 
+// R5 sender decoupling: popup/sidepanel/options send messages with no
+// sender.tab (they crashed 'Tab context required' rejections or
+// sender.tab.windowId TypeErrors). A sender.url under 'chrome-extension://'
+// is a trusted extension surface — content scripts always carry the page
+// URL — so its window comes from msg.windowId or the last focused window.
+// Content scripts keep the tab-context requirement: that boundary stands.
+function isExtensionSurfaceSender(sender) {
+  return typeof sender.url === 'string' && sender.url.startsWith('chrome-extension://');
+}
+
+// Sync variant for case bodies that cannot await. chrome.windows
+// .WINDOW_ID_CURRENT resolves to the last focused window inside the
+// tabs/windows query APIs, which is the right default for an extension
+// surface that did not name a window.
+function senderWindowIdSync(sender, msg) {
+  if (sender.tab && typeof sender.tab.windowId === 'number') return sender.tab.windowId;
+  if (isExtensionSurfaceSender(sender) && msg && typeof msg.windowId === 'number') return msg.windowId;
+  return chrome.windows.WINDOW_ID_CURRENT;
+}
+
+// Async variant where the case body already runs inside an async context.
+async function resolveSenderWindowId(sender, msg) {
+  if (sender.tab && typeof sender.tab.windowId === 'number') return sender.tab.windowId;
+  if (isExtensionSurfaceSender(sender)) {
+    if (msg && typeof msg.windowId === 'number') return msg.windowId;
+    try {
+      const win = await chrome.windows.getLastFocused();
+      if (win && typeof win.id === 'number') return win.id;
+    } catch (e) { /* fall through to WINDOW_ID_CURRENT */ }
+  }
+  return chrome.windows.WINDOW_ID_CURRENT;
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   // S8: Message sender validation
   if (sender.id !== chrome.runtime.id) {
@@ -3668,15 +3874,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return false;
   }
 
-  // S8: Tab-scoped operations check
+  // S8: Tab-scoped operations check. Extension surfaces (popup, sidepanel,
+  // options, welcome) send from chrome-extension:// origins with no
+  // sender.tab — they are trusted and resolve their window via
+  // senderWindowIdSync/resolveSenderWindowId. Content-script senders still
+  // require tab context (security boundary preserved).
   const tabScopedTypes = [
     "AI_COMMAND", "EXECUTE_CONFIRMED_TOOL_CALL", "GET_TABS",
     "CLOSE_OTHER_TABS", "CLOSE_TABS_RIGHT", "AUTO_GROUP",
     "AI_SEARCH", "AI_SMART_GROUP", "SHIELD_ACTIVATE",
     "AI_DECLUTTER", "AI_EXTRACT", "AI_WORKSPACE", "INDEX_PAGE",
-    "AI_MULTIGROUP_ASSIGN"
+    "AI_MULTIGROUP_ASSIGN", "EXECUTE_PLAN"
   ];
-  if (tabScopedTypes.includes(msg.type) && !sender.tab) {
+  if (tabScopedTypes.includes(msg.type) && !sender.tab && !isExtensionSurfaceSender(sender)) {
     console.warn(`[Security] Tab context missing for tab-scoped message: ${msg.type}`);
     sendResponse({ success: false, message: "Tab context required" });
     return false;
@@ -3732,7 +3942,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
 
     case "AI_COMMAND": {
-      const windowId = sender.tab.windowId;
+      const windowId = senderWindowIdSync(sender, msg);
       const commandKey = `${windowId}-${msg.command}`;
       if (activeAiCommands.has(commandKey)) {
         console.warn('[AI_COMMAND] Duplicate request ignored:', commandKey);
@@ -3744,7 +3954,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       // Route pipeline progress back to the tab that asked. Registered here
       // because this is the only place the sender is known; the pipeline itself
       // has no idea which tab is waiting on it.
-      if (typeof self.setProgressTarget === 'function') {
+      if (typeof self.setProgressTarget === 'function' && sender.tab && sender.tab.id) {
         self.setProgressTarget(sender.tab.id);
       }
 
@@ -3783,9 +3993,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           // per sender at a time caps the loop at one round.
           if (plan && plan.clarify && Array.isArray(plan.clarify.options) && plan.clarify.options.length) {
             const clarifyId = generateTxId();
-            pendingClarifies.set(clarifyId, {
+            await persistPendingClarify(clarifyId, {
               options: plan.clarify.options,
-              expiresAt: Date.now() + 5 * 60 * 1000
+              expiresAt: Date.now() + PENDING_TTL_MS
             });
             if (sender.tab && sender.tab.id) {
               chrome.tabs.sendMessage(sender.tab.id, {
@@ -3841,56 +4051,67 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       // the SAME delivery path as any other plan (preview for destructive /
       // >=3 matches, execute otherwise) — selection is never re-run and the
       // clarify gate never re-fires, so one command clarifies at most once.
-      const pending = pendingClarifies.get(msg.clarifyId);
-      if (!pending) {
-        sendResponse({ success: false, message: "Clarification expired. Please send the command again." });
-        return false;
-      }
-      pendingClarifies.delete(msg.clarifyId);
-      if (Date.now() > pending.expiresAt) {
-        sendResponse({ success: false, message: "Clarification expired. Please send the command again." });
-        return false;
-      }
-      const idx = Number(msg.optionIndex);
-      const option = Array.isArray(pending.options) && Number.isInteger(idx) && pending.options[idx] ? pending.options[idx] : null;
-      if (!option || !option.plan) {
-        sendResponse({ success: false, message: "Invalid clarification choice" });
-        return false;
-      }
-      const chosenPlan = option.plan;
-      delete chosenPlan.clarify;
-      const winId2 = sender.tab ? sender.tab.windowId : chrome.windows.WINDOW_ID_CURRENT;
-      deliverCommandPlan(chosenPlan, {
-        command: typeof msg.command === 'string' ? msg.command : undefined,
-        windowId: winId2,
-        senderTabId: sender.tab ? sender.tab.id : null,
-        sendResponse
-      }).catch(error => {
-        console.error('[CLARIFY_CHOSEN] delivery failed:', error);
-        sendResponse({ success: false, message: error.message || "Command failed" });
-      });
+      (async () => {
+        const pending = await getPendingClarify(msg.clarifyId);
+        if (!pending) {
+          sendResponse({ success: false, message: "Clarification expired. Please send the command again." });
+          return;
+        }
+        deletePendingClarify(msg.clarifyId);
+        if (Date.now() > pending.expiresAt) {
+          sendResponse({ success: false, message: "Clarification expired. Please send the command again." });
+          return;
+        }
+        const idx = Number(msg.optionIndex);
+        const option = Array.isArray(pending.options) && Number.isInteger(idx) && pending.options[idx] ? pending.options[idx] : null;
+        if (!option || !option.plan) {
+          sendResponse({ success: false, message: "Invalid clarification choice" });
+          return;
+        }
+        const chosenPlan = option.plan;
+        delete chosenPlan.clarify;
+        const winId2 = sender.tab ? sender.tab.windowId : await resolveSenderWindowId(sender, msg);
+        deliverCommandPlan(chosenPlan, {
+          command: typeof msg.command === 'string' ? msg.command : undefined,
+          windowId: winId2,
+          senderTabId: sender.tab ? sender.tab.id : null,
+          sendResponse
+        }).catch(error => {
+          console.error('[CLARIFY_CHOSEN] delivery failed:', error);
+          sendResponse({ success: false, message: error.message || "Command failed" });
+        });
+      })();
       return true;
     }
 
-    case "EXECUTE_PLAN": {      const windowId = sender.tab.windowId;
-      const { planId, checkedTabIds } = msg;
+    case "EXECUTE_PLAN": {
+      (async () => {
+        const windowId = await resolveSenderWindowId(sender, msg);
+        const { planId, checkedTabIds } = msg;
 
-      const pending = pendingPlans.get(planId);
-      if (!pending) {
-        sendResponse({ success: false, message: "Plan expired or invalid. Please try again." });
-        return false;
-      }
-      
-      if (Date.now() > pending.expiresAt) {
-        pendingPlans.delete(planId);
-        sendResponse({ success: false, message: "Plan expired. Please try again." });
-        return false;
-      }
+        const pending = await getPendingPlan(planId);
+        if (!pending) {
+          sendResponse({ success: false, message: "Plan expired or invalid. Please try again." });
+          return;
+        }
 
-      // Branch for Multi-Group Assign plan
-      if (pending.intent === 'group_multi') {
-        const userBuckets = msg.buckets || pending.buckets || [];
-        (async () => {
+        if (Date.now() > pending.expiresAt) {
+          deletePendingPlan(planId);
+          sendResponse({ success: false, message: "Plan expired. Please try again." });
+          return;
+        }
+
+        // R5: URL-hash revalidation shared by the flat and chained branches.
+        // A tab whose URL changed since the preview is HELD BACK and reported
+        // (changedTabs), a closed one is DROPPED and counted in the message.
+        const candidates = (checkedTabIds || []).length;
+        const changedTabs = [];
+        let heldBack = 0;
+        let missing = 0;
+
+        // Branch for Multi-Group Assign plan
+        if (pending.intent === 'group_multi') {
+          const userBuckets = msg.buckets || pending.buckets || [];
           try {
             const allOriginalIds = new Set(pending.allTabIds || []);
             const allGroupedIds = [];
@@ -3906,8 +4127,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                 }
                 try {
                   const tab = await chrome.tabs.get(id);
-                  if (tab && tab.windowId === windowId) validIds.push(id);
-                } catch (e) { /* closed */ }
+                  if (tab && tab.windowId === windowId) {
+                    const verdict = await checkPlanTabFreshness(pending, id, tab);
+                    if (verdict.fresh) validIds.push(id);
+                    else { heldBack++; if (verdict.changed) changedTabs.push(verdict.changed); }
+                  } else {
+                    missing++;
+                  }
+                } catch (e) { missing++; }
               }
               if (validIds.length >= 2) {
                 // Whitelist the preview-supplied colour against the known palette;
@@ -3949,32 +4176,36 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
               }).catch(() => {});
             }
 
+            let mgMessage = createdCount > 0
+              ? `Created ${createdCount} tab groups (${totalGrouped} tabs organized)`
+              : "No tab groups were created (each group requires at least 2 tabs).";
+            if (heldBack + missing > 0) {
+              mgMessage = `${heldBack + missing} of ${candidates} tabs changed since preview — the rest executed; ${mgMessage}`;
+            }
             sendResponse({
               success: createdCount > 0,
-              message: createdCount > 0
-                ? `Created ${createdCount} tab groups (${totalGrouped} tabs organized)`
-                : "No tab groups were created (each group requires at least 2 tabs)."
+              ...(changedTabs.length > 0 ? { changedTabs } : {}),
+              message: mgMessage
             });
           } catch (err) {
             sendResponse({ success: false, message: err.message });
           } finally {
-            pendingPlans.delete(planId);
+            deletePendingPlan(planId);
           }
-        })();
-        return true;
-      }
+          return;
+        }
 
-      // Branch for chained (tool-call schema v3) plans: the confirm carries
-      // the union of the steps' selections as checkedTabIds; each step then
-      // executes over its own frozen selection intersected with that subset.
-      // ONE composite transaction (action 'chain') is recorded for the whole
-      // chain -- the group_multi single-record precedent -- so ONE undo
-      // reverses every executed step in reverse order.
-      if (Array.isArray(pending.steps) && pending.steps.length > 1) {
-        (async () => {
+        // Branch for chained (tool-call schema v3) plans: the confirm carries
+        // the union of the steps' selections as checkedTabIds; each step then
+        // executes over its own frozen selection intersected with that subset.
+        // ONE composite transaction (action 'chain') is recorded for the whole
+        // chain -- the group_multi single-record precedent -- so ONE undo
+        // reverses every executed step in reverse order.
+        if (Array.isArray(pending.steps) && pending.steps.length > 1) {
           try {
             // Same security validation as flat plans: only ids present in the
             // original plan, still open, and still in the confirming window.
+            // Plus R5 URL-hash revalidation.
             const validIds = new Set();
             const originalIds = new Set(pending.tabIds);
             for (const id of checkedTabIds || []) {
@@ -3984,12 +4215,26 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
               }
               try {
                 const tab = await chrome.tabs.get(id);
-                if (tab && tab.windowId === windowId) validIds.add(id);
-              } catch (e) { /* tab closed */ }
+                if (tab && tab.windowId === windowId) {
+                  const verdict = await checkPlanTabFreshness(pending, id, tab);
+                  if (verdict.fresh) validIds.add(id);
+                  else { heldBack++; if (verdict.changed) changedTabs.push(verdict.changed); }
+                } else {
+                  missing++;
+                }
+              } catch (e) { missing++; }
             }
 
             if (validIds.size === 0) {
-              sendResponse({ success: false, message: "No valid tabs selected." });
+              if (heldBack + missing > 0) {
+                sendResponse({
+                  success: true,
+                  changedTabs,
+                  message: `${heldBack + missing} of ${candidates} tabs changed since preview — none executed`
+                });
+              } else {
+                sendResponse({ success: false, message: "No valid tabs selected." });
+              }
               return;
             }
 
@@ -4015,6 +4260,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             });
 
             const stepLabels = executed.map(s => (CHAIN_STEP_VERBS[s.intent] || s.intent) + ' ' + s.tabIds.length).join(', ');
+            let message = `Executed ${executed.length} step(s): ${stepLabels}`;
+            if (heldBack + missing > 0) {
+              message = `${heldBack + missing} of ${candidates} tabs changed since preview — the rest executed; ${message}`;
+            }
             if (sender.tab?.id) {
               chrome.tabs.sendMessage(sender.tab.id, {
                 type: 'UNDO_AVAILABLE',
@@ -4026,71 +4275,90 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
             sendResponse({
               success: true,
-              message: `Executed ${executed.length} step(s): ${stepLabels}`
+              ...(changedTabs.length > 0 ? { changedTabs } : {}),
+              message
             });
           } catch (err) {
             sendResponse({ success: false, message: err.message });
           } finally {
-            pendingPlans.delete(planId);
+            deletePendingPlan(planId);
           }
-        })();
-        return true;
-      }
-
-      // Validate Checked Tab IDs for flat single plans
-      const validatedIds = [];
-      const originalIds = new Set(pending.tabIds);
-      
-      (async () => {
-        for (const id of checkedTabIds || []) {
-          if (!originalIds.has(id)) {
-            console.warn('[Security] Checked tab ID not in original plan:', id);
-            continue;
-          }
-          try {
-            const tab = await chrome.tabs.get(id);
-            if (tab && tab.windowId === windowId) {
-              validatedIds.push(id);
-            }
-          } catch (e) {
-            // tab closed
-          }
-        }
-
-        if (validatedIds.length === 0) {
-          sendResponse({ success: false, message: "No valid tabs selected." });
           return;
         }
 
-        try {
-          const routed = toolForIntent(pending.intent);
-          const confirmedCards = await collectCardsForTabs(validatedIds);
-          const ap = pending.actionParams || {};
-          const functionCall = {
-            name: routed.tool,
-            args: {
-              ...routed.args,
-              ...ap,
-              groupName: ap.groupName || deriveGroupName(pending.command || '', confirmedCards, pending.groupName),
-              tabIds: validatedIds
+        // Validate Checked Tab IDs for flat single plans
+        {
+          const validatedIds = [];
+          const originalIds = new Set(pending.tabIds);
+
+          for (const id of checkedTabIds || []) {
+            if (!originalIds.has(id)) {
+              console.warn('[Security] Checked tab ID not in original plan:', id);
+              continue;
             }
-          };
-          const result = await executeToolCall(functionCall, windowId, pending.command || '', validatedIds);
-          
-          if (result.success && sender.tab.id) {
-            chrome.tabs.sendMessage(sender.tab.id, {
-              type: 'UNDO_AVAILABLE',
-              action: pending.intent,
-              count: validatedIds.length,
-              message: result.message
-            }).catch(() => { });
+            try {
+              const tab = await chrome.tabs.get(id);
+              if (tab && tab.windowId === windowId) {
+                const verdict = await checkPlanTabFreshness(pending, id, tab);
+                if (verdict.fresh) validatedIds.push(id);
+                else { heldBack++; if (verdict.changed) changedTabs.push(verdict.changed); }
+              } else {
+                missing++;
+              }
+            } catch (e) {
+              missing++;
+            }
           }
-          
-          sendResponse(result);
-        } catch (err) {
-          sendResponse({ success: false, message: err.message });
-        } finally {
-          pendingPlans.delete(planId);
+
+          if (validatedIds.length === 0) {
+            if (heldBack + missing > 0) {
+              sendResponse({
+                success: true,
+                changedTabs,
+                message: `${heldBack + missing} of ${candidates} tabs changed since preview — none executed`
+              });
+            } else {
+              sendResponse({ success: false, message: "No valid tabs selected." });
+            }
+            return;
+          }
+
+          try {
+            const routed = toolForIntent(pending.intent);
+            const confirmedCards = await collectCardsForTabs(validatedIds);
+            const ap = pending.actionParams || {};
+            const functionCall = {
+              name: routed.tool,
+              args: {
+                ...routed.args,
+                ...ap,
+                confirmation: false,
+                groupName: ap.groupName || deriveGroupName(pending.command || '', confirmedCards, pending.groupName),
+                tabIds: validatedIds
+              }
+            };
+            const result = await executeToolCall(functionCall, windowId, pending.command || '', validatedIds);
+
+            if (heldBack + missing > 0) {
+              result.changedTabs = changedTabs;
+              result.message = `${heldBack + missing} of ${candidates} tabs changed since preview — the rest executed`;
+            }
+
+            if (result.success && sender.tab?.id) {
+              chrome.tabs.sendMessage(sender.tab.id, {
+                type: 'UNDO_AVAILABLE',
+                action: pending.intent,
+                count: validatedIds.length,
+                message: result.message
+              }).catch(() => { });
+            }
+
+            sendResponse(result);
+          } catch (err) {
+            sendResponse({ success: false, message: err.message });
+          } finally {
+            deletePendingPlan(planId);
+          }
         }
       })();
 
@@ -4098,9 +4366,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
 
     case "EXECUTE_CONFIRMED_TOOL_CALL": {
-      const windowId = sender.tab.windowId;
       (async () => {
         try {
+          const windowId = await resolveSenderWindowId(sender, msg);
           const args = { ...msg.functionCall.args, confirmation: false };
           const result = await executeToolCall(
             { ...msg.functionCall, args },
@@ -4115,7 +4383,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
 
     case "GET_TABS": {
-      const windowId = sender.tab.windowId;
+      const windowId = senderWindowIdSync(sender, msg);
       if (tabCache.size === 0) {
         rehydrateAll().then(() => {
           sendResponse({ tabs: tabCache.get(windowId) || [] });
@@ -4180,7 +4448,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
 
     case "CLOSE_OTHER_TABS": {
-      const windowId = sender.tab.windowId;
+      const windowId = senderWindowIdSync(sender, msg);
       chrome.tabs.query({ windowId }, (tabs) => {
         const idsToRemove = tabs.filter(t => t.id !== msg.tabId).map(t => t.id);
         chrome.tabs.remove(idsToRemove);
@@ -4189,7 +4457,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
 
     case "CLOSE_TABS_RIGHT": {
-      const windowId = sender.tab.windowId;
+      const windowId = senderWindowIdSync(sender, msg);
       chrome.tabs.get(msg.tabId, (currentTab) => {
         chrome.tabs.query({ windowId }, (tabs) => {
           const idsToRemove = tabs.filter(t => t.index > currentTab.index).map(t => t.id);
@@ -4205,7 +4473,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
 
     case "AUTO_GROUP": {
-      const windowId = sender.tab.windowId;
+      const windowId = senderWindowIdSync(sender, msg);
       chrome.tabs.query({ windowId }, (tabs) => {
         const hostMap = new Map();
         tabs.forEach(t => {
@@ -4238,7 +4506,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
 
     case "AI_SEARCH": {
-      const windowId = sender.tab.windowId;
+      const windowId = senderWindowIdSync(sender, msg);
       const query = (msg.query || '').trim();
       if (!query) {
         sendResponse({ tabId: null });
@@ -4304,7 +4572,7 @@ Candidates: ${JSON.stringify(compact)}`;
     }
 
     case "AI_SMART_GROUP": {
-      const windowId = sender.tab.windowId;
+      const windowId = senderWindowIdSync(sender, msg);
       chrome.tabs.query({ windowId }, async (tabs) => {
         const settings = await readAiSettings();
         const maxCandidates = Math.max(20, Math.min(200, settings.aiMaxCandidates || 60));
@@ -4392,7 +4660,7 @@ Candidates: ${JSON.stringify(compact)}`;
     }
 
     case "AI_MULTIGROUP_ASSIGN": {
-      const windowId = sender.tab.windowId;
+      const windowId = senderWindowIdSync(sender, msg);
       (async () => {
         const res = await assignMultiGroupsCore({
           windowId,
@@ -4406,7 +4674,7 @@ Candidates: ${JSON.stringify(compact)}`;
     }
 
     case "SHIELD_ACTIVATE": {
-      const windowId = sender.tab.windowId;
+      const windowId = senderWindowIdSync(sender, msg);
       chrome.storage.sync.get({ enableShield: false }, (shieldSettings) => {
         if (!shieldSettings.enableShield) return;
 
@@ -4471,7 +4739,7 @@ Candidates: ${JSON.stringify(compact)}`;
     }
 
     case "AI_DECLUTTER": {
-      const windowId = sender.tab.windowId;
+      const windowId = senderWindowIdSync(sender, msg);
       chrome.tabs.query({ windowId }, async (tabs) => {
         const settings = await readAiSettings();
         const now = Date.now();
@@ -4488,7 +4756,7 @@ Candidates: ${JSON.stringify(compact)}`;
         );
 
         if (inactiveTabs.length === 0) {
-          chrome.tabs.sendMessage(sender.tab.id, { type: 'DECLUTTER_RESULTS', tabIds: [] }).catch(() => { });
+          if (sender.tab?.id) chrome.tabs.sendMessage(sender.tab.id, { type: 'DECLUTTER_RESULTS', tabIds: [] }).catch(() => { });
           return;
         }
 
@@ -4511,7 +4779,7 @@ Candidates: ${JSON.stringify(compact)}`;
           .slice(0, maxCandidates);
 
         if (prefiltered.length === 0) {
-          chrome.tabs.sendMessage(sender.tab.id, { type: 'DECLUTTER_RESULTS', tabIds: [] }).catch(() => { });
+          if (sender.tab?.id) chrome.tabs.sendMessage(sender.tab.id, { type: 'DECLUTTER_RESULTS', tabIds: [] }).catch(() => { });
           return;
         }
 
@@ -4551,10 +4819,12 @@ Candidates: ${JSON.stringify(compact)}`;
           }
         }
 
-        chrome.tabs.sendMessage(sender.tab.id, {
-          type: 'DECLUTTER_RESULTS',
-          tabIds: Array.from(finalIds),
-        }).catch(() => { });
+        if (sender.tab?.id) {
+          chrome.tabs.sendMessage(sender.tab.id, {
+            type: 'DECLUTTER_RESULTS',
+            tabIds: Array.from(finalIds),
+          }).catch(() => { });
+        }
       });
 
       return false;
@@ -4570,7 +4840,7 @@ Candidates: ${JSON.stringify(compact)}`;
     }
 
     case "PURGE_DUPLICATES": {
-      const windowId = sender.tab.windowId;
+      const windowId = senderWindowIdSync(sender, msg);
       const tabs = tabCache.get(windowId) || [];
 
       if (tabs.length === 0) {
@@ -4666,7 +4936,7 @@ Candidates: ${JSON.stringify(compact)}`;
         return false;
       }
 
-      const windowId = sender.tab.windowId;
+      const windowId = senderWindowIdSync(sender, msg);
       console.log('[TabScroller] AI_WORKSPACE started:', query);
 
       chrome.tabs.query({ windowId }, async (currentTabs) => {
@@ -5020,7 +5290,7 @@ Candidates: ${JSON.stringify(compact)}`;
 
         if (result.success) {
           telemetry.log('INFO', 'undo_executed', { message: result.message });
-          const windowId = sender.tab.windowId;
+          const windowId = senderWindowIdSync(sender, msg);
           if (windowId) broadcastUpdate(windowId);
         }
       })();
@@ -5028,7 +5298,7 @@ Candidates: ${JSON.stringify(compact)}`;
     }
 
     case "CLARIFICATION_RESPONSE": {
-      const windowId = sender.tab.windowId;
+      const windowId = senderWindowIdSync(sender, msg);
       (async () => {
         try {
           const { functionCall, selectedOption } = msg;
@@ -5045,7 +5315,7 @@ Candidates: ${JSON.stringify(compact)}`;
           const enhancedFunctionCall = { ...functionCall, args: enhancedArgs };
           const result = await executeToolCall(enhancedFunctionCall, windowId);
 
-          if (result.undoable && sender.tab.id) {
+          if (result.undoable && sender.tab?.id) {
             chrome.tabs.sendMessage(sender.tab.id, {
               type: 'UNDO_AVAILABLE',
               action: functionCall.name,
@@ -5148,7 +5418,7 @@ Candidates: ${JSON.stringify(compact)}`;
 
     // --- RAG indexing ---
     case 'INDEX_PAGE': {
-      indexTabById(sender.tab.id).then(() => {
+      indexTabById(sender.tab?.id).then(() => {
         sendResponse({ success: true });
       }).catch(err => {
         sendResponse({ success: false, message: err.message });
@@ -5855,6 +6125,10 @@ chrome.runtime.onInstalled.addListener(() => {
 
 
 
+// SW wake: backfill tabLastActive from the live tabs' lastAccessed (the Map
+// died with the previous worker instance; lastAccessed survives).
+ensureTabLastActive();
+
 // ---- Test/surface exposure (service-worker globals) ----
 // The chained-plan machinery is driven end-to-end by offline tests; these
 // hooks are inert in the SW itself.
@@ -5862,3 +6136,5 @@ self.deliverCommandPlan = deliverCommandPlan;
 self.executeChainedPlanSteps = executeChainedPlanSteps;
 self.transactionLog = transactionLog;
 self.pendingPlans = pendingPlans;
+self.tabLastActive = tabLastActive;
+self.ensureTabLastActive = ensureTabLastActive;

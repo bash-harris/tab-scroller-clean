@@ -19,6 +19,7 @@ const SUITES = [
   ['clarify',      'V2-3  interpretation clarify loop: lexicon + split test + no-loop'],
   ['agent',        'A6  bounded agent: planner validate + executor set-exact + fallback chain'],
   ['chain-e2e',    'V3  chained plans: background confirm executes steps + ONE composite undo'],
+  ['resilience',   'R5  MV3 resilience: plan persist+hydrate, URL-hash revalidation, undo hydrate, confirm:false, sender decoupling'],
   ['progress',     'NLI progress estimation threshold + UI progress clamping']
 ];
 

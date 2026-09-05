@@ -34,3 +34,7 @@ bench/.real-v1-critic-*.js
 bench/.r6-probe.js
 bench/.v2r2-probe.js
 tests/progress.test.js
+
+# local API credentials - never commit
+bench/.api-env.json
+*.api-env.json

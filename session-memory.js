@@ -299,10 +299,23 @@ const SessionMemoryEngine = (() => {
       activeSession.actions = activeSession.actions.slice(-MAX_ACTIONS_PER_SESSION);
     }
 
-    // Debounced persist (every 10 events or important events)
-    if (activeSession.actions.length % 10 === 0 || type === 'tab_snoozed' || type === 'ai_command') {
-      await persistActiveSession();
-    }
+    // R5: write-through with a short debounce. The MV3 service worker can die
+    // ~30s after its last event, so persisting only on the 10-event /
+    // important-event milestones lost recent activity. Every event now
+    // schedules a persist 2s out; the 60s interval below stays as a backstop.
+    schedulePersistActiveSession();
+  }
+
+  let persistDebounceTimer = null;
+  function schedulePersistActiveSession() {
+    if (!activeSession || !sessionEnabled) return;
+    if (persistDebounceTimer) return;
+    persistDebounceTimer = setTimeout(() => {
+      persistDebounceTimer = null;
+      if (activeSession && sessionEnabled) {
+        persistActiveSession();
+      }
+    }, 2000);
   }
 
   async function updateTabSnippet(tabId, snippet) {
@@ -571,7 +584,8 @@ Write a 2-3 sentence summary of what this browsing session was about. Be specifi
     }
   }
 
-  // Auto-persist every 60 seconds
+  // Auto-persist every 60 seconds (backstop; events also persist via a 2s
+  // debounced write-through, see schedulePersistActiveSession)
   setInterval(() => {
     if (activeSession && sessionEnabled) {
       persistActiveSession();

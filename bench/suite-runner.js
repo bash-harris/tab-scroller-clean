@@ -4,7 +4,7 @@
 // (LLM query parser -> hybrid cosine/NLI) so its numbers are directly
 // comparable with the 112-command v2 benchmark.
 //
-//   node bench/suite-runner.js [--no-llm] [--implemented-only] [--category N]
+//   node bench/suite-runner.js [--no-llm] [--hosted] [--implemented-only] [--category N]
 //
 // Scoring: set-exact, precision, recall, mustNotSelect violations.
 // Two cuts are reported: implemented-only (what v2-style reporting gives) and
@@ -42,12 +42,14 @@ require(path.join(__dirname, '..', 'concept-core.js'));
 const NliSelect = require(path.join(__dirname, '..', 'nli-select.js'));
 const LlmQuery = require(path.join(__dirname, '..', 'llm-query.js'));
 const CommandAgent = require(path.join(__dirname, '..', 'command-agent.js'));
+const callHostedModel = require(path.join(__dirname, 'call-hosted.js'));
 
 const { env } = require('@xenova/transformers');
 env.cacheDir = path.join(__dirname, '.model-cache');
 
 const args = process.argv.slice(2);
 const NO_LLM = args.includes('--no-llm');
+const HOSTED = !NO_LLM && args.includes('--hosted');
 const IMPLEMENTED_ONLY = args.includes('--implemented-only');
 const catArg = args.find(a => a.startsWith('--category'));
 const CAT = catArg ? Number(catArg.split('=')[1]) : null;
@@ -164,6 +166,20 @@ async function callModel(system, prompt, timeout) {
   } finally { clearTimeout(timer); }
 }
 
+// Model identity tag for parse-cache keys: local and hosted parses must never
+// cross-contaminate. Legacy entries (written before tags existed) have no tag
+// and were only ever produced by the local model, so they read as local.
+const HOSTED_MODEL = HOSTED ? callHostedModel.loadApiEnv().model : null;
+const MODEL_TAG = NO_LLM ? null : HOSTED ? `hosted:${HOSTED_MODEL}` : `local:${process.env.QUERY_MODEL || 'qwen2.5:latest'}`;
+const parseQkey = cmd => {
+  const norm = LlmQuery.normalizeCommand(cmd);
+  const tagged = `${MODEL_TAG}|${norm}`;
+  // Legacy entries carry no tag; a local run falls back to the bare key so a
+  // pre-tag cache stays warm. A hosted run NEVER reads legacy entries: a tag
+  // miss goes straight to the model, so local and hosted parses can't mix.
+  return HOSTED ? tagged : (qcache[tagged] !== undefined ? tagged : (qcache[norm] !== undefined ? norm : tagged));
+};
+
 const bucketOf = c => {
   if (c.abstain) return 'abstain';
   if (c.featureGap) return 'featureGap';
@@ -206,7 +222,7 @@ const CAT_NAMES = {
   NliSelect.setEmbedder(embed);
 
   const label = [
-    NO_LLM ? 'deterministic parser' : 'LLM parser + NLI',
+    NO_LLM ? 'deterministic parser' : HOSTED ? `hosted ${HOSTED_MODEL} + NLI` : 'LLM parser + NLI',
     IMPLEMENTED_ONLY ? 'implemented-only' : 'all commands',
     CAT != null ? `category ${CAT}` : 'all categories'
   ].join(' | ');
@@ -239,11 +255,11 @@ const CAT_NAMES = {
   for (const c of CMDS) {
     let query = null;
     if (!NO_LLM) {
-      const key = LlmQuery.normalizeCommand(c.command);
+      const key = parseQkey(c.command);
       if (qcache[key]) { query = qcache[key]; cacheHits++; }
       else {
         const t0 = Date.now();
-        query = await LlmQuery.parse(c.command, { callModel, noCache: true });
+        query = await LlmQuery.parse(c.command, { callModel: HOSTED ? callHostedModel : callModel, noCache: true });
         llmMs += Date.now() - t0;
         cacheMisses++;
         qcache[key] = query;
@@ -399,7 +415,7 @@ const CAT_NAMES = {
     console.log(`cat ${String(cat).padStart(2)} ${CAT_NAMES[cat].padEnd(22)} set-exact ${pct(slot.exact, slot.n).padEnd(18)} violations ${slot.viol}`);
   }
 
-  console.log(`\nllm ${llmMs}ms (${cacheHits} cache hits, ${cacheMisses} fresh) | nli ${nliMs}ms${resultCache && Object.keys(resultCache).length ? ` | result-cache ${Object.keys(resultCache).size} entries, code ${codeHash}` : ''}`);
+  console.log(`\nllm ${llmMs}ms (${cacheHits} cache hits, ${cacheMisses} fresh)${MODEL_TAG ? ` | model ${MODEL_TAG}` : ''} | nli ${nliMs}ms${resultCache && Object.keys(resultCache).length ? ` | result-cache ${Object.keys(resultCache).size} entries, code ${codeHash}` : ''}`);
   console.log(`clarify-fire ${clarifyFired}/${CMDS.length}${CMDS.length ? ` (${(100 * clarifyFired / CMDS.length).toFixed(1)}%)` : ''} | correct-option-present ${clarifyCorrect}/${clarifyFired}${clarifyFired ? ` (${Math.round(100 * clarifyCorrect / clarifyFired)}%)` : ''}`);
   if (clarifyFires.length) {
     for (const f of clarifyFires) {
