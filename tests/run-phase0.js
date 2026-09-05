@@ -17,7 +17,8 @@ const SUITES = [
   ['enrich-math',  'pre-existing  tag/alias math'],
   ['domain-priors','pre-existing  domain priors'],
   ['clarify',      'V2-3  interpretation clarify loop: lexicon + split test + no-loop'],
-  ['agent',        'A6  bounded agent: planner validate + executor set-exact + fallback chain']
+  ['agent',        'A6  bounded agent: planner validate + executor set-exact + fallback chain'],
+  ['progress',     'NLI progress estimation threshold + UI progress clamping']
 ];
 
 let failed = [];

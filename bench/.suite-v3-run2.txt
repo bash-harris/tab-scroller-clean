@@ -1,0 +1,398 @@
+﻿
+SUITE-V3 -- LLM parser + NLI | all commands | all categories
+181 commands, 117-tab pool, 7 groups, 3 windows
+==============================================================================
+[NLI] 117 tabs: 105 by cosine (free), 12 by NLI -> 24 passes (+0 cached, 2 embeds) in 428ms = 18ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 17ms = 17ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 14ms = 14ms/pass  [simd=?]
+[NLI] 117 tabs: 93 by cosine (free), 24 by NLI -> 22 passes (+2 cached, 1 embeds) in 341ms = 16ms/pass  [simd=?]
+[NLI] 117 tabs: 84 by cosine (free), 33 by NLI -> 29 passes (+4 cached, 1 embeds) in 430ms = 15ms/pass  [simd=?]
+[NLI] 117 tabs: 115 by cosine (free), 2 by NLI -> 4 passes (+0 cached, 2 embeds) in 106ms = 27ms/pass  [simd=?]
+[NLI] 117 tabs: 96 by cosine (free), 21 by NLI -> 21 passes (+0 cached, 1 embeds) in 335ms = 16ms/pass  [simd=?]
+[NLI] 117 tabs: 77 by cosine (free), 40 by NLI -> 35 passes (+5 cached, 1 embeds) in 500ms = 14ms/pass  [simd=?]
+[NLI] 117 tabs: 94 by cosine (free), 23 by NLI -> 21 passes (+2 cached, 1 embeds) in 376ms = 18ms/pass  [simd=?]
+[NLI] 117 tabs: 113 by cosine (free), 4 by NLI -> 4 passes (+0 cached, 1 embeds) in 83ms = 21ms/pass  [simd=?]
+[NLI] 117 tabs: 113 by cosine (free), 4 by NLI -> 4 passes (+0 cached, 1 embeds) in 62ms = 16ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 15ms = 15ms/pass  [simd=?]
+[NLI] 117 tabs: 111 by cosine (free), 6 by NLI -> 6 passes (+0 cached, 1 embeds) in 195ms = 33ms/pass  [simd=?]
+[NLI] 117 tabs: 114 by cosine (free), 3 by NLI -> 3 passes (+0 cached, 1 embeds) in 52ms = 17ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 20ms = 20ms/pass  [simd=?]
+[NLI] 117 tabs: 100 by cosine (free), 17 by NLI -> 32 passes (+2 cached, 2 embeds) in 575ms = 18ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 12ms = 12ms/pass  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 2ms  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 32ms = 32ms/pass  [simd=?]
+[NLI] 117 tabs: 76 by cosine (free), 41 by NLI -> 37 passes (+4 cached, 1 embeds) in 547ms = 15ms/pass  [simd=?]
+[NLI] 117 tabs: 115 by cosine (free), 2 by NLI -> 4 passes (+0 cached, 2 embeds) in 82ms = 21ms/pass  [simd=?]
+[NLI] 117 tabs: 108 by cosine (free), 9 by NLI -> 18 passes (+0 cached, 2 embeds) in 401ms = 22ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 16ms = 16ms/pass  [simd=?]
+[NLI] 117 tabs: 108 by cosine (free), 9 by NLI -> 9 passes (+0 cached, 1 embeds) in 168ms = 19ms/pass  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 2ms  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 2ms  [simd=?]
+[NLI] 117 tabs: 115 by cosine (free), 2 by NLI -> 2 passes (+0 cached, 1 embeds) in 32ms = 16ms/pass  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 4ms  [simd=?]
+[NLI] 117 tabs: 115 by cosine (free), 2 by NLI -> 2 passes (+0 cached, 1 embeds) in 85ms = 43ms/pass  [simd=?]
+[NLI] 117 tabs: 75 by cosine (free), 42 by NLI -> 39 passes (+3 cached, 1 embeds) in 548ms = 14ms/pass  [simd=?]
+[NLI] 117 tabs: 93 by cosine (free), 24 by NLI -> 21 passes (+3 cached, 1 embeds) in 347ms = 17ms/pass  [simd=?]
+[NLI] 117 tabs: 104 by cosine (free), 13 by NLI -> 13 passes (+0 cached, 1 embeds) in 242ms = 19ms/pass  [simd=?]
+[NLI] 117 tabs: 114 by cosine (free), 3 by NLI -> 3 passes (+0 cached, 1 embeds) in 78ms = 26ms/pass  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 26ms  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 3ms  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 90ms = 90ms/pass  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 3ms  [simd=?]
+[NLI] 117 tabs: 105 by cosine (free), 12 by NLI -> 12 passes (+0 cached, 1 embeds) in 238ms = 20ms/pass  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 3ms  [simd=?]
+[NLI] 117 tabs: 109 by cosine (free), 8 by NLI -> 8 passes (+0 cached, 1 embeds) in 185ms = 23ms/pass  [simd=?]
+[NLI] 117 tabs: 110 by cosine (free), 7 by NLI -> 7 passes (+0 cached, 1 embeds) in 170ms = 24ms/pass  [simd=?]
+[NLI] 117 tabs: 115 by cosine (free), 2 by NLI -> 2 passes (+0 cached, 1 embeds) in 104ms = 52ms/pass  [simd=?]
+[NLI] 117 tabs: 75 by cosine (free), 42 by NLI -> 0 passes (+42 cached, 0 embeds) in 28ms  [simd=?]
+[NLI] 117 tabs: 89 by cosine (free), 28 by NLI -> 28 passes (+0 cached, 1 embeds) in 432ms = 15ms/pass  [simd=?]
+[NLI] 117 tabs: 84 by cosine (free), 33 by NLI -> 30 passes (+3 cached, 1 embeds) in 450ms = 15ms/pass  [simd=?]
+[NLI] 117 tabs: 115 by cosine (free), 2 by NLI -> 2 passes (+0 cached, 1 embeds) in 44ms = 22ms/pass  [simd=?]
+[NLI] 117 tabs: 106 by cosine (free), 11 by NLI -> 9 passes (+2 cached, 0 embeds) in 202ms = 22ms/pass  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 0 embeds) in 0ms  [simd=?]
+[NLI] 117 tabs: 115 by cosine (free), 2 by NLI -> 2 passes (+0 cached, 1 embeds) in 42ms = 21ms/pass  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 4ms  [simd=?]
+[NLI] 117 tabs: 114 by cosine (free), 3 by NLI -> 3 passes (+0 cached, 1 embeds) in 70ms = 23ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 31ms = 31ms/pass  [simd=?]
+[NLI] 117 tabs: 108 by cosine (free), 9 by NLI -> 0 passes (+9 cached, 0 embeds) in 36ms  [simd=?]
+[NLI] 117 tabs: 75 by cosine (free), 42 by NLI -> 0 passes (+42 cached, 0 embeds) in 54ms  [simd=?]
+[NLI] 117 tabs: 102 by cosine (free), 15 by NLI -> 15 passes (+0 cached, 1 embeds) in 273ms = 18ms/pass  [simd=?]
+[NLI] 117 tabs: 57 by cosine (free), 60 by NLI -> 54 passes (+6 cached, 1 embeds) in 781ms = 14ms/pass  [simd=?]
+[NLI] 117 tabs: 102 by cosine (free), 15 by NLI -> 0 passes (+15 cached, 0 embeds) in 56ms  [simd=?]
+[NLI] 117 tabs: 105 by cosine (free), 12 by NLI -> 22 passes (+2 cached, 2 embeds) in 487ms = 22ms/pass  [simd=?]
+[NLI] 117 tabs: 53 by cosine (free), 64 by NLI -> 0 passes (+64 cached, 1 embeds) in 55ms  [simd=?]
+[NLI] 117 tabs: 113 by cosine (free), 4 by NLI -> 4 passes (+0 cached, 1 embeds) in 158ms = 40ms/pass  [simd=?]
+[NLI] 117 tabs: 97 by cosine (free), 20 by NLI -> 17 passes (+3 cached, 1 embeds) in 280ms = 16ms/pass  [simd=?]
+[NLI] 117 tabs: 67 by cosine (free), 50 by NLI -> 47 passes (+3 cached, 1 embeds) in 701ms = 15ms/pass  [simd=?]
+[NLI] 117 tabs: 79 by cosine (free), 38 by NLI -> 35 passes (+3 cached, 1 embeds) in 556ms = 16ms/pass  [simd=?]
+[NLI] 117 tabs: 106 by cosine (free), 11 by NLI -> 0 passes (+11 cached, 0 embeds) in 45ms  [simd=?]
+[NLI] 117 tabs: 108 by cosine (free), 9 by NLI -> 9 passes (+0 cached, 1 embeds) in 226ms = 25ms/pass  [simd=?]
+[NLI] 117 tabs: 93 by cosine (free), 24 by NLI -> 37 passes (+11 cached, 1 embeds) in 629ms = 17ms/pass  [simd=?]
+[NLI] 117 tabs: 106 by cosine (free), 11 by NLI -> 22 passes (+0 cached, 2 embeds) in 462ms = 21ms/pass  [simd=?]
+[NLI] 117 tabs: 99 by cosine (free), 18 by NLI -> 18 passes (+0 cached, 1 embeds) in 338ms = 19ms/pass  [simd=?]
+[NLI] 117 tabs: 107 by cosine (free), 10 by NLI -> 10 passes (+0 cached, 1 embeds) in 237ms = 24ms/pass  [simd=?]
+[NLI] 117 tabs: 102 by cosine (free), 15 by NLI -> 13 passes (+2 cached, 1 embeds) in 256ms = 20ms/pass  [simd=?]
+[NLI] 117 tabs: 106 by cosine (free), 11 by NLI -> 0 passes (+11 cached, 0 embeds) in 38ms  [simd=?]
+[NLI] 117 tabs: 55 by cosine (free), 62 by NLI -> 59 passes (+3 cached, 1 embeds) in 838ms = 14ms/pass  [simd=?]
+[NLI] 117 tabs: 108 by cosine (free), 9 by NLI -> 9 passes (+0 cached, 1 embeds) in 161ms = 18ms/pass  [simd=?]
+[NLI] 117 tabs: 107 by cosine (free), 10 by NLI -> 0 passes (+10 cached, 1 embeds) in 5ms  [simd=?]
+[NLI] 117 tabs: 46 by cosine (free), 71 by NLI -> 67 passes (+4 cached, 1 embeds) in 957ms = 14ms/pass  [simd=?]
+[NLI] 117 tabs: 86 by cosine (free), 31 by NLI -> 28 passes (+3 cached, 1 embeds) in 457ms = 16ms/pass  [simd=?]
+[NLI] 117 tabs: 86 by cosine (free), 31 by NLI -> 0 passes (+31 cached, 0 embeds) in 53ms  [simd=?]
+[NLI] 117 tabs: 79 by cosine (free), 38 by NLI -> 36 passes (+2 cached, 1 embeds) in 559ms = 16ms/pass  [simd=?]
+[NLI] 117 tabs: 113 by cosine (free), 4 by NLI -> 0 passes (+4 cached, 0 embeds) in 8ms  [simd=?]
+[NLI] 117 tabs: 113 by cosine (free), 4 by NLI -> 4 passes (+0 cached, 1 embeds) in 93ms = 23ms/pass  [simd=?]
+[NLI] 117 tabs: 105 by cosine (free), 12 by NLI -> 0 passes (+12 cached, 0 embeds) in 62ms  [simd=?]
+[NLI] 117 tabs: 105 by cosine (free), 12 by NLI -> 0 passes (+12 cached, 0 embeds) in 90ms  [simd=?]
+[NLI] 117 tabs: 105 by cosine (free), 12 by NLI -> 0 passes (+12 cached, 0 embeds) in 49ms  [simd=?]
+[NLI] 117 tabs: 105 by cosine (free), 12 by NLI -> 0 passes (+12 cached, 0 embeds) in 48ms  [simd=?]
+[NLI] 117 tabs: 98 by cosine (free), 19 by NLI -> 18 passes (+1 cached, 1 embeds) in 333ms = 19ms/pass  [simd=?]
+[NLI] 117 tabs: 103 by cosine (free), 14 by NLI -> 16 passes (+12 cached, 1 embeds) in 363ms = 23ms/pass  [simd=?]
+[NLI] 117 tabs: 110 by cosine (free), 7 by NLI -> 7 passes (+0 cached, 1 embeds) in 184ms = 26ms/pass  [simd=?]
+[NLI] 117 tabs: 99 by cosine (free), 18 by NLI -> 0 passes (+18 cached, 0 embeds) in 50ms  [simd=?]
+[NLI] 117 tabs: 101 by cosine (free), 16 by NLI -> 0 passes (+16 cached, 1 embeds) in 36ms  [simd=?]
+[NLI] 117 tabs: 104 by cosine (free), 13 by NLI -> 12 passes (+1 cached, 1 embeds) in 237ms = 20ms/pass  [simd=?]
+[NLI] 117 tabs: 93 by cosine (free), 24 by NLI -> 48 passes (+0 cached, 2 embeds) in 777ms = 16ms/pass  [simd=?]
+[NLI] 117 tabs: 107 by cosine (free), 10 by NLI -> 10 passes (+0 cached, 1 embeds) in 232ms = 23ms/pass  [simd=?]
+[NLI] 117 tabs: 109 by cosine (free), 8 by NLI -> 8 passes (+0 cached, 1 embeds) in 185ms = 23ms/pass  [simd=?]
+[NLI] 117 tabs: 115 by cosine (free), 2 by NLI -> 2 passes (+0 cached, 1 embeds) in 42ms = 21ms/pass  [simd=?]
+[NLI] 117 tabs: 100 by cosine (free), 17 by NLI -> 17 passes (+0 cached, 1 embeds) in 343ms = 20ms/pass  [simd=?]
+[NLI] 117 tabs: 102 by cosine (free), 15 by NLI -> 13 passes (+2 cached, 1 embeds) in 259ms = 20ms/pass  [simd=?]
+[NLI] 117 tabs: 104 by cosine (free), 13 by NLI -> 13 passes (+0 cached, 1 embeds) in 288ms = 22ms/pass  [simd=?]
+[NLI] 117 tabs: 53 by cosine (free), 64 by NLI -> 0 passes (+64 cached, 0 embeds) in 51ms  [simd=?]
+[NLI] 117 tabs: 112 by cosine (free), 5 by NLI -> 5 passes (+0 cached, 1 embeds) in 132ms = 26ms/pass  [simd=?]
+[NLI] 117 tabs: 50 by cosine (free), 67 by NLI -> 122 passes (+12 cached, 2 embeds) in 1803ms = 15ms/pass  [simd=?]
+[NLI] 117 tabs: 81 by cosine (free), 36 by NLI -> 63 passes (+9 cached, 1 embeds) in 1002ms = 16ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 56ms = 56ms/pass  [simd=?]
+[NLI] 117 tabs: 107 by cosine (free), 10 by NLI -> 10 passes (+0 cached, 1 embeds) in 195ms = 20ms/pass  [simd=?]
+[NLI] 117 tabs: 104 by cosine (free), 13 by NLI -> 13 passes (+0 cached, 1 embeds) in 245ms = 19ms/pass  [simd=?]
+[NLI] 117 tabs: 107 by cosine (free), 10 by NLI -> 10 passes (+0 cached, 1 embeds) in 247ms = 25ms/pass  [simd=?]
+[NLI] 117 tabs: 107 by cosine (free), 10 by NLI -> 10 passes (+0 cached, 1 embeds) in 247ms = 25ms/pass  [simd=?]
+[NLI] 117 tabs: 86 by cosine (free), 31 by NLI -> 28 passes (+3 cached, 1 embeds) in 458ms = 16ms/pass  [simd=?]
+[NLI] 117 tabs: 111 by cosine (free), 6 by NLI -> 6 passes (+0 cached, 1 embeds) in 179ms = 30ms/pass  [simd=?]
+[NLI] 117 tabs: 110 by cosine (free), 7 by NLI -> 7 passes (+0 cached, 1 embeds) in 164ms = 23ms/pass  [simd=?]
+[NLI] 117 tabs: 55 by cosine (free), 62 by NLI -> 114 passes (+10 cached, 2 embeds) in 1753ms = 15ms/pass  [simd=?]
+[NLI] 117 tabs: 108 by cosine (free), 9 by NLI -> 9 passes (+0 cached, 1 embeds) in 205ms = 23ms/pass  [simd=?]
+[NLI] 117 tabs: 86 by cosine (free), 31 by NLI -> 0 passes (+31 cached, 0 embeds) in 41ms  [simd=?]
+[NLI] 117 tabs: 66 by cosine (free), 51 by NLI -> 46 passes (+5 cached, 1 embeds) in 651ms = 14ms/pass  [simd=?]
+[NLI] 117 tabs: 113 by cosine (free), 4 by NLI -> 0 passes (+4 cached, 0 embeds) in 3ms  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 0 embeds) in 0ms  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+1 cached, 2 embeds) in 17ms = 17ms/pass  [simd=?]
+[NLI] 117 tabs: 96 by cosine (free), 21 by NLI -> 0 passes (+63 cached, 1 embeds) in 47ms  [simd=?]
+[NLI] 117 tabs: 112 by cosine (free), 5 by NLI -> 15 passes (+0 cached, 3 embeds) in 237ms = 16ms/pass  [simd=?]
+[NLI] 117 tabs: 112 by cosine (free), 5 by NLI -> 0 passes (+5 cached, 0 embeds) in 2ms  [simd=?]
+[NLI] 117 tabs: 92 by cosine (free), 25 by NLI -> 22 passes (+3 cached, 1 embeds) in 409ms = 19ms/pass  [simd=?]
+[NLI] 117 tabs: 102 by cosine (free), 15 by NLI -> 15 passes (+0 cached, 1 embeds) in 292ms = 19ms/pass  [simd=?]
+[NLI] 117 tabs: 102 by cosine (free), 15 by NLI -> 12 passes (+3 cached, 1 embeds) in 231ms = 19ms/pass  [simd=?]
+[NLI] 117 tabs: 110 by cosine (free), 7 by NLI -> 0 passes (+7 cached, 1 embeds) in 9ms  [simd=?]
+[NLI] 117 tabs: 108 by cosine (free), 9 by NLI -> 9 passes (+0 cached, 1 embeds) in 234ms = 26ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 69ms = 69ms/pass  [simd=?]
+[NLI] 117 tabs: 107 by cosine (free), 10 by NLI -> 10 passes (+0 cached, 1 embeds) in 231ms = 23ms/pass  [simd=?]
+[NLI] 117 tabs: 102 by cosine (free), 15 by NLI -> 0 passes (+15 cached, 0 embeds) in 51ms  [simd=?]
+[NLI] 117 tabs: 112 by cosine (free), 5 by NLI -> 5 passes (+0 cached, 1 embeds) in 166ms = 33ms/pass  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 16ms  [simd=?]
+[NLI] superlative: oldest (accessed) -> tab 53
+[NLI] 117 tabs: 99 by cosine (free), 18 by NLI -> 29 passes (+7 cached, 1 embeds) in 551ms = 19ms/pass  [simd=?]
+[NLI] 117 tabs: 76 by cosine (free), 41 by NLI -> 38 passes (+3 cached, 1 embeds) in 607ms = 16ms/pass  [simd=?]
+[NLI] 117 tabs: 106 by cosine (free), 11 by NLI -> 11 passes (+0 cached, 1 embeds) in 255ms = 23ms/pass  [simd=?]
+[NLI] 117 tabs: 113 by cosine (free), 4 by NLI -> 4 passes (+0 cached, 1 embeds) in 114ms = 29ms/pass  [simd=?]
+
+-- by bucket --------------------------------------------------
+implemented  set-exact 50/83 (60%)        P 0.74 R 0.81 F1 0.74 violations 10
+gap          set-exact 13/86 (15%)        P 0.30 R 0.52 F1 0.32 violations 12
+abstain      set-exact 6/9 (67%)          P 0.67 R 0.67 F1 0.67 violations 0
+featureGap   set-exact 2/3 (67%)          P 0.67 R 0.67 F1 0.67 violations 0
+TOTAL        set-exact 71/181 (39%)       violations 22
+
+-- by spec category ------------------------------------------
+cat  1 url-domain             set-exact 22/28 (79%)        violations 0
+cat  2 structured-url         set-exact 2/9 (22%)          violations 2
+cat  3 title                  set-exact 6/8 (75%)          violations 0
+cat  4 time                   set-exact 4/13 (31%)         violations 0
+cat  5 tab-state              set-exact 4/10 (40%)         violations 0
+cat  6 window-group-position  set-exact 3/7 (43%)          violations 1
+cat  7 relationship-current   set-exact 1/4 (25%)          violations 1
+cat  8 duplicates             set-exact 2/4 (50%)          violations 0
+cat  9 page-content           set-exact 3/7 (43%)          violations 0
+cat 10 content-type           set-exact 1/6 (17%)          violations 1
+cat 11 topic-category         set-exact 9/15 (60%)         violations 2
+cat 12 entities               set-exact 1/5 (20%)          violations 2
+cat 13 nav-origin             set-exact 0/2 (0%)           violations 1
+cat 14 search-query           set-exact 0/3 (0%)           violations 0
+cat 15 reading-progress       set-exact 0/6 (0%)           violations 0
+cat 16 bookmarks              set-exact 0/3 (0%)           violations 0
+cat 17 history-frequency      set-exact 0/2 (0%)           violations 0
+cat 18 error-health           set-exact 0/3 (0%)           violations 0
+cat 19 language-geo           set-exact 1/3 (33%)          violations 0
+cat 20 price-availability     set-exact 0/5 (0%)           violations 2
+cat 21 task-project           set-exact 2/4 (50%)          violations 0
+cat 22 quality-authority      set-exact 0/3 (0%)           violations 3
+cat 23 cross-tab              set-exact 1/2 (50%)          violations 0
+cat 24 ranking-limit          set-exact 1/6 (17%)          violations 1
+cat 25 compound-boolean       set-exact 6/14 (43%)         violations 6
+cat 26 conversational         set-exact 1/3 (33%)          violations 0
+cat 27 user-defined           set-exact 1/6 (17%)          violations 0
+
+llm 0ms (181 cached, 0 fresh, 1 fallback) | nli 57295ms
+
+-- failures (110) ---------------------------------------------
+[gap] cat1 "close all PDF tabs"
+   got [16,18,19,20,21,33,35,36,37,45,70,71,85] exp [36,37]
+[gap] cat1 "group all tabs using http instead of https"
+   got [77] exp [74,75,76,77]
+[gap] cat1 "close localhost tabs except port 3000"
+   got [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117] exp [75,76]
+[gap] cat1 "close tabs from .edu domains"
+   got [] exp [38,39]
+[gap] cat1 "group tabs from the same website as the current tab"
+   got [] exp [10,11,12,13,14,15,16,17,97]
+[implemented] cat1 "close medium tabs"
+   got [] exp [61]
+[gap] cat2 "close github issue tabs but keep pull requests"
+   got [] exp [13,14]
+[gap] cat2 "group github tabs belonging to the auth-service repository"
+   got [14,13,12,10,11] exp [10,11,12,13,14,97]
+[gap] cat2 "group youtube video tabs but not channel pages"
+   got [2,46,48] exp [2,46,48,106]
+[gap] cat2 "close amazon product pages but not search pages"
+   got [49,50,52,72] exp [49,50,72]  VIOLATIONS 1
+[gap] cat2 "group jira issues from project XC"
+   got [] exp [25,26]
+[gap] cat2 "group confluence pages from the DEV space"
+   got [] exp [28]
+[gap] cat2 "close stack overflow question pages with the cpp tag"
+   got [30,32] exp [30]  VIOLATIONS 1
+[gap] cat3 "close tabs whose title is identical to another open tab keeping the oldest"
+   got [] exp [66,68,71,79,80]
+[gap] cat3 "group tabs with unusually long titles"
+   got [] exp [64]
+[implemented] cat4 "close tabs opened in the last hour"
+   got [24,49,50,51,52,66,93,100] exp [24,49,66]
+[implemented] cat4 "group tabs opened in the last 24 hours"
+   got [9,12,16,18,19,20,21,22,24,26,30,32,36,46,47,48,49,50,51,52,54,55,57,60,65,66,67,68,69,70,71,73,74,75,78,79,80,83,89,90,92,93,94,95,96,97,98,99,100,106,107,112,116,117] exp [9,12,16,18,19,20,21,22,24,26,30,32,36,46,47,48,49,50,51,52,54,55,57,60,65,66,67,68,70,71,73,74,75,78,79,80,83,89,90,92,93,94,95,96,97,98,99,100,106,107,112,116,117]
+[implemented] cat4 "group tabs used in the last two hours"
+   got [22,24,46,49,50,51,52,65,66,73,74,75,78,92,93,100,101,107,111,112] exp [22,24,49,74,100,111]
+[implemented] cat4 "close tabs opened between 3 and 7 days ago"
+   got [5,10,13,14,15,17,23,25,27,28,29,31,38,39,40,41,42,44,45,62,63,64,76,77,81,82,84,86,88,103,104,105,108,109,111,113,114] exp [1,2,4,5,8,10,11,13,14,15,31,37,41,61,62,104]
+[implemented] cat4 "group tabs i havent looked at in three days"
+   got [2,5,8,10,11,13,14,15,17,23,25,27,28,29,31,37,38,39,40,41,42,44,45,58,59,64,76,77,81,82,84,86,88,102,104,105,108,109,110,113,114] exp [2,5,8,10,13,14,15,17,23,25,27,28,29,31,37,38,39,40,41,42,44,45,58,59,64,76,77,81,82,84,86,88,102,104,105,108,109,113,114]
+[gap] cat4 "close tabs never activated during this session"
+   got [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117] exp [7,14,27,32,47]
+[gap] cat4 "reload tabs stuck loading for more than 30 seconds"
+   got [] exp [93]
+[implemented] cat4 "close tabs opened more than 30 days ago"
+   got [39,40,44,45,111,114] exp [38,39,40,44,45,76,81,86,108,109,111,113,114]
+[implemented] cat4 "group tabs opened in the last 30 minutes"
+   got [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117] exp [49,93]
+[implemented] cat5 "group all unpinned tabs in this window"
+   got [] exp [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,23,24,25,26,27,28,29,30,31,32,34,35,36,37,38,39,40,41,42,43,54,55,56,57,58,59,60,65,67,69,70,74,75,77,78,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,110,112]
+[gap] cat5 "close discarded tabs except pinned ones"
+   got [] exp [23,44]
+[gap] cat5 "group ungrouped tabs in window 2"
+   got [] exp [44,45,46,47,48,51,52,53,66,68,71,72,73,79,100,101,102,106,107,115]
+[gap] cat5 "mute incognito tabs"
+   got [] exp [55]
+[implemented] cat5 "unmute my muted tabs in window 2"
+   got [] exp [46,106]
+[implemented] cat5 "switch to the q3 budget spreadsheet"
+   got [5,20] exp [20]
+[gap] cat6 "group tabs in grey colored groups"
+   got [] exp [18,19,20,21,22,23,24,25,26,27,28,29,113,114]
+[gap] cat6 "close all tabs to the right of the current tab in this window"
+   got [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117] exp [11,12,13,14,15,16,17,18,19,20,21,23,24,25,26,27,28,29,30,31,32,34,35,36,37,38,39,40,41,42,54,55,56,57,58,59,60,65,67,69,70,74,75,77,78,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,110,112]  VIOLATIONS 1
+[gap] cat6 "bookmark the first five tabs in this window"
+   got [] exp [22,111,1,2,4]
+[gap] cat6 "group my dev tools tabs in window 3"
+   got [34,96,103,85] exp [76,103,104,105]
+[gap] cat7 "group tabs related to the current tab"
+   got [] exp [11,12,13,14,25,26,62,94]
+[gap] cat7 "group tabs opened from the fastmcp google search"
+   got [95] exp [96,97,98]  VIOLATIONS 1
+[gap] cat7 "group tabs opened from the fastmcp docs page"
+   got [] exp [98]
+[implemented] cat8 "close duplicate tabs and keep the oldest"
+   got [] exp [66,68,71,72,73]
+[gap] cat8 "close duplicates in other windows"
+   got [] exp [66,68,71,72,73]
+[gap] cat24 "pin my five most frequently visited tabs"
+   got [] exp [22,111,1,41,110]
+[implemented] cat16 "bookmark tabs that are not bookmarked and are about research"
+   got [36,60] exp [61,63]
+[gap] cat16 "close open tabs that are already bookmarked"
+   got [] exp [1,3,18,33,36,62,65,69]
+[gap] cat16 "group tabs bookmarked under research"
+   got [36,60] exp [33,36,62]
+[implemented] cat9 "group pages that mention both oauth and refresh tokens"
+   got [11,62,104] exp [62]
+[implemented] cat9 "close product pages that say out of stock"
+   got [] exp [50]
+[gap] cat9 "close pages containing an email address"
+   got [22] exp [64,91]
+[gap] cat9 "close pages published before 2020"
+   got [] exp [37,113]
+[implemented] cat10 "group documentation pages"
+   got [85,16,88,45,33,117,35,21,70,71,57,18,19,20] exp [16,28,29,33,35,41,70,85,88,96,98,117]
+[implemented] cat10 "bookmark tutorial tabs"
+   got [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117] exp [34,41,85,96,117]
+[gap] cat10 "bookmark official documentation about fastmcp"
+   got [97,95,96,98] exp [96,98]  VIOLATIONS 1
+[gap] cat10 "close login pages"
+   got [94,25] exp [94]
+[gap] cat10 "close forms and login tabs"
+   got [94,25] exp [94,51]
+[implemented] cat11 "close ai tabs that are not about local models"
+   got [39,58,108] exp [36,58,60]
+[implemented] cat12 "group tabs related to react excluding react native"
+   got [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,76,77,78,79,80,81,82,83,84,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117] exp [34,46,105]  VIOLATIONS 1
+[implemented] cat12 "close tabs about python 2 but keep python 3"
+   got [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32,33,34,35,36,37,38,39,40,42,43,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117] exp [44,45]
+[gap] cat12 "group pages for jira tickets xc-120 through xc-150"
+   got [27,25] exp [25,26]
+[implemented] cat12 "group tabs about java the programming language not the island"
+   got [88,40,97] exp [88]  VIOLATIONS 1
+[gap] cat13 "close tabs automatically opened by websites"
+   got [] exp [115]
+[gap] cat13 "group pages i opened from google search results"
+   got [95,110] exp [96,97,98]  VIOLATIONS 1
+[gap] cat14 "close google search pages but keep the results i opened"
+   got [95,18,110,23,111] exp [95]
+[gap] cat14 "group tabs from search engines"
+   got [24,99,95] exp [95,99]
+[gap] cat15 "group unread articles into a reading list"
+   got [67,68,69,82,83,65,66,54,55,63,61,62] exp [61]
+[gap] cat15 "close articles i have finished"
+   got [67,68,69,82,83,65,66,54,55,63,61,62] exp [63]
+[gap] cat15 "bookmark partially read technical articles"
+   got [59,5] exp [62]
+[gap] cat15 "group long articles i havent finished"
+   got [82] exp [61,62]
+[gap] cat15 "close videos i have finished watching"
+   got [] exp [106]
+[implemented] cat11 "pin cricket tabs"
+   got [1,2,43,4,8,3,7] exp [1,2,4,8,43]  VIOLATIONS 1
+[implemented] cat25 "group sports news tabs"
+   got [43,2,1,8,7,3,4,9,54,65,66,73,82,83] exp [1,8,43]  VIOLATIONS 4
+[implemented] cat11 "group my bengaluru weather tabs"
+   got [56,112,110] exp [56,112]  VIOLATIONS 1
+[implemented] cat11 "group ai tabs"
+   got [108,57,59,58,39] exp [36,57,58,59,60]
+[implemented] cat11 "close all shopping tabs"
+   got [53,51,50,72,87,49,89,52,90,115] exp [49,50,51,52,53,72,87,89,90]
+[implemented] cat11 "group my study tabs"
+   got [39,116] exp [38,39,108,109,116]
+[gap] cat17 "close tabs i have visited only once and not used today"
+   got [] exp [37]
+[gap] cat17 "pin my two most frequently used work tabs"
+   got [29,26,23,20,25,18,28,22,27,111,21,101,24,77,19] exp [22,111]
+[gap] cat18 "close tabs that failed to load"
+   got [] exp [91,92]
+[gap] cat18 "group pages asking me to sign in"
+   got [94,25] exp [94]
+[gap] cat18 "close unavailable product pages"
+   got [] exp [50]
+[gap] cat19 "group reference wiki tabs in german"
+   got [77,40,81,84,86] exp [81]
+[gap] cat19 "close news pages about india"
+   got [56,1,55,43,65,66,73,83,82,54,9,84,3] exp [55,83]
+[gap] cat20 "group pages priced in inr"
+   got [] exp [49,50,89]
+[gap] cat20 "close laptop tabs above 80000 rupees"
+   got [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117] exp [49]  VIOLATIONS 1
+[gap] cat20 "group in-stock laptops"
+   got [87,90,49,51,72,89] exp [49,89]  VIOLATIONS 1
+[gap] cat20 "close product tabs that do not ship to india"
+   got [49,50,52,72,87] exp [50]
+[gap] cat20 "group products with rating above 4"
+   got [50,87,49,52,72,90,53,51,89] exp [49,89]
+[gap] cat21 "group everything related to fixing the authentication bug"
+   got [] exp [10,11,12,13,14,25,62,94]
+[gap] cat21 "bookmark resources used for jira ticket xc-142"
+   got [26] exp [26,96]
+[gap] cat22 "close community tutorial copies of react docs"
+   got [105,117,34,46,75] exp [117]  VIOLATIONS 1
+[implemented] cat22 "group official documentation about browser extensions"
+   got [33,63,88,61,85,16,35,70,71] exp [33]  VIOLATIONS 2
+[gap] cat22 "close pages whose instructions are outdated"
+   got [6] exp [44,45,113]
+[gap] cat23 "close articles that add no new information"
+   got [67,68,69,82,83,65,66,54,55,63,61,62] exp [54]
+[implemented] cat25 "close shopping tabs unless they are pinned or currently playing audio"
+   got [] exp [50,51,52,53,72,87,89,90]
+[implemented] cat25 "bookmark unpinned tabs opened in the last 24 hours except already bookmarked pages"
+   got [] exp [9,12,16,19,20,21,24,26,30,32,46,47,48,49,50,51,52,54,55,57,60,66,67,68,70,71,73,74,75,78,79,80,83,89,90,92,93,94,95,96,97,98,99,100,106,107,112,116,117]
+[gap] cat25 "close tabs from google.com but not google docs sheets or maps"
+   got [22,23,24,95,111] exp [95]  VIOLATIONS 2
+[implemented] cat25 "close the amazon cart tab and all new tab pages"
+   got [51,50,52,72,49] exp [52,78,79,80]
+[abstain] cat25 "close all tabs except pinned ones"
+   got [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,23,24,25,26,27,28,29,30,31,32,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,112,113,114,115,116,117] exp []
+[abstain] cat25 "close all financial news tabs from this morning"
+   got [54,9,65,66,73,82,83] exp []
+[abstain] cat25 "group news articles published today"
+   got [65,66,83,55,54,9,73] exp []
+[gap] cat26 "close all tabs in window 3 except the leetcode one"
+   got [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,117] exp [76,80,103,104,105,108,109,113,114,117]
+[gap] cat26 "group tabs similar to the oauth refresh token article"
+   got [62] exp [10,11,12,13,14,25,94]
+[gap] cat27 "close temporary tabs older than two days"
+   got [1,2,3,4,5,6,7,8,10,11,13,14,15,17,23,25,27,28,29,31,35,37,38,39,40,41,42,44,45,56,58,59,61,62,63,64,76,77,81,82,84,85,86,87,88,102,103,104,105,108,109,110,111,113,114,115] exp [115]
+[gap] cat27 "group high priority tabs"
+   got [] exp [26,116]
+[gap] cat27 "bookmark all tabs tagged onboarding"
+   got [96,26] exp [96]
+[gap] cat27 "group tabs tagged research"
+   got [36,60] exp [61,62,63]
+[gap] cat27 "close tabs due this week"
+   got [17,23,38,39,40,42,44,45,64,76,77,81,82,86,88,103,108,109,111,113,114] exp [26,116]
+[implemented] cat24 "close the eight oldest tabs"
+   got [] exp [40,111,39,45,44,114,86,113]
+[implemented] cat24 "close the three oldest shopping tabs"
+   got [53] exp [87,53,72]
+[gap] cat24 "close all but the newest tab from example-news.com"
+   got [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117] exp [65,73]  VIOLATIONS 1
+[gap] cat24 "bookmark the two most relevant react performance tabs"
+   got [105,34,46,117,75] exp [34,46]
+[featureGap] cat14 "group tabs i copied code from"
+   got [105,12,14,97,31,30,104,17,15,103,32] exp []
+[gap] cat15 "group tabs where the user scrolled to the bottom"
+   got [] exp [63]

@@ -3639,7 +3639,7 @@
     let nliPending = 0;
     for (const c of universe) {
       const cs = cosScores.get(c.tabId);
-      if (cs === null || (cs < BAND_HIGH && cs >= BAND_LOW)) nliPending++;
+      if (cs === null || (cs < INCLUDE_FLOOR && cs >= BAND_LOW)) nliPending++;
     }
     if (typeof opts.onCosineDone === 'function') {
       try { opts.onCosineDone(nliPending, universe.length); } catch (e) { /* UI only */ }

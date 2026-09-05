@@ -1798,9 +1798,10 @@ async function selectMatches(cleanCommand, candidates, settings) {
       const result = await self.NliSelect.select(cleanCommand, candidates,
         Object.assign({
           onProgress: (done, total, freeCount) => {
-            const pct = 40 + Math.round(52 * (done / Math.max(1, total)));
+            const effectiveTotal = Math.max(total || 0, done || 0);
+            const pct = Math.min(95, 40 + Math.round(52 * (done / Math.max(1, effectiveTotal))));
             reportProgress('match',
-              total ? `Comparing ${done} of ${total} tabs — almost done` : 'Finding matching tabs',
+              effectiveTotal ? `Comparing ${done} of ${effectiveTotal} tabs — almost done` : 'Finding matching tabs',
               pct);
             void freeCount;
           },
