@@ -471,7 +471,7 @@
   //   - the site leg never fires on an empty or >= 30% of the pool set.
   // Missing slots -> the interpreter is never reached -> byte-identical legacy.
   const SLOT_KEYS = ['urlShape', 'rank', 'retain', 'dedupe', 'scope', 'anchor',
-    'answerable', 'carveout'];
+    'answerable', 'carveout', 'relationship', 'position', 'groupScope'];
   const SLOT_SITE_FAMILIES = {
     youtube: ['youtube.com', 'youtu.be'],
     github: ['github.com'],
@@ -505,6 +505,10 @@
   const SLOT_RANK_WORDS = ['first', 'last', 'newest', 'oldest', 'most', 'recently',
     'recent', 'used', 'use', 'top', 'next', 'previous', 'one', 'two', 'three', 'four',
     'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+  // Chrome tab-group color enum: the only values groupScope color legs may
+  // bind (closed enum, like site/section).
+  const SLOT_GROUP_COLORS = ['grey', 'gray', 'blue', 'red', 'yellow', 'green',
+    'pink', 'purple', 'cyan', 'orange'];
   const SLOT_STOP = new Set(['my', 'i', 'you', 'the', 'a', 'an', 'all', 'and', 'or', 'of',
     'in', 'on', 'for', 'to', 'from', 'that', 'which', 'who', 'are', 'is', 'was', 'be',
     'been', 'have', 'has', 'do', 'does', 'with', 'about', 'not', 'keep', 'but', 'except',
@@ -565,6 +569,9 @@
     const dedupe = S.dedupe || null;
     const scope = S.scope || null;
     const anchor = S.anchor || null;
+    const relationship = (S.relationship && typeof S.relationship === 'object') ? S.relationship : null;
+    const position = (S.position && typeof S.position === 'object') ? S.position : null;
+    const groupScope = (S.groupScope && typeof S.groupScope === 'object') ? S.groupScope : null;
     const secActive = !!section && section !== 'search'; // search: site-search vs results ambiguity
 
     // Concept-coverage gate: every concept token must be slot vocabulary. One
@@ -574,6 +581,16 @@
     if (section) for (const w of SLOT_SECTION_WORDS[section] || []) covered.add(w);
     if (rank) for (const w of SLOT_RANK_WORDS) covered.add(w);
     if (dedupe) ['duplicate', 'duplicates', 'copy', 'copies'].forEach(w => covered.add(w));
+    if (groupScope) {
+      // The group's own name/color words are slot vocabulary; "group"/"colored"
+      // are the construction's frame words. Colors sit in SLOT_STOP's spirit but
+      // are not stop-listed globally, so add them only under this slot.
+      ['group', 'colored', 'color', 'colour'].forEach(w => covered.add(w));
+      if (groupScope.name != null) for (const w of String(groupScope.name).toLowerCase().split(/[^a-z0-9]+/)) if (w) covered.add(w);
+      if (groupScope.color != null) covered.add(String(groupScope.color).toLowerCase());
+    }
+    if (position && !rank) for (const w of SLOT_RANK_WORDS) covered.add(w);
+    if (relationship) ['opened', 'from'].forEach(w => covered.add(w));
     if (anchor && !site && !rank && !retain && !dedupe) covered.add('related', 'similar');
     const extras = [];
     for (const cpt of q.concepts || []) {
@@ -591,7 +608,7 @@
     // SITE/SECTION LEG -- family membership (+ optional path section), with an
     // optional rank cut composed on top and at most one URL-path refinement
     // token from the concepts ("leetcode problem" -> /problems/ URLs).
-    if ((site || secActive) && !anchor && !retain && !dedupe) {
+    if ((site || secActive) && !anchor && !retain && !dedupe && !relationship) {
       let set = candidates.filter(c => (!site || slotInFamily(c, site)) && (!secActive || slotInSection(c, section)));
       if (rank && rank.by && rank.n && rank.by !== 'relevance') {
         if (extras.length === 1) {
@@ -723,10 +740,86 @@
       return slotOut(dups, 'slot dedupe canonical duplicates');
     }
 
+    // GROUPSCOPE LEG -- filter by tab group (name or Chrome color enum).
+    // Bench candidates carry groupId/groupName/groupColor; production passes
+    // them where available. No candidate carries the field -> yield, never an
+    // empty selection (absence of data must not read as absence of tabs).
+    if (groupScope && !retain && !dedupe && !anchor) {
+      const gName = groupScope.name != null ? String(groupScope.name).toLowerCase() : null;
+      const gColor = groupScope.color != null ? String(groupScope.color).toLowerCase() : null;
+      const hasGroupData = candidates.some(c =>
+        c.groupName != null || c.groupColor != null || c.groupId != null);
+      if (!hasGroupData || (!gName && !gColor)) return null;
+      let set = candidates.filter(c => {
+        if (gName) return String(c.groupName || '').toLowerCase() === gName;
+        return String(c.groupColor || '').toLowerCase() === gColor;
+      });
+      if (!set.length || set.length / candidates.length >= 0.30) return null;
+      return slotOut(set, `slot groupScope ${gName ? 'name:' + gName : 'color:' + gColor}`);
+    }
+
+    // POSITION LEG -- window/pool positional cut ("the first tab", "the last
+    // five tabs"). Rank covers most positional shapes, so this leg only fires
+    // when the rank slot is absent; candidate.index is the ordering key, and
+    // a pool where no candidate carries an index yields (no order to cut).
+    if (position && position.from && Number.isInteger(position.n) && position.n >= 1 &&
+        !rank && !retain && !dedupe && !anchor && !shape && !relationship) {
+      const hasIndex = candidates.some(c => Number.isFinite(c.index));
+      if (!hasIndex) return null;
+      let set = candidates;
+      if (scope && scope.window !== undefined && scope.window !== 'all') {
+        const w = scope.window === 'current'
+          ? (meta.currentWindowId != null ? meta.currentWindowId : 1)
+          : Number(scope.window);
+        const winSet = set.filter(c => c.windowId === w);
+        if (!winSet.length) return null;
+        set = winSet;
+      }
+      const ordered = set.slice().sort((a, b) => (Number.isFinite(a.index) ? a.index : 0) -
+        (Number.isFinite(b.index) ? b.index : 0));
+      const out = position.from === 'end' ? ordered.slice(-position.n) : ordered.slice(0, position.n);
+      if (!out.length || out.length / candidates.length >= 0.30) return null;
+      return slotOut(out, `slot position ${position.from} ${position.n}`);
+    }
+
+    // RELATIONSHIP LEG -- opener-chain selection ("tabs opened from the
+    // fastmcp google search", with or without the transitive chain). The
+    // anchor resolves by distinctive-token identity over the pool (same DF
+    // discipline as the anchor leg); the chain walks candidate.opener fields.
+    if (relationship && relationship.openerOf && !rank && !retain && !dedupe &&
+        !anchor && !position && !groupScope && !shape) {
+      const toks = String(relationship.openerOf).toLowerCase().split(/[^a-z0-9]+/)
+        .filter(t => t.length >= 2 &&
+          !['the', 'a', 'an', 'my', 'this', 'that', 'current', 'same', 'other', 'tab', 'page'].includes(t));
+      if (!toks.length) return null;
+      const df = new Map();
+      for (const c of candidates) for (const t of new Set(idTokensOf(c))) df.set(t, (df.get(t) || 0) + 1);
+      if (!toks.every(t => (df.get(stem(t)) || 0) > 0 && (df.get(stem(t)) || 0) <= 5)) return null;
+      const hits = candidates.filter(c => {
+        const s = new Set(idTokensOf(c));
+        return toks.every(t => s.has(stem(t)));
+      });
+      if (hits.length !== 1) return null;
+      const anchorId = hits[0].tabId;
+      const hasOpenerData = candidates.some(c => c.opener != null);
+      if (!hasOpenerData) return null;
+      const chain = new Set([anchorId]);
+      let grew = true;
+      while (relationship.chain === true && grew) {
+        grew = false;
+        for (const c of candidates) {
+          if (chain.has(c.tabId)) continue;
+          if (c.opener != null && chain.has(c.opener)) { chain.add(c.tabId); grew = true; }
+        }
+      }
+      const set = candidates.filter(c => chain.has(c.opener) && !chain.has(c.tabId));
+      if (!set.length) return null;
+      return slotOut(set, `slot relationship openerOf "${relationship.openerOf}"${relationship.chain === true ? ' chain' : ''}`);
+    }
+
     // scope alone, dedupe alone, retain alone, relevance -- yield.
     return null;
   }
-
   // ---- Evidence-identity binding ------------------------------------------
   //
   // WHY: entailment scores a POOLED context (title + host + tags + body). A

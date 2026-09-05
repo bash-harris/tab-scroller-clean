@@ -1,0 +1,85 @@
+﻿
+SUITE-V3 -- LLM parser + NLI | all commands | all categories
+181 commands, 117-tab pool, 7 groups, 3 windows
+==============================================================================
+[NLI] 117 tabs: 105 by cosine (free), 12 by NLI -> 24 passes (+0 cached, 2 embeds) in 657ms = 27ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 37ms = 37ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 64ms = 64ms/pass  [simd=?]
+[NLI] 117 tabs: 94 by cosine (free), 23 by NLI -> 21 passes (+2 cached, 1 embeds) in 604ms = 29ms/pass  [simd=?]
+[NLI] 117 tabs: 113 by cosine (free), 4 by NLI -> 4 passes (+0 cached, 1 embeds) in 124ms = 31ms/pass  [simd=?]
+[NLI] 117 tabs: 113 by cosine (free), 4 by NLI -> 4 passes (+0 cached, 1 embeds) in 183ms = 46ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 34ms = 34ms/pass  [simd=?]
+[NLI] 117 tabs: 111 by cosine (free), 6 by NLI -> 6 passes (+0 cached, 1 embeds) in 258ms = 43ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 32ms = 32ms/pass  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 3ms  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 24ms = 24ms/pass  [simd=?]
+[NLI] 117 tabs: 76 by cosine (free), 41 by NLI -> 37 passes (+4 cached, 1 embeds) in 979ms = 26ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 19ms = 19ms/pass  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 6ms  [simd=?]
+[NLI] 117 tabs: 93 by cosine (free), 24 by NLI -> 21 passes (+3 cached, 1 embeds) in 637ms = 30ms/pass  [simd=?]
+[NLI] 117 tabs: 104 by cosine (free), 13 by NLI -> 13 passes (+0 cached, 1 embeds) in 377ms = 29ms/pass  [simd=?]
+[NLI] 117 tabs: 109 by cosine (free), 8 by NLI -> 8 passes (+0 cached, 1 embeds) in 275ms = 34ms/pass  [simd=?]
+[NLI] 117 tabs: 106 by cosine (free), 11 by NLI -> 11 passes (+0 cached, 1 embeds) in 373ms = 34ms/pass  [simd=?]
+[NLI] 117 tabs: 114 by cosine (free), 3 by NLI -> 3 passes (+0 cached, 1 embeds) in 105ms = 35ms/pass  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 1 passes (+0 cached, 1 embeds) in 29ms = 29ms/pass  [simd=?]
+[NLI] 117 tabs: 108 by cosine (free), 9 by NLI -> 9 passes (+0 cached, 1 embeds) in 337ms = 37ms/pass  [simd=?]
+[NLI] 117 tabs: 79 by cosine (free), 38 by NLI -> 35 passes (+3 cached, 1 embeds) in 883ms = 25ms/pass  [simd=?]
+[NLI] 117 tabs: 106 by cosine (free), 11 by NLI -> 22 passes (+0 cached, 2 embeds) in 707ms = 32ms/pass  [simd=?]
+[NLI] 117 tabs: 99 by cosine (free), 18 by NLI -> 18 passes (+0 cached, 1 embeds) in 520ms = 29ms/pass  [simd=?]
+[NLI] 117 tabs: 106 by cosine (free), 11 by NLI -> 0 passes (+11 cached, 0 embeds) in 67ms  [simd=?]
+[NLI] 117 tabs: 103 by cosine (free), 14 by NLI -> 19 passes (+9 cached, 1 embeds) in 625ms = 33ms/pass  [simd=?]
+[NLI] 117 tabs: 110 by cosine (free), 7 by NLI -> 7 passes (+0 cached, 1 embeds) in 323ms = 46ms/pass  [simd=?]
+[NLI] 117 tabs: 104 by cosine (free), 13 by NLI -> 12 passes (+1 cached, 1 embeds) in 416ms = 35ms/pass  [simd=?]
+[NLI] 117 tabs: 93 by cosine (free), 24 by NLI -> 48 passes (+0 cached, 2 embeds) in 1325ms = 28ms/pass  [simd=?]
+[NLI] 117 tabs: 108 by cosine (free), 9 by NLI -> 9 passes (+0 cached, 1 embeds) in 304ms = 34ms/pass  [simd=?]
+[NLI] 117 tabs: 86 by cosine (free), 31 by NLI -> 28 passes (+3 cached, 1 embeds) in 890ms = 32ms/pass  [simd=?]
+[NLI] 117 tabs: 111 by cosine (free), 6 by NLI -> 6 passes (+0 cached, 1 embeds) in 303ms = 51ms/pass  [simd=?]
+[NLI] 117 tabs: 66 by cosine (free), 51 by NLI -> 46 passes (+5 cached, 1 embeds) in 1081ms = 24ms/pass  [simd=?]
+[NLI] 117 tabs: 113 by cosine (free), 4 by NLI -> 0 passes (+4 cached, 0 embeds) in 5ms  [simd=?]
+[NLI] 117 tabs: 116 by cosine (free), 1 by NLI -> 2 passes (+0 cached, 2 embeds) in 92ms = 46ms/pass  [simd=?]
+[NLI] 117 tabs: 112 by cosine (free), 5 by NLI -> 0 passes (+5 cached, 0 embeds) in 2ms  [simd=?]
+[NLI] 117 tabs: 102 by cosine (free), 15 by NLI -> 15 passes (+0 cached, 1 embeds) in 486ms = 32ms/pass  [simd=?]
+[NLI] 117 tabs: 110 by cosine (free), 7 by NLI -> 0 passes (+7 cached, 1 embeds) in 24ms  [simd=?]
+[NLI] 117 tabs: 112 by cosine (free), 5 by NLI -> 5 passes (+0 cached, 1 embeds) in 242ms = 48ms/pass  [simd=?]
+[NLI] superlative (rank): oldest (opened) x8 topic=[] -> [40,111,39,45,44,114,113,86]
+[NLI] superlative (rank): oldest (opened) x3 topic=[shopping] -> [87,53,72]
+[NLI] 117 tabs: 106 by cosine (free), 11 by NLI -> 11 passes (+0 cached, 1 embeds) in 350ms = 32ms/pass  [simd=?]
+
+-- by bucket --------------------------------------------------
+implemented  set-exact 83/83 (100%)       P 1.00 R 1.00 F1 1.00 violations 0
+gap          set-exact 86/86 (100%)       P 1.00 R 1.00 F1 1.00 violations 0
+abstain      set-exact 9/9 (100%)         P 1.00 R 1.00 F1 1.00 violations 0
+featureGap   set-exact 3/3 (100%)         P 1.00 R 1.00 F1 1.00 violations 0
+TOTAL        set-exact 181/181 (100%)     violations 0
+
+-- by spec category ------------------------------------------
+cat  1 url-domain             set-exact 28/28 (100%)       violations 0
+cat  2 structured-url         set-exact 9/9 (100%)         violations 0
+cat  3 title                  set-exact 8/8 (100%)         violations 0
+cat  4 time                   set-exact 13/13 (100%)       violations 0
+cat  5 tab-state              set-exact 10/10 (100%)       violations 0
+cat  6 window-group-position  set-exact 7/7 (100%)         violations 0
+cat  7 relationship-current   set-exact 4/4 (100%)         violations 0
+cat  8 duplicates             set-exact 4/4 (100%)         violations 0
+cat  9 page-content           set-exact 7/7 (100%)         violations 0
+cat 10 content-type           set-exact 6/6 (100%)         violations 0
+cat 11 topic-category         set-exact 15/15 (100%)       violations 0
+cat 12 entities               set-exact 5/5 (100%)         violations 0
+cat 13 nav-origin             set-exact 2/2 (100%)         violations 0
+cat 14 search-query           set-exact 3/3 (100%)         violations 0
+cat 15 reading-progress       set-exact 6/6 (100%)         violations 0
+cat 16 bookmarks              set-exact 3/3 (100%)         violations 0
+cat 17 history-frequency      set-exact 2/2 (100%)         violations 0
+cat 18 error-health           set-exact 3/3 (100%)         violations 0
+cat 19 language-geo           set-exact 3/3 (100%)         violations 0
+cat 20 price-availability     set-exact 5/5 (100%)         violations 0
+cat 21 task-project           set-exact 4/4 (100%)         violations 0
+cat 22 quality-authority      set-exact 3/3 (100%)         violations 0
+cat 23 cross-tab              set-exact 2/2 (100%)         violations 0
+cat 24 ranking-limit          set-exact 6/6 (100%)         violations 0
+cat 25 compound-boolean       set-exact 14/14 (100%)       violations 0
+cat 26 conversational         set-exact 3/3 (100%)         violations 0
+cat 27 user-defined           set-exact 6/6 (100%)         violations 0
+
+llm 0ms (181 cache hits, 181 fresh) | nli 25341ms | result-cache undefined entries, code 662b57def072d03f
+clarify-fire 0/181 (0.0%) | correct-option-present 0/0

@@ -821,7 +821,65 @@ const transactionLog = {
           } catch (e) {
             console.warn('[TX] Ungroup failed:', e.message);
           }
-          return { success: true, message: `↩️ Ungrouped ${tx.affectedTabIds.length} tabs` };
+          return { success: true, message: `✅ Ungrouped ${tx.affectedTabIds.length} tabs` };
+        }
+
+        case 'chain': {
+          // Composite chained-plan record: beforeState.steps[] carries every
+          // executed step in execution order with its own before-state. Undo
+          // replays the inverse of each step in REVERSE order, so the chain
+          // unwinds exactly backwards (close tabs are reopened, then the
+          // bookmark folder that referenced them is removed; ungroup/pin/mute
+          // restore per-step). A step whose before-state is missing is
+          // skipped, never fabricated.
+          const chainSteps = Array.isArray(tx.beforeState && tx.beforeState.steps) ? tx.beforeState.steps : [];
+          if (chainSteps.length === 0) {
+            return { success: false, message: 'Undo not supported for: chain (no steps recorded)' };
+          }
+          const done = [];
+          for (let i = chainSteps.length - 1; i >= 0; i--) {
+            const step = chainSteps[i];
+            try {
+              if (step.intent === 'close_tabs') {
+                const urls = step.beforeState.urls || [];
+                let reopened = 0;
+                for (const url of urls) {
+                  try { await chrome.tabs.create({ url, active: false }); reopened++; } catch (e) { /* url lost */ }
+                }
+                done.push(`reopened ${reopened} tab(s)`);
+              } else if (step.intent === 'bookmark_tabs') {
+                const { folderId, isNewFolder, createdBookmarkIds } = step.beforeState;
+                if (isNewFolder && folderId) {
+                  try { await chrome.bookmarks.removeTree(folderId); } catch (e) { /* already gone */ }
+                } else if (Array.isArray(createdBookmarkIds)) {
+                  for (const bId of createdBookmarkIds) {
+                    try { await chrome.bookmarks.remove(bId); } catch (e) { /* already gone */ }
+                  }
+                }
+                done.push('removed bookmarks');
+              } else if (step.intent === 'group_tabs') {
+                try { await chrome.tabs.ungroup(step.beforeState.tabIds || step.tabIds || []); } catch (e) { /* never grouped */ }
+                done.push(`ungrouped ${(step.beforeState.tabIds || step.tabIds || []).length} tab(s)`);
+              } else if (step.intent === 'pin_tabs' || step.intent === 'unpin_tabs') {
+                const states = step.beforeState.pinnedStates || {};
+                for (const [tabId, wasPinned] of Object.entries(states)) {
+                  try { await chrome.tabs.update(parseInt(tabId), { pinned: wasPinned }); } catch (e) { /* tab may be closed */ }
+                }
+                done.push('restored pin state');
+              } else if (step.intent === 'mute_tabs' || step.intent === 'unmute_tabs') {
+                const states = step.beforeState.mutedStates || {};
+                for (const [tabId, wasMuted] of Object.entries(states)) {
+                  try { await chrome.tabs.update(parseInt(tabId), { muted: wasMuted }); } catch (e) { /* tab may be closed */ }
+                }
+                done.push('restored mute state');
+              } else {
+                done.push(`skipped ${step.intent} (no undo)`);
+              }
+            } catch (e) {
+              console.warn('[TX] chain undo step failed:', step.intent, e.message);
+            }
+          }
+          return { success: true, message: `✅ Undid chain: ${done.join(', ')}` };
         }
 
         case 'pin_tabs': {
@@ -2842,8 +2900,10 @@ async function executeToolCall(functionCall, windowId, rawCommand = '', preResol
     }
 
     // §7: Record transaction for undoable actions.
-    // opts.skipTransaction lets a batch caller (e.g. multi-group assign) suppress
-    // the per-call record and instead log ONE compound transaction it can undo atomically.
+    // opts.skipTransaction lets a batch caller (e.g. multi-group assign, chained
+    // plans) suppress the per-call record and instead log ONE compound transaction
+    // it can undo atomically. The captured before-state rides on the result
+    // (result._beforeState) so the batch composer can fold it into that record.
     if (result.success && isUndoableIntent(name) && !opts.skipTransaction) {
       const affectedIds = beforeState.tabIds || args.tabIds || [];
       if (name === 'bookmark_tabs') {
@@ -2852,6 +2912,14 @@ async function executeToolCall(functionCall, windowId, rawCommand = '', preResol
         beforeState.createdBookmarkIds = result.createdBookmarkIds;
       }
       transactionLog.record(name, affectedIds, beforeState);
+      result.undoable = true;
+    } else if (result.success && isUndoableIntent(name) && opts.skipTransaction) {
+      if (name === 'bookmark_tabs') {
+        beforeState.folderId = result.folderId;
+        beforeState.isNewFolder = result.isNewFolder;
+        beforeState.createdBookmarkIds = result.createdBookmarkIds;
+      }
+      result._beforeState = beforeState;
       result.undoable = true;
     }
 
@@ -3330,6 +3398,69 @@ if (typeof self !== 'undefined') {
 // preview, and direct execution. A clarify-chosen plan rides this exact
 // path, so a chosen destructive interpretation still previews.
 // =====================================================
+// Intent -> human verb for chained-step labels/preview lines.
+const CHAIN_STEP_VERBS = {
+  close_tabs: 'Close', group_tabs: 'Group', bookmark_tabs: 'Bookmark',
+  pin_tabs: 'Pin', unpin_tabs: 'Unpin', mute_tabs: 'Mute', unmute_tabs: 'Unmute',
+  reload_tabs: 'Reload', sort_tabs: 'Sort',
+};
+
+// =====================================================
+// CHAINED-PLAN EXECUTION (tool-call schema v3)
+//
+// A chained plan (plan.chained, steps[] from the agent pipeline) runs its
+// steps SEQUENTIALLY through the existing per-intent tool path -- the same
+// executeToolCall dispatch EXECUTE_CONFIRMED_TOOL_CALL uses, with
+// confirmation:false so a >=3-tab close step executes instead of bouncing a
+// second confirm. The first failed step aborts the remaining steps. Per-step
+// transactions are suppressed (skipTransaction) and ONE composite record is
+// written instead (action 'chain', beforeState.steps[] carrying each step's
+// intent + captured before-state) -- the same single-record precedent the
+// multi-group assign already follows (ONE 'group_multi' tx spanning every
+// bucket), so ONE undo reverses every step in REVERSE step order.
+// =====================================================
+async function executeChainedPlanSteps(steps, windowId, command, allowedIds) {
+  const allowed = allowedIds instanceof Set ? allowedIds : new Set(Array.isArray(allowedIds) ? allowedIds : []);
+  const executed = [];
+  for (const step of Array.isArray(steps) ? steps : []) {
+    const stepIds = (Array.isArray(step.tabIds) ? step.tabIds : []).filter(id => allowed.has(id));
+    if (stepIds.length === 0) continue; // nothing confirmed for this step
+    const routed = toolForIntent(step.intent);
+    const stepCards = await collectCardsForTabs(stepIds);
+    // Agent plans carry action_params (closeAfterBookmark, group name/color...).
+    // confirmation:false reuses the EXECUTE_CONFIRMED_TOOL_CALL semantics: the
+    // user already confirmed the chain, so no step may re-ask.
+    const ap = step.params || {};
+    const functionCall = {
+      name: routed.tool,
+      args: {
+        ...routed.args,
+        ...ap,
+        confirmation: false,
+        tabIds: stepIds,
+        // groupName only exists for group_tabs; deriving it for every step
+        // put junk args on close/bookmark calls.
+        ...(routed.tool === 'group_tabs'
+          ? { groupName: ap.groupName || deriveGroupName(command || '', stepCards, null) }
+          : {}),
+      },
+    };
+    const result = await executeToolCall(functionCall, windowId, command || '', stepIds, { skipTransaction: true });
+    if (!result.success) {
+      // Abort remaining steps on failure. Already-executed steps stay
+      // committed and are still recorded below, so undo can reverse them.
+      break;
+    }
+    const beforeState = { ...(result._beforeState || {}) };
+    executed.push({
+      intent: step.intent,
+      tabIds: beforeState.tabIds || stepIds,
+      beforeState,
+    });
+  }
+  return executed;
+}
+
 async function deliverCommandPlan(plan, { command, windowId, senderTabId, sendResponse }) {
   // retrieve_open (agent path): a find-and-open command, not a bulk
   // action over open tabs. handleRecallTabs runs the semantic history
@@ -3359,6 +3490,59 @@ async function deliverCommandPlan(plan, { command, windowId, senderTabId, sendRe
       message: `No matching tabs found. Try using different keywords or targeting standard categories like: ${topCategories.slice(0, 3).join(', ')}.`,
       categories: topCategories.slice(0, 3)
     });
+    return;
+  }
+
+  // Chained (tool-call schema v3) plans: ONE confirm over the combined
+  // preview, then each step executes over its own selection (see
+  // executeChainedPlanSteps). Chains ALWAYS preview -- a multi-step plan
+  // spans several actions, so the destructive/non-destructive split that a
+  // single-intent plan gets must not auto-execute step 2 behind the user's
+  // back. plan.intent on a chained plan is the joined form
+  // ("bookmark_tabs+close_tabs"), which no single tool serves; that is
+  // exactly why the confirm path branches on pending.steps below instead of
+  // toolForIntent (which would fall back to group_tabs over the union).
+  if (plan.chained && Array.isArray(plan.steps) && plan.steps.length > 1) {
+    const planId = generateTxId();
+    pendingPlans.set(planId, {
+      chained: true,
+      intent: plan.intent,
+      command,
+      tabIds: [...plan.tabIds, ...(plan.uncertain || [])],
+      // Per-step selections frozen at planning time; EXECUTE_PLAN intersects
+      // each with the user's checked subset before executing.
+      steps: plan.steps.map(s => ({
+        intent: s.intent,
+        tabIds: [...(s.tabIds || [])],
+        params: { ...(s.params || {}) },
+        carry: s.carry === true,
+      })),
+      expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes TTL
+    });
+
+    if (senderTabId) {
+      const tabDetails = {};
+      for (const id of [...plan.tabIds, ...(plan.uncertain || [])]) {
+        try {
+          const t = await chrome.tabs.get(id);
+          if (t) {
+            tabDetails[id] = {
+              title: t.title || 'Untitled',
+              favIconUrl: t.favIconUrl || '',
+              reason: plan.perTabReasons[id] || 'Matched'
+            };
+          }
+        } catch (e) { /* tab closed between planning and confirm */ }
+      }
+      chrome.tabs.sendMessage(senderTabId, {
+        type: 'PREVIEW_PLAN',
+        planId,
+        plan,
+        tabDetails
+      }).catch(() => { });
+    }
+
+    sendResponse({ success: true, awaitingConfirmation: true });
     return;
   }
 
@@ -3770,6 +3954,79 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
               message: createdCount > 0
                 ? `Created ${createdCount} tab groups (${totalGrouped} tabs organized)`
                 : "No tab groups were created (each group requires at least 2 tabs)."
+            });
+          } catch (err) {
+            sendResponse({ success: false, message: err.message });
+          } finally {
+            pendingPlans.delete(planId);
+          }
+        })();
+        return true;
+      }
+
+      // Branch for chained (tool-call schema v3) plans: the confirm carries
+      // the union of the steps' selections as checkedTabIds; each step then
+      // executes over its own frozen selection intersected with that subset.
+      // ONE composite transaction (action 'chain') is recorded for the whole
+      // chain -- the group_multi single-record precedent -- so ONE undo
+      // reverses every executed step in reverse order.
+      if (Array.isArray(pending.steps) && pending.steps.length > 1) {
+        (async () => {
+          try {
+            // Same security validation as flat plans: only ids present in the
+            // original plan, still open, and still in the confirming window.
+            const validIds = new Set();
+            const originalIds = new Set(pending.tabIds);
+            for (const id of checkedTabIds || []) {
+              if (!originalIds.has(id)) {
+                console.warn('[Security] Chained tab ID not in original plan:', id);
+                continue;
+              }
+              try {
+                const tab = await chrome.tabs.get(id);
+                if (tab && tab.windowId === windowId) validIds.add(id);
+              } catch (e) { /* tab closed */ }
+            }
+
+            if (validIds.size === 0) {
+              sendResponse({ success: false, message: "No valid tabs selected." });
+              return;
+            }
+
+            const executed = await executeChainedPlanSteps(pending.steps, windowId, pending.command || '', validIds);
+
+            if (executed.length === 0) {
+              sendResponse({ success: false, message: "Chained plan failed: no step executed." });
+              return;
+            }
+
+            // ONE composite transaction for the whole chain (mirrors the
+            // group_multi single-record precedent at :3756): per-step ops in
+            // execution order, so undo() replays them in REVERSE order. The
+            // affected-id union is deduped -- steps commonly share tabs
+            // ("bookmark them and then close them" acts on the same ids twice).
+            const unionIds = [];
+            for (const s of executed) {
+              for (const id of s.tabIds) if (!unionIds.includes(id)) unionIds.push(id);
+            }
+            transactionLog.record('chain', unionIds, {
+              steps: executed.map(s => ({ intent: s.intent, tabIds: [...s.tabIds], beforeState: s.beforeState })),
+              tabIds: unionIds,
+            });
+
+            const stepLabels = executed.map(s => (CHAIN_STEP_VERBS[s.intent] || s.intent) + ' ' + s.tabIds.length).join(', ');
+            if (sender.tab?.id) {
+              chrome.tabs.sendMessage(sender.tab.id, {
+                type: 'UNDO_AVAILABLE',
+                action: 'chain',
+                count: unionIds.length,
+                message: `Chained plan executed (${stepLabels})`
+              }).catch(() => { });
+            }
+
+            sendResponse({
+              success: true,
+              message: `Executed ${executed.length} step(s): ${stepLabels}`
             });
           } catch (err) {
             sendResponse({ success: false, message: err.message });
@@ -5597,3 +5854,11 @@ chrome.runtime.onInstalled.addListener(() => {
 // (RAG indexing listener consolidated into main router));
 
 
+
+// ---- Test/surface exposure (service-worker globals) ----
+// The chained-plan machinery is driven end-to-end by offline tests; these
+// hooks are inert in the SW itself.
+self.deliverCommandPlan = deliverCommandPlan;
+self.executeChainedPlanSteps = executeChainedPlanSteps;
+self.transactionLog = transactionLog;
+self.pendingPlans = pendingPlans;

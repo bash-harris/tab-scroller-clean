@@ -21,7 +21,7 @@
 global.self = global; // recall-tabs.js self-fallback guard; harmless in node
 
 const { buildFilterPlan, validate, parseMultiGroupCommand, buildRegexPlan, validateActionParams, detectTimeFilter } = require('../agent-planner.js');
-const { executePlan, extractRetrieval } = require('../agent-executor.js');
+const { executePlan, executeSteps, extractRetrieval } = require('../agent-executor.js');
 const { isComplexCommand } = require('../agent-router.js');
 const { parseTimeRange, parseTimeWindow } = require('../recall-tabs.js');
 const { assignToBuckets } = require('../multi-group-assign.js');
@@ -560,6 +560,137 @@ const CASES = [
 
     // No temporal phrase -> null (a plain topic command carries no time filter).
     ok('detectTimeFilter no time phrase -> null', detectTimeFilter('close my cricket tabs') === null);
+  }
+
+  console.log('\n--- TOOL-CALL SCHEMA V3: CHAINED COMMANDS (steps[]) ---');
+  {
+    // (1) PLANNER EMITS 2 STEPS: a chained model output validates into a v3
+    // plan with 2 steps; a single-intent steps array is accepted too
+    // (backward compat), and a bad intent in one step dies alone.
+    const chained = validate({
+      steps: [
+        { intent: 'bookmark_tabs', include: [{ field: 'topic', op: 'about', value: 'recipe' }], exclude: [], confidence: 0.9 },
+        { intent: 'close_tabs', include: [], exclude: [], carry: true, confidence: 0.9 },
+      ],
+      confidence: 0.9,
+    }, []);
+    ok('planner emits 2 steps (v3 plan)',
+      chained && chained.v === 3 && Array.isArray(chained.steps) && chained.steps.length === 2,
+      JSON.stringify(chained && { v: chained.v, n: chained.steps && chained.steps.length }));
+    ok('chained plan destructive = any step destructive', chained.destructive === true);
+    ok('carry flag survives validation', chained.steps[1].carry === true && chained.steps[0].carry === false);
+
+    const single = validate({
+      steps: [{ intent: 'mute_tabs', include: [{ field: 'state', op: 'is', value: 'audible' }], exclude: [], confidence: 0.9 }],
+      confidence: 0.9,
+    }, []);
+    ok('single-step array accepted (backward compat)', single && single.v === 3 && single.steps.length === 1,
+      JSON.stringify(single && single.v));
+
+    const badIntent = validate({
+      steps: [
+        { intent: 'bookmark_tabs', include: [], exclude: [], confidence: 0.9 },
+        { intent: 'nuke_tabs', include: [], exclude: [], confidence: 0.9 },
+      ],
+      confidence: 0.9,
+    }, []);
+    ok('bad step intent drops, valid step survives', badIntent && badIntent.v === 3 && badIntent.steps.length === 1,
+      JSON.stringify(badIntent && badIntent.steps && badIntent.steps.length));
+
+    // Closed-enum per-step dimensions: relationship/position/groupScope land
+    // in the step's where tree as include[] predicates.
+    const v3slots = validate({
+      steps: [{ intent: 'group_tabs', include: [], exclude: [],
+        slots: { relationship: { openerOf: 'fastmcp docs', chain: true }, position: { from: 'end', n: 3 }, groupScope: { color: 'grey' } },
+        confidence: 0.9 }],
+      confidence: 0.9,
+    }, []);
+    const v3fields = v3slots.steps[0].where.all.map(f => f.field);
+    ok('step slots compile to relationship+position+groupScope predicates',
+      v3fields.includes('relationship') && v3fields.includes('position') && v3fields.includes('groupScope'),
+      JSON.stringify(v3fields));
+    ok('groupScope color enum closes bad colors',
+      validate({ steps: [{ intent: 'group_tabs', include: [], exclude: [], slots: { groupScope: { color: 'chartreuse' } }, confidence: 0.9 }] }, [])
+        .steps[0].where.all === undefined);
+
+    // (2) EXECUTOR ORDER: steps run sequentially, union carries both steps'
+    // selections.
+    const NOW2 = 1_000_000_000_000, DAY2 = 86400000;
+    const tabs2 = [
+      { id: 1, title: 'pasta recipe', url: 'https://x.com/1', lastAccessed: NOW2 - 2 * DAY2, active: false },
+      { id: 2, title: 'recipe archive', url: 'https://x.com/2', lastAccessed: NOW2 - 10 * DAY2, active: false },
+      { id: 3, title: 'news roundup', url: 'https://x.com/3', lastAccessed: NOW2 - 1 * DAY2, active: false },
+    ];
+    const deps2 = mkDeps(tabs2);
+    const s1 = { intent: 'bookmark_tabs', where: { all: [{ field: 'topic', op: 'about', value: 'recipe' }] }, params: {}, carry: false, destructive: false };
+    const s2 = { intent: 'mute_tabs', where: { all: [{ field: 'state', op: 'is', value: 'audible' }] }, params: {}, carry: true, destructive: false };
+    const live2 = tabs2.map(t => ({ ...t, audible: t.id === 1 || t.id === 3 }));
+    const res2 = await executeSteps([s1, s2], deps2.candidates, { ...deps2, liveTabs: live2 });
+    ok('executor order: step1 selects recipes', JSON.stringify(res2.steps[0].tabIds) === '[1,2]', JSON.stringify(res2.steps[0].tabIds));
+    ok('executor order: step2 (carry) restricted to step1 selection', JSON.stringify(res2.steps[1].tabIds) === '[1]', JSON.stringify(res2.steps[1].tabIds));
+    ok('composite tabIds = union of steps', setEq(res2.tabIds, [1, 2]).equal, JSON.stringify(res2.tabIds));
+    ok('chain not failed', res2.failed === false);
+
+    // (3) CARRY FLAG: step 2 without carry scans the WHOLE universe, with
+    // carry only the inherited set.
+    const s2NoCarry = { intent: 'mute_tabs', where: { all: [{ field: 'state', op: 'is', value: 'audible' }] }, params: {}, carry: false, destructive: false };
+    const resNoCarry = await executeSteps([s1, s2NoCarry], deps2.candidates, { ...deps2, liveTabs: live2 });
+    ok('no carry: step2 scans whole universe', JSON.stringify(resNoCarry.steps[1].tabIds) === '[1,3]', JSON.stringify(resNoCarry.steps[1].tabIds));
+
+    // (4) FAILURE ABORTS CHAIN: step 1 matches 0 tabs -> step 2 never runs.
+    const s1Empty = { intent: 'bookmark_tabs', where: { all: [{ field: 'topic', op: 'about', value: 'quantum' }] }, params: {}, carry: false, destructive: false };
+    let ran = 0;
+    const depsCounted = {
+      ...mkDeps(tabs2),
+      findByTopic: async (v, cands) => {
+        if (String(v).includes('quantum')) return [];
+        ran++;
+        return (cands || deps2.candidates).filter(c => c.title.includes('recipe')).map(c => c.tabId);
+      },
+    };
+    const resFail = await executeSteps([s1Empty, s2], depsCounted.candidates, { ...depsCounted, liveTabs: tabs2 });
+    ok('failure aborts chain: failed=true, failedAtStep=0', resFail.failed === true && resFail.failedAtStep === 0, JSON.stringify({ f: resFail.failed, at: resFail.failedAtStep }));
+    ok('failure aborts chain: step2 never executed', resFail.steps.length === 1 && resFail.steps[0].tabIds.length === 0,
+      JSON.stringify(resFail.steps.map(s => s.tabIds)));
+
+    // (5) COMPOSITE UND RECORDED ONCE: the composite transaction descriptor
+    // carries ONE record with every step's op + the union tabIds (mirrors the
+    // multi-group single-record precedent).
+    const CA = require('../command-agent.js');
+    const compositePlan = CA.composeChainedPlan(
+      { steps: [s1, s2].map(st => ({ intent: st.intent, carry: st.carry })), source: 'gemini' },
+      res2,
+    );
+    const tx = CA.buildCompositeTransaction(
+      { steps: [s1, s2].map(st => ({ intent: st.intent, carry: st.carry })) },
+      res2,
+    );
+    ok('composite tx is ONE record, action=chain', tx.action === 'chain' && tx.steps.length === 2, JSON.stringify(tx));
+    ok('composite tx records per-step intents + union tabIds',
+      tx.steps[0].intent === 'bookmark_tabs' && tx.steps[1].intent === 'mute_tabs' &&
+      tx.steps[1].carry === true && setEq(tx.tabIds, [1, 2]).equal, JSON.stringify(tx));
+    ok('chained plan preview = per-step labels',
+      /1\. Bookmark 2 tab/.test(compositePlan.reason) && /2\. Mute 1 tab/.test(compositePlan.reason),
+      JSON.stringify(compositePlan.reason));
+    ok('chained plan marks chained + union selection',
+      compositePlan.chained === true && setEq(compositePlan.tabIds, [1, 2]).equal &&
+      compositePlan.destructive === false, JSON.stringify({ c: compositePlan.chained, t: compositePlan.tabIds }));
+
+    // (6) PARSER END-TO-END: "bookmark X and then close them" -> LlmQuery
+    // emits steps[] with carry on step 2, deterministically (no model).
+    global.self.LlmQuery = require('../llm-query.js');
+    const q = global.self.LlmQuery;
+    const st = q.stepsFromCommand('bookmark the recipe tabs and then close them');
+    ok('parser: chained command -> 2 steps',
+      st && st.length === 2 && st[0].intent === 'bookmark_tabs' && st[1].intent === 'close_tabs',
+      JSON.stringify(st));
+    ok('parser: "them" sets carry on step 2', st && st[1].carry === true);
+    ok('parser: topic list does NOT split ("cricket and football")',
+      q.stepsFromCommand('group my cricket and football tabs') === null);
+    ok('parser: plain command -> no steps',
+      q.stepsFromCommand('close all shopping tabs from yesterday except gardening') === null);
+    ok('parser: max 3 steps ("A then B then C")',
+      (q.stepsFromCommand('bookmark the react docs and then close them and then group the rest') || []).length === 3);
   }
 
   console.log('\n' + '='.repeat(60));

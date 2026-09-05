@@ -28,6 +28,104 @@
 
   const EXCEPT_RE = /\b(except(?:\s+for)?|excluding|other than|apart from|aside from|but not|not including|besides|minus|without|unless|save for|leaving out|skip(?:ping)?|ignore|don'?t\s+(?:include|touch))\b/i;
 
+  // ---- TOOL-CALL SCHEMA V3 (multi-step) -------------------------------------
+  // A plan may carry up to MAX_STEPS sequential steps. Single-intent commands
+  // compile to steps:[{...}] while the flat V2 fields (intent/where/params)
+  // stay on the plan for backward compatibility: every existing reader of the
+  // flat shape keeps working, and executeSteps treats a 1-step array exactly
+  // like executePlan treats the flat plan.
+  const MAX_STEPS = 3;
+
+  // Per-step selection dimensions beyond include/exclude: relationship
+  // (opener-chain), position (window/pool positional), groupScope (tab group).
+  // Closed enums per field; a bad value drops the whole predicate, never half.
+  function validateV3Predicate(f) {
+    if (!f || typeof f !== 'object') return null;
+    const opts = f.opts || {};
+    switch (f.field) {
+      case 'relationship': {
+        const ref = String(f.value || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+        if (!ref) return null;
+        return { field: 'relationship', op: 'opener_of', value: ref, opts: { chain: opts.chain === true } };
+      }
+      case 'position': {
+        const n = Number(f.value);
+        if (!Number.isInteger(n) || n < 1 || n > 100) return null;
+        const from = opts.from === 'end' ? 'end' : 'start';
+        return { field: 'position', op: 'from', value: n, opts: { from } };
+      }
+      case 'groupScope': {
+        const kind = opts.kind === 'color' ? 'color' : 'name';
+        const v = String(f.value || '').trim();
+        if (!v || v.length > 40) return null;
+        return { field: 'groupScope', op: 'is', value: v.toLowerCase(), opts: { kind } };
+      }
+      default:
+        return validatePredicate(f);
+    }
+  }
+
+  // Validate one model-emitted step: {intent, include[], exclude[], slots{},
+  // carry}. Returns the executor-shaped step {intent, where, params, carry},
+  // or null when the step is unusable. Unknown selection dimensions in
+  // slots{} (relationship/position/groupScope) compile into include[]
+  // predicates so the executor's set algebra sees one uniform tree.
+  function validateStep(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    if (!INTENTS.has(raw.intent)) return null;
+    const include = (Array.isArray(raw.include) ? raw.include : []).map(validateV3Predicate).filter(Boolean);
+    const exclude = (Array.isArray(raw.exclude) ? raw.exclude : []).map(validateV3Predicate).filter(Boolean);
+
+    // slots{}: relationship/position/groupScope from the parser's step
+    // schema, validated through the same closed-enum discipline.
+    const slots = (raw.slots && typeof raw.slots === 'object') ? raw.slots : {};
+    if (slots.relationship && typeof slots.relationship === 'object' && slots.relationship.openerOf != null) {
+      const phrase = String(slots.relationship.openerOf).trim().replace(/\s+/g, ' ');
+      if (phrase && phrase.length <= 60) {
+        include.push({ field: 'relationship', op: 'opener_of', value: phrase, opts: { chain: slots.relationship.chain === true } });
+      }
+    }
+    if (slots.position && typeof slots.position === 'object') {
+      const n = Number(slots.position.n);
+      const from = slots.position.from === 'end' ? 'end' : slots.position.from === 'start' ? 'start' : null;
+      if (from && Number.isInteger(n) && n >= 1 && n <= 100) {
+        include.push({ field: 'position', op: 'from', value: n, opts: { from } });
+      }
+    }
+    if (slots.groupScope && typeof slots.groupScope === 'object') {
+      const name = slots.groupScope.name != null ? String(slots.groupScope.name).trim() : null;
+      const color = slots.groupScope.color != null ? String(slots.groupScope.color).trim().toLowerCase() : null;
+      if (name && name.length <= 40) include.push({ field: 'groupScope', op: 'is', value: name.toLowerCase(), opts: { kind: 'name' } });
+      else if (color && ['grey', 'blue', 'red', 'yellow', 'green', 'pink', 'purple', 'cyan', 'orange'].includes(color)) {
+        include.push({ field: 'groupScope', op: 'is', value: color, opts: { kind: 'color' } });
+      }
+    }
+
+    // Reuse the V2 compiler per step so dedupe/order_by/limit folding and
+    // param sanitization stay identical to single-intent plans. _v3 keeps the
+    // relationship/position/groupScope predicates from being stripped.
+    const stepPlan = buildV2Schema({ _v3: true, intent: raw.intent, include, exclude, action_params: raw.action_params, confidence: raw.confidence });
+    return {
+      intent: stepPlan.intent,
+      where: stepPlan.where,
+      dedupe: stepPlan.dedupe,
+      order_by: stepPlan.order_by,
+      limit: stepPlan.limit,
+      params: stepPlan.params,
+      carry: raw.carry === true,
+      destructive: DESTRUCTIVE.has(raw.intent),
+    };
+  }
+
+  // Compile a raw model output into plan.steps. Accepts:
+  //   raw.steps: [{intent, include[], exclude[], slots{}, carry, action_params}]  (chained)
+  // and compiles every validated step. Returns null when no step survives.
+  function validateSteps(raw) {
+    if (!raw || !Array.isArray(raw.steps) || raw.steps.length === 0) return null;
+    const steps = raw.steps.slice(0, MAX_STEPS).map(validateStep).filter(Boolean);
+    return steps.length ? steps : null;
+  }
+
   function normalizeCommand(cmd) {
     return String(cmd || '').toLowerCase().replace(/[^a-z0-9.\s]/g, ' ').replace(/\s+/g, ' ').trim();
   }
@@ -69,6 +167,14 @@ Examples:
 "Group the shopping tabs I opened between 2 and 5 days ago" -> {"intent":"group_tabs","include":[{"field":"topic","op":"about","value":"shopping"},{"field":"time","op":"between","value":"2_to_5_days","opts":{"basis":"opened"}}],"exclude":[],"exception_span":null,"confidence":0.85}
 "Open the programming tabs from the last hour" -> {"intent":"open_tabs","include":[{"field":"topic","op":"about","value":"programming"},{"field":"time","op":"within","value":"last_hour","opts":{"basis":"opened"}}],"exclude":[],"exception_span":null,"confidence":0.85}
 "Show me my youtube tabs" -> {"intent":"open_tabs","include":[{"field":"domain","op":"equals","value":"youtube.com"}],"exclude":[],"exception_span":null,"confidence":0.85}
+
+Multi-step (chained) commands: when the command contains SEQUENTIAL actions ("and then", "then", "after that", or "and <verb> them"), return a top-level steps[] array instead of the flat shape. steps[] has 1-3 entries; each entry is:
+{"intent":"<intent>","include":[<pred>,...],"exclude":[<pred>,...],"slots":{},"carry":<bool>,"action_params":{}}
+- step N's include/exclude/slots/action_params use exactly the same fields as the flat shape.
+- carry: true on a step whose object is a PRONOUN referring to the previous step's selection ("them"/"those"/"the selection"); that step re-runs over exactly the previous step's tabs. Use carry:false when the step names its own selection.
+- Steps execute in order; a step that matches nothing aborts the rest. If the chain cannot be expressed in 3 steps, emit only the flat single-intent shape for the dominant action instead.
+Example: "bookmark the recipe tabs and then close them" -> {"steps":[{"intent":"bookmark_tabs","include":[{"field":"topic","op":"about","value":"recipe"}],"exclude":[],"slots":{},"carry":false,"action_params":{}},{"intent":"close_tabs","include":[],"exclude":[],"slots":{},"carry":true,"action_params":{}}],"confidence":0.9}
+Single-intent commands MUST keep using the flat shape (intent/include/exclude), never a one-step steps[] wrapper that changes nothing.
 `;
 
   const TIME_FIELDS = new Set(['time', 'opened_at', 'accessed_at']);
@@ -186,8 +292,12 @@ Examples:
   }
 
   function buildV2Schema(raw) {
-    const include = (Array.isArray(raw.include) ? raw.include : []).map(validatePredicate).filter(Boolean);
-    const exclude = (Array.isArray(raw.exclude) ? raw.exclude : []).map(validatePredicate).filter(Boolean);
+    // V3 step compiler path: predicates already validated through
+    // validateV3Predicate keep their relationship/position/groupScope fields,
+    // which plain validatePredicate would drop.
+    const predOf = raw._v3 ? validateV3Predicate : validatePredicate;
+    const include = (Array.isArray(raw.include) ? raw.include : []).map(predOf).filter(Boolean);
+    const exclude = (Array.isArray(raw.exclude) ? raw.exclude : []).map(predOf).filter(Boolean);
     
     let dedupe = null;
     let order_by = [];
@@ -228,8 +338,25 @@ Examples:
 
   function validate(raw, signals = []) {
     if (!raw || typeof raw !== 'object') return null;
-    if (!INTENTS.has(raw.intent)) return null;
 
+    // Multi-step (V3): a chained model output carries steps[]. When at least
+    // one step validates, the plan is composite: flat intent fields are left
+    // off and the executor runs the chain. Any single-step array is still
+    // accepted (steps:[{...}] == the flat shape) so the formats interoperate.
+    const steps = validateSteps(raw);
+    if (steps) {
+      const conf = Number(raw.confidence);
+      return {
+        v: 3,
+        steps,
+        source: 'open_tabs',
+        params: steps[steps.length - 1].params || {},
+        confidence: Number.isFinite(conf) ? Math.max(0, Math.min(1, conf)) : 0.7,
+        destructive: steps.some(s => s.destructive),
+      };
+    }
+
+    if (!INTENTS.has(raw.intent)) return null;
     const plan = buildV2Schema(raw);
 
     const missing = signals.filter(s => REQUIRED[s] && !REQUIRED[s](plan));
@@ -585,6 +712,7 @@ No markdown, no prose.`;
 
   const AgentPlanner = {
     buildFilterPlan, validate, buildRegexPlan, parseMultiGroupCommand, normalizeCommand, detectTimeFilter, validateActionParams, SYSTEM, INTENTS,
+    validateSteps, validateStep, validateV3Predicate, MAX_STEPS,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = AgentPlanner;
   if (typeof self !== 'undefined') self.AgentPlanner = AgentPlanner;

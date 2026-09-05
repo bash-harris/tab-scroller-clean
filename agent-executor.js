@@ -53,7 +53,16 @@
     const getOpenedAt = opts.getOpenedAt || (() => null);
     const getExtractedAt = opts.getExtractedAt || (() => null);
 
-    const liveTabs = Array.isArray(opts.liveTabs) ? opts.liveTabs : [];
+    // Selection-carry: when the caller restricts this step to the previous
+    // step's selection (step 2 of "bookmark X and then close them"), the
+    // universe shrinks to that set. An explicit restriction IS the narrowing
+    // filter -- the destructive whole-window veto must not fire on it.
+    const allowIds = (opts.allowIds && opts.allowIds instanceof Set) ? opts.allowIds : null;
+    let liveTabs = Array.isArray(opts.liveTabs) ? opts.liveTabs : [];
+    if (allowIds) {
+      liveTabs = liveTabs.filter(t => allowIds.has(t.id));
+      notes.push('restricted to previous step selection');
+    }
     const tabById = new Map(liveTabs.map(t => [t.id, t]));
     const universe = new Set(liveTabs.map(t => t.id));
 
@@ -119,6 +128,73 @@
           if (f.value === 'muted' && !!t.muted) set.add(id);
         } else if (f.field === 'duplicate') {
           // not handled as leaf in v2, but just in case
+        } else if (f.field === 'relationship') {
+          // Opener-chain membership: value = the anchor reference phrase,
+          // opts.chain = transitive. The anchor tab is resolved by
+          // distinctive-token identity (every phrase token appears in exactly
+          // one candidate's identity fields); no unique anchor or no opener
+          // data -> empty set (the caller's zero-match path answers, never a
+          // crash). Guards for absent opener fields: production passes them
+          // where available, bench pools always do.
+          const phrase = String(f.value || '').toLowerCase();
+          const toks = phrase.split(/[^a-z0-9]+/).filter(tok => tok.length >= 2 &&
+            !['the', 'a', 'an', 'my', 'this', 'that', 'current', 'same', 'other', 'tab', 'page'].includes(tok));
+          if (toks.length) {
+            const idTok = (t2) => {
+              const out = [];
+              for (const tok of String(t2.title || '').toLowerCase().split(/[^a-z0-9]+/)) if (tok.length >= 2) out.push(tok);
+              try { for (const tok of new URL(t2.url || '').pathname.toLowerCase().split(/[^a-z0-9]+/)) if (tok.length >= 2) out.push(tok); } catch {}
+              return out;
+            };
+            const hits = liveTabs.filter(t2 => {
+              const s = new Set(idTok(t2));
+              return toks.every(tok => s.has(tok) || s.has(tok.replace(/s$/, '')));
+            });
+            if (hits.length === 1) {
+              const anchorId = hits[0].id;
+              const hasOpener = liveTabs.some(t2 => t2.opener != null);
+              if (hasOpener) {
+                const chain = new Set([anchorId]);
+                let grew = f.opts && f.opts.chain === true;
+                while (grew) {
+                  grew = false;
+                  for (const t2 of liveTabs) {
+                    if (chain.has(t2.id)) continue;
+                    if (t2.opener != null && chain.has(t2.opener)) { chain.add(t2.id); grew = true; }
+                  }
+                }
+                for (const t2 of liveTabs) {
+                  if (t2.opener != null && chain.has(t2.opener) && !chain.has(t2.id)) set.add(t2.id);
+                }
+              }
+            }
+          }
+        } else if (f.field === 'position') {
+          // Window/pool positional: opts.from start|end, value = n. Ordering
+          // key is tab.index; candidates/tabs without an index sort last and
+          // never crash the cut.
+          const n = Number(f.value);
+          if (Number.isInteger(n) && n >= 1) {
+            const from = (f.opts && f.opts.from) === 'end' ? 'end' : 'start';
+            let pool = liveTabs.filter(t2 => Number.isFinite(t2.index));
+            if ((f.opts && f.opts.windowId) != null) {
+              pool = pool.filter(t2 => t2.windowId === f.opts.windowId);
+            }
+            pool.sort((a, b) => a.index - b.index);
+            const chosen = from === 'end' ? pool.slice(-n) : pool.slice(0, n);
+            for (const t2 of chosen) set.add(t2.id);
+          }
+        } else if (f.field === 'groupScope') {
+          // Tab-group membership by name or Chrome color. Candidates carry
+          // groupId/groupName/groupColor where available; a tab without the
+          // field simply does not match.
+          const kind = (f.opts && f.opts.kind) === 'color' ? 'color' : 'name';
+          const val = String(f.value || '').toLowerCase();
+          for (const id2 of universe) {
+            const t2 = tabById.get(id2) || candidates.find(c => c.tabId === id2) || {};
+            if (kind === 'name' && String(t2.groupName || '').toLowerCase() === val) set.add(id2);
+            if (kind === 'color' && String(t2.groupColor || '').toLowerCase() === val) set.add(id2);
+          }
         }
       }
       return set;
@@ -235,8 +311,11 @@
     for (const id of tabIds) perTabReasons[id] = reason;
 
     const selectedAllDestructive = DESTRUCTIVE.has(dsl.intent) && !hasNarrowing;
-    const needsCorrection = topicMatchedZero || selectedAllDestructive;
-    if (selectedAllDestructive) notes.push('destructive plan had no narrowing filter (would match all tabs)');
+    // A carry restriction is an explicit narrowing the user named ("close
+    // them"): the destructive veto is satisfied by the inherited universe.
+    const narrowedByCarry = allowIds != null && allowIds.size > 0;
+    const needsCorrection = topicMatchedZero || (selectedAllDestructive && !narrowedByCarry);
+    if (selectedAllDestructive && !narrowedByCarry) notes.push('destructive plan had no narrowing filter (would match all tabs)');
 
     let confidence = Number.isFinite(dsl.confidence) ? dsl.confidence : 0.6;
     if (topicMatchedZero || tabIds.length === 0) confidence = Math.min(confidence, 0.3);
@@ -275,7 +354,71 @@
     };
   }
 
-  const AgentExecutor = { executePlan, extractRetrieval, describePlan };
+  // ---- TOOL-CALL SCHEMA V3: MULTI-STEP EXECUTION ----------------------------
+  //
+  // executeSteps runs a plan.steps array sequentially. Contract:
+  //   - each step resolves its own selection via executePlan;
+  //   - step N with carry:true is restricted to step (N-1)'s selection
+  //     ("bookmark the recipe tabs and then close them": "them" = the
+  //     bookmarked set);
+  //   - if step N fails (needsCorrection or empty), step N+1 is NEVER
+  //     executed and the chain is marked failed;
+  //   - the composite result carries per-step results plus the union of all
+  //     steps' tabIds, so the orchestrator previews ONE combined plan.
+  async function executeSteps(steps, candidates = [], ctx = {}) {
+    const results = [];
+    const combined = new Set();
+    let prevSelection = null;
+
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      const stepCtx = { ...ctx };
+      if (step.carry && prevSelection) {
+        stepCtx.allowIds = prevSelection;
+      }
+      let exec;
+      try {
+        exec = await executePlan(step, candidates, stepCtx);
+      } catch (e) {
+        exec = {
+          intent: step.intent, tabIds: [], perTabReasons: {}, uncertain: [],
+          confidence: 0, needsCorrection: true, notes: [`step ${i + 1} threw: ${e && e.message}`],
+          action_params: step.params || {}, destructive: step.destructive === true,
+          reason: step.intent,
+        };
+      }
+      results.push(exec);
+      for (const id of exec.tabIds) combined.add(id);
+      prevSelection = new Set(exec.tabIds);
+      // NEVER execute step N+1 if step N failed.
+      if (exec.needsCorrection || (exec.tabIds.length === 0 && i > 0) ||
+          (exec.tabIds.length === 0 && steps.length > 1 && i === 0)) {
+        return {
+          steps: results,
+          tabIds: [...combined],
+          failed: true,
+          failedAtStep: i,
+          intent: steps.map(s => s.intent).join('+'),
+          destructive: steps.some(s => s.destructive),
+          confidence: Math.min(...results.map(r => r.confidence)),
+          notes: ['chain aborted at step ' + (i + 1)],
+        };
+      }
+    }
+
+    return {
+      steps: results,
+      tabIds: [...combined],
+      failed: false,
+      failedAtStep: null,
+      intent: steps.map(s => s.intent).join('+'),
+      destructive: steps.some(s => s.destructive),
+      confidence: Math.min(...results.map(r => r.confidence)),
+      notes: [],
+    };
+  }
+
+  const AgentExecutor = { executePlan, executeSteps, extractRetrieval, describePlan };
   if (typeof module !== 'undefined' && module.exports) module.exports = AgentExecutor;
   if (typeof self !== 'undefined') self.AgentExecutor = AgentExecutor;
 })();

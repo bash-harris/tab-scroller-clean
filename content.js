@@ -3105,7 +3105,9 @@
       group_multi: "Organize into Groups"
     };
 
-    const actionTitle = titleMap[data.plan.intent] || "Tab Action Plan";
+    const actionTitle = data.plan.chained
+      ? "Chained Plan"
+      : (titleMap[data.plan.intent] || "Tab Action Plan");
 
     const title = document.createElement("h3");
     title.className = "ts-preview-title";
@@ -3123,6 +3125,17 @@
     `;
     header.appendChild(subtitle);
     content.appendChild(header);
+
+    // Chained (multi-step) plans: the combined per-step preview lines from
+    // the background ("1. Bookmark 2 tab(s)", "2. Close 2 tab(s)") render
+    // above the tab list so the user confirms BOTH steps in one modal.
+    if (data.plan.chained && data.plan.reason) {
+      const stepsBox = document.createElement("div");
+      stepsBox.className = "ts-preview-steps";
+      stepsBox.style.cssText = "margin:8px 0 4px;padding:6px 10px;border:1px solid rgba(148,163,184,0.35);border-radius:8px;white-space:pre-line;font-size:12px;";
+      stepsBox.textContent = data.plan.reason;
+      content.appendChild(stepsBox);
+    }
 
     // List header with Select All
     const listHeader = document.createElement("div");

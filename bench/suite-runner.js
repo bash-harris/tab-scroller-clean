@@ -80,7 +80,16 @@ const resultCache = (() => {
     return (j.codeHash === codeHash && j.poolHash === poolHash) ? j.entries : {};
   } catch { return {}; }
 })();
-const flushResultCache = () => fs.writeFileSync(RCACHE_RES, JSON.stringify({ codeHash, poolHash, entries: resultCache }, null, 1));
+const flushResultCache = () => {
+  try {
+    fs.writeFileSync(RCACHE_RES, JSON.stringify({ codeHash, poolHash, entries: resultCache }, null, 1));
+  } catch (e) {
+    // A failed cache write (transient Windows file lock / AV scan on the
+    // multi-MB JSON) must never abort a gate run -- results are still
+    // computed and printed; only the warm cache is lost.
+    console.warn(`[cache] result-cache flush failed (${e.code || e.message}); continuing`);
+  }
+};
 
 // Offset-based times -> epoch ms at suite load. refNow in nli-select anchors
 // to the freshest candidate timestamp, which is load-time minus minutes, so
@@ -250,6 +259,7 @@ const CAT_NAMES = {
     let res, nliElapsed = 0, hit = false;
     if (cached && Array.isArray(cached.matches) && Array.isArray(cached.mode)) {
       res = { matches: cached.matches, mode: cached.mode[0] };
+      if (Array.isArray(cached.steps)) res.results = cached.steps;
       hit = true; cacheHits++;
     } else {
       const t1 = Date.now();
@@ -263,13 +273,30 @@ const CAT_NAMES = {
       nliMs += nliElapsed;
       resultCache[rkey] = {
         matches: res.matches.map(m => ({ tabId: m.tabId, confidence: m.confidence, reason: m.reason })),
-        mode: [res.mode]
+        mode: [res.mode],
+        // Composite (chained) results persist per-step too, so a warm cache
+        // reproduces the union scoring exactly.
+        ...(Array.isArray(res.results) ? { steps: res.results.map(r => ({ matches: (r.matches || []).map(m => ({ tabId: m.tabId, confidence: m.confidence })) })) } : {})
       };
       flushResultCache();
       cacheMisses++;
     }
 
-    const got = new Set(res.matches.filter(m => m.confidence >= 0.5).map(m => m.tabId));
+    // Composite-plan acceptance (tool-call schema v3): a chained result
+    // carries per-step results ({results:[{matches:[...]}]}) instead of one
+    // flat match list. Scoring is UNCHANGED -- the selection set is the union
+    // of every step's selection.
+    //
+    // NOTE (R4): this branch is INERT today -- nli-select.select() never
+    // emits res.results (it has no steps consumer yet), so on the gold suites
+    // every result flows through the flat res.matches path. The branch stays
+    // for future use, ready for the day the deterministic/bench selection
+    // path starts emitting per-step results; production chains run through
+    // background.js's executeChainedPlanSteps instead.
+    const flatMatches = Array.isArray(res.results)
+      ? res.results.flatMap(r => (Array.isArray(r.matches) ? r.matches : []))
+      : res.matches;
+    const got = new Set(flatMatches.filter(m => m.confidence >= 0.5).map(m => m.tabId));
 
     // --- CLARIFY SIMULATION (orchestrator replay, triggers 1+2) ------------
     // Replays command-agent.maybeClarify's decision on the bench pipeline:

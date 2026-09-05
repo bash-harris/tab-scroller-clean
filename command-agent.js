@@ -416,28 +416,98 @@ const INTENT_RULES = [
   { intent: 'pin_tabs',         re: /\bpin(s|ned|ning)?\b/ },
   { intent: 'mute_tabs',        re: /\b(mute(s|d|ing)?|silence|turn\s+(the\s+)?sound\s+off)\b/ },
   { intent: 'reload_tabs',      re: /\b(reload|refresh)(s|ed|ing)?\b/ },
+  // Sort/group sit ABOVE open_tabs: "open" is also a state adjective, and
+  // "group all open tabs about sports" / "sort my open tabs" name group/sort
+  // actions over tabs whose open-state is a qualifier, not the action.
+  { intent: 'sort_tabs',        re: /\b(sort|order|arrange|reorder)(s|ed|ing)?\b/ },
+  { intent: 'group_tabs',       re: /\b(group|cluster|organi[sz]e|collect|gather|bundle|tidy)(s|ed|ing)?\b/ },
   // Open/focus verbs surface ALREADY-open tabs rather than running a content
   // search; "find"/"search" stay search_and_switch below because this rule
   // simply does not match them.
-  { intent: 'open_tabs',        re: /\b(open(s|ed|ing)?|show(s|ing|n)?|focus(es|ed|ing)?|reveal(s|ed|ing)?|highlight(s|ed|ing)?|(bring|pull)\s+up)\b/ },
-  { intent: 'search_and_switch', re: /\b(search|find|go\s+to|switch\s+to|jump\s+to|take\s+me\s+to)\b/ },
-  { intent: 'sort_tabs',        re: /\b(sort|order|arrange|reorder)(s|ed|ing)?\b/ },
-  { intent: 'group_tabs',       re: /\b(group|cluster|organi[sz]e|collect|gather|bundle|tidy)(s|ed|ing)?\b/ }
+  // GUARD (bug #3 follow-up): with sort/group now above, the only way open_tabs
+  // still shadows them is the participle reading "opened" ("tabs opened from
+  // the fastmcp google search" reads as group over an opener chain, with
+  // "opened" a past-participle qualifier). An open_tabs hit whose matched token
+  // is the bare participle "opened"/"opening" is that adjective, never the
+  // imperative -- skip it so the true verb below (or the no-verb default)
+  // answers. Imperative "open" ("open my sports tabs") and open-family verbs
+  // ("show me open work tabs") are unaffected.
+  { intent: 'open_tabs',
+    re: /\b(open(s|ed|ing)?|show(s|ing|n)?|focus(es|ed|ing)?|reveal(s|ed|ing)?|highlight(s|ed|ing)?|(bring|pull)\s+up)\b/,
+    guard: (text, m) => !OPEN_ADJ_PARTICIPLE.test(String(m && m[0] || '').toLowerCase()) },
+  { intent: 'search_and_switch', re: /\b(search|find|go\s+to|switch\s+to|jump\s+to|take\s+me\s+to)\b/ }
 ];
 
 // Commands that negate the destructive verb: "don't close my docs, just group
 // them". Without this, the close rule fires on the word it is told to avoid.
 const NEGATED_CLOSE = /\b(do\s?n[o']?t|dont|never|avoid|without|except|rather\s+than|instead\s+of)\b[^.;]{0,30}\b(clos|kill|quit|shut)/;
 
+// Past-participle forms of the open verb used as adjectives/qualifiers
+// ("tabs opened yesterday"), never the action verb.
+const OPEN_ADJ_PARTICIPLE = /^(opened|opening)$/;
+
+// State participles ("pinned", "unpinned", "muted", "bookmarked") read as
+// tab-state qualifiers, not imperatives, when a genuine action verb follows
+// them ("ignore the pinned tabs and close everything else" must be
+// close_tabs, not pin_tabs). They only decide the intent when NO other verb
+// exists anywhere in the command ("muted tabs" -> mute_tabs, the old read).
+const STATE_PARTICIPLE = /^(pinned|unpinned|muted|bookmarked)$/;
+
 function detectIntent(cmdLower) {
   const text = String(cmdLower || '').toLowerCase();
 
   const closeNegated = NEGATED_CLOSE.test(text);
 
-  for (const rule of INTENT_RULES) {
+  // EARLIEST-MATCH POSITION ranking (R4 repair of the intent flip):
+  //
+  // The rule ARRAY order made sort/group permanently outrank open/show even
+  // when the open verb came first: "show me the tabs in my dev group" has
+  // show@0 but group@21, yet the ladder returned group_tabs because the
+  // group rule sat above open in INTENT_RULES. The principled rule is that
+  // the FIRST VERB in the command is the command -- later hits are usually
+  // qualifiers or noun phrases ("the tabs in my dev group"), not the action.
+  //
+  // So: collect every rule's first match, rank candidates by EARLIEST MATCH
+  // POSITION in the text, and only use the array order as the tie-break for
+  // equal positions (e.g. a tie means the same token satisfied both regexes,
+  // and the negated/positive ordering keeps 'un-' forms winning
+  // 'unpin'/'unmute' over their substrings 'pin'/'mute').
+  //
+  // Participle handling stays a qualifier, never the action: a hit whose
+  // matched token is a state participle is ranked in a SECOND tier, so a
+  // real verb later in the sentence beats it while participle-only commands
+  // keep their old intent.
+  let bestVerb = null;      // { intent, pos, order } over non-participle hits
+  let bestParticiple = null; // same shape over participle-token hits
+  for (let i = 0; i < INTENT_RULES.length; i++) {
+    const rule = INTENT_RULES[i];
     if (rule.intent === 'close_tabs' && closeNegated) continue;
-    if (rule.re.test(text)) return rule.intent;
+    const m = text.match(rule.re);
+    if (!m) continue;
+    const tok = String(m[0] || '').toLowerCase();
+    const slot = STATE_PARTICIPLE.test(tok) ? 'p' : 'v';
+    if (slot === 'p') continue; // participles ranked separately below
+    if (typeof rule.guard === 'function' && !rule.guard(text, m)) continue;
+    const pos = m.index;
+    if (bestVerb === null || pos < bestVerb.pos) bestVerb = { intent: rule.intent, pos, order: i };
+    // Equal position: keep the earlier rule in the array (negated forms first).
   }
+  if (bestVerb) return bestVerb.intent;
+
+  // No imperative verb anywhere: fall back to the earliest participle hit
+  // ("the muted tabs", "unpinned tabs"), preserving the pre-ranking reads.
+  for (let i = 0; i < INTENT_RULES.length; i++) {
+    const rule = INTENT_RULES[i];
+    if (rule.intent === 'close_tabs' && closeNegated) continue;
+    const m = text.match(rule.re);
+    if (!m) continue;
+    if (!STATE_PARTICIPLE.test(String(m[0] || '').toLowerCase())) continue;
+    if (typeof rule.guard === 'function' && !rule.guard(text, m)) continue;
+    const pos = m.index;
+    if (bestParticiple === null || pos < bestParticiple.pos) bestParticiple = { intent: rule.intent, pos, order: i };
+  }
+  if (bestParticiple) return bestParticiple.intent;
+
   // No explicit verb. Default to the least destructive useful action.
   return 'group_tabs';
 }
@@ -1551,6 +1621,110 @@ function makeFindByTopic(command, candidates) {
   };
 }
 
+// ---- CHAINED-PLAN HELPERS (tool-call schema v3) ----------------------------
+//
+// One combined preview + one composite transaction descriptor for a chained
+// plan. The orchestrator preview gate keys off plan.destructive, which a v3
+// plan inherits as "any step destructive", so the combined preview forces
+// one confirm whenever ANY step would be destructive. The transaction
+// descriptor mirrors the multi-group precedent (background.js:3756 records
+// ONE 'group_multi' transaction spanning all grouped tabs): one record,
+// action 'chain', carrying every step's op so undo replays the inverse in
+// reverse step order.
+
+// Intent -> human verb for preview labels.
+const CHAIN_VERBS = {
+  close_tabs: 'Close', group_tabs: 'Group', bookmark_tabs: 'Bookmark',
+  pin_tabs: 'Pin', unpin_tabs: 'Unpin', mute_tabs: 'Mute', unmute_tabs: 'Unmute',
+  reload_tabs: 'Reload', sort_tabs: 'Sort', open_tabs: 'Show',
+  retrieve_open: 'Find', search_and_switch: 'Find', clarify: 'Clarify',
+  group_multi: 'Group',
+};
+
+function buildChainedPreview(plan, composite) {
+  const lines = [];
+  plan.steps.forEach((step, i) => {
+    const res = composite.steps[i];
+    const verb = CHAIN_VERBS[step.intent] || step.intent;
+    lines.push(`${i + 1}. ${verb} ${res ? res.tabIds.length : 0} tab(s)`);
+  });
+  return lines.join('\n');
+}
+
+function buildCompositeTransaction(plan, composite) {
+  return {
+    action: 'chain',
+    steps: plan.steps.map((step, i) => {
+      const res = composite.steps[i];
+      return {
+        intent: step.intent,
+        tabIds: res ? [...res.tabIds] : [],
+        carry: step.carry === true,
+      };
+    }),
+    tabIds: [...composite.tabIds],
+  };
+}
+
+// Compose the plan shape the action gate (Layer 3) consumes from a chained
+// execution. The composite result is flattened: tabIds are the UNION of the
+// steps' selections, perTabReasons record the step labels, and the preview +
+// transaction descriptors ride along for the delivery layer. A failed chain
+// degrades to the successful prefix; a fully failed chain returns
+// needsCorrection so the caller offers a clarification instead of executing.
+//
+// NOTE on >3-part chains (R4 documentation fix): the planner caps steps[] at
+// MAX_STEPS=3, and llm-query's stepsFromCommand returns null for >3 segments
+// (its split regex yields parts.length>3), so a "bookmark X, close them, and
+// then group the rest and reload" style 4+-part command never carries a
+// steps[] array at all -- the parse falls through as a single-intent command
+// and the pipeline treats it by its first/dominant verb only. The chain is
+// therefore DISCARDED for such commands (single-intent fallback), not
+// silently truncated to the first 3 steps. bench/suite-runner.js's composite
+// result branch stays for future deterministic-path use.
+
+function composeChainedPlan(plan, composite, extras = {}) {
+  const perTabReasons = {};
+  plan.steps.forEach((step, i) => {
+    const res = composite.steps[i];
+    if (!res) return;
+    const verb = CHAIN_VERBS[step.intent] || step.intent;
+    for (const id of res.tabIds) {
+      if (!(id in perTabReasons)) perTabReasons[id] = `step ${i + 1}: ${verb.toLowerCase()}`;
+    }
+  });
+  const allFailed = composite.failed && composite.tabIds.length === 0;
+  return {
+    intent: plan.steps.map(s => s.intent).join('+'),
+    tabIds: composite.tabIds,
+    perTabReasons,
+    uncertain: [],
+    confidence: composite.confidence,
+    destructive: composite.destructive,
+    path: 'agent',
+    action_params: {},
+    reason: buildChainedPreview(plan, composite),
+    planSource: plan.source,
+    chained: true,
+    // Per-step selections + params ride the plan so the delivery layer can
+    // freeze them into the pending plan; on confirm, background executes
+    // each step over its own ids (intersected with the user's checked
+    // subset) instead of toolForIntent on the joined intent.
+    steps: plan.steps.map((step, i) => {
+      const res = composite.steps[i];
+      return {
+        intent: step.intent,
+        carry: step.carry === true,
+        params: { ...(step.params || {}) },
+        tabIds: res ? [...res.tabIds] : [],
+      };
+    }),
+    needsCorrection: allFailed,
+    preview: extras.preview || null,
+    transaction: extras.transaction || null,
+  };
+}
+
 async function runAgentPipeline(cleanCommand, windowId, signals = [], tracer = null) {
   const logStep = (phase, msg, data) => tracer ? tracer.step(phase, msg, data) : console.log(`[AgentPipeline] [${phase}] ${msg}`);
 
@@ -1673,9 +1847,32 @@ async function runAgentPipeline(cleanCommand, windowId, signals = [], tracer = n
       ...((plan.where && plan.where.all) || []).map(f => `${f.field}:${f.op}:${f.value}`),
       ...((plan.where && plan.where.none) || []).map(f => `not ${f.field}:${f.op}:${f.value}`)
     ].join(', ') || '(none)',
+    steps: Array.isArray(plan.steps) ? plan.steps.length : undefined,
     confidence: plan.confidence,
     durMs: Date.now() - tPlan0
   });
+
+  // 5b. CHAINED PLANS (tool-call schema v3): a v3 plan with >1 step runs as
+  // one composite transaction. The steps resolve sequentially (step 2 may
+  // inherit step 1's selection via the carry flag), and the chain is
+  // previewed as ONE plan: the union of every step's tabIds with per-step
+  // labels, one confirm, one composite transaction -- mirroring the
+  // multi-group precedent (background.js records ONE 'group_multi'
+  // transaction for the whole multi-bucket assign; the composite record below
+  // is the chained-plan analogue).
+  if (plan.v === 3 && Array.isArray(plan.steps) && plan.steps.length > 1) {
+    reportProgress('execute', 'Selecting the right tabs…', 72);
+    const composite = await self.AgentExecutor.executeSteps(plan.steps, candidates, execDeps);
+    logStep('ExecutorSteps', `Chain executed (failed=${composite.failed})`, {
+      steps: plan.steps.map(s => s.intent).join('+'),
+      selectedTabs: composite.tabIds.length
+    });
+    return composeChainedPlan(plan, composite, {
+      command: cleanCommand,
+      preview: buildChainedPreview(plan, composite),
+      transaction: buildCompositeTransaction(plan, composite),
+    });
+  }
 
   reportProgress('execute', 'Selecting the right tabs…', 72);
   let exec = await self.AgentExecutor.executePlan(plan, candidates, execDeps);
@@ -1949,6 +2146,9 @@ self.registrable = registrable;
 self.resolveDomainScopes = resolveDomainScopes;
 self.isDomainScopeCommand = isDomainScopeCommand;
 self.executeDomainScopePlan = executeDomainScopePlan;
+self.buildCompositeTransaction = buildCompositeTransaction;
+self.buildChainedPreview = buildChainedPreview;
+self.composeChainedPlan = composeChainedPlan;
 
 // Node-side export so the pure routing logic can be unit-tested without chrome.
 if (typeof module !== 'undefined' && module.exports) {
@@ -1959,6 +2159,7 @@ if (typeof module !== 'undefined' && module.exports) {
     BRAND_HOSTS, HOST_SERVICE_NARROWERS, registrable,
     resolveDomainScopes, isDomainScopeCommand, executeDomainScopePlan,
     senseSplitTest, maybeClarify, selectForInterpretation, defaultSenseScorer,
-    CLARIFY_SPLIT_MARGIN, CLARIFY_MAX_OPTIONS
+    CLARIFY_SPLIT_MARGIN, CLARIFY_MAX_OPTIONS,
+    buildCompositeTransaction, buildChainedPreview, composeChainedPlan
   };
 }

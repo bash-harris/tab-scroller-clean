@@ -18,6 +18,7 @@ const SUITES = [
   ['domain-priors','pre-existing  domain priors'],
   ['clarify',      'V2-3  interpretation clarify loop: lexicon + split test + no-loop'],
   ['agent',        'A6  bounded agent: planner validate + executor set-exact + fallback chain'],
+  ['chain-e2e',    'V3  chained plans: background confirm executes steps + ONE composite undo'],
   ['progress',     'NLI progress estimation threshold + UI progress clamping']
 ];
 

@@ -379,11 +379,14 @@ Examples:
   const RETAIN_PER = new Set(['domain', 'category', 'group', 'window', 'url']);
   const RETAIN_KEEP = new Set(['oldest', 'newest', 'first', 'last', 'bookmarked', 'pinned']);
   const SCOPE_WINDOWS = new Set(['current', '1', '2', '3', 'all']);
+  // Chrome tab-group color enum (groupScope.color).
+  const GROUP_COLOR_ENUM = new Set(['grey', 'blue', 'red', 'yellow', 'green', 'pink',
+    'purple', 'cyan', 'orange']);
   // carveout is cue-only: the model is never asked for it, validate() never
   // produces it. It marks a carve-out construction the slot schema cannot
   // express, forcing the slot interpreter to yield to the legacy pipeline.
   const SLOT_KEYS = ['urlShape', 'rank', 'retain', 'dedupe', 'scope', 'anchor',
-    'answerable', 'carveout'];
+    'answerable', 'carveout', 'relationship', 'position', 'groupScope'];
 
   // The model's slot output is untrusted: validate each field against its
   // closed enum and keep only what survives. A single bad field dies alone.
@@ -428,6 +431,27 @@ Examples:
     }
     if (typeof r.answerable === 'boolean') out.answerable = r.answerable;
     if (r.carveout === true) out.carveout = true;
+    // Slot schema v3 dimensions. Closed enums, same field-dies-alone policy:
+    // relationship {openerOf: phrase, chain: bool}; position {from: start|end,
+    // n >= 1}; groupScope {name} or {color} (Chrome color enum only).
+    if (r.relationship && typeof r.relationship === 'object' && r.relationship.openerOf != null) {
+      const phrase = String(r.relationship.openerOf).trim().replace(/\s+/g, ' ');
+      const words = phrase.split(' ').filter(Boolean);
+      if (phrase && words.length <= 8 && phrase.length <= 60) {
+        out.relationship = { openerOf: phrase, chain: r.relationship.chain === true };
+      }
+    }
+    if (r.position && typeof r.position === 'object') {
+      const from = r.position.from === 'end' ? 'end' : r.position.from === 'start' ? 'start' : null;
+      const n = Number(r.position.n);
+      if (from && Number.isInteger(n) && n >= 1 && n <= 100) out.position = { from, n };
+    }
+    if (r.groupScope && typeof r.groupScope === 'object') {
+      const name = r.groupScope.name != null ? String(r.groupScope.name).trim().replace(/\s+/g, ' ') : null;
+      const color = r.groupScope.color != null ? String(r.groupScope.color).trim().toLowerCase() : null;
+      if (name && name.length <= 40) out.groupScope = { name };
+      else if (color && GROUP_COLOR_ENUM.has(color)) out.groupScope = { color };
+    }
     return out;
   }
 
@@ -597,9 +621,152 @@ Examples:
         /\bthe (?:last|previous) (?:filter|search|results?|set|batch)\b/.test(s)) {
       slots.answerable = false;
     }
+
+    // Slot schema v3 dimensions (gauntlet-v3 R4): relationship + position
+    // cues. groupScope deliberately has NO cue here: the legacy GROUP NAME
+    // operator and the color-adjective path already own those shapes in
+    // select(), and a parallel slot would risk a second vote disagreeing.
+    // relationship: "tabs opened from the X" -> opener-chain from X.
+    if (!slots.relationship && !slots.urlShape && !slots.rank) {
+      const relM = s.match(/\bopened\s+from\s+(?:the\s+|my\s+|this\s+)?(.+)$/);
+      if (relM) {
+        const phrase = relM[1].trim().replace(/\s+/g, ' ').slice(0, 60);
+        const toks = phrase.split(/[^a-z0-9]+/).filter(w => w.length >= 3 && w !== 'the');
+        if (phrase && toks.length) {
+          slots.relationship = { openerOf: phrase, chain: /\b(all|everything|ones?|them|those|these)\b/.test(phrase) };
+        }
+      }
+    }
+    // position: bare "the first/last tab(s)" / "the first/last N" WITHOUT a
+    // temporal-tail unit, and never when a site/section shape owns the
+    // command ("the last two amazon shopping tabs" is a rank within a
+    // scope, already covered by rank+urlShape).
+    if (!slots.position && !slots.rank && !slots.urlShape) {
+      const posM = s.match(/\bthe\s+(first|last)\s+(?:(\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+)?(?:tabs?|pages?|ones?)\b/);
+      if (posM) {
+        const n = posM[2] ? (slotNum(posM[2]) || 1) : 1;
+        slots.position = { from: posM[1] === 'first' ? 'start' : 'end', n };
+      }
+    }
     return slots;
   }
 
+
+  // ---- TOOL-CALL SCHEMA V3: CHAINED COMMANDS (steps[]) ----------------------
+  //
+  // A command with sequential actions ("bookmark the recipe tabs and then
+  // close them", "group A then close B") parses into steps[]: 1..3 entries,
+  // each {intent, include[], exclude[], slots{}, carry}. Step 2 inherits
+  // step-1's selection when the command says "them"/"those" (the
+  // selection-carry flag). Emission is deterministic and cue-gated:
+  //   - the split marker is an explicit sequential connector ("then", "and
+  //     then", "and also", "after that") OR "and <action verb>" where the
+  //     second clause's object is a pronoun (them/those/these/each/it/all) --
+  //     a plain "and" between two topics ("cricket and football") never
+  //     splits;
+  //   - each step's intent comes from the segment's own action verb;
+  //   - every step validates against the closed intent enum and the same
+  //     slot enums as the top-level query; max 3 steps.
+  // The chain flag also requires step 1's clause to name a real selection
+  // (a topic/domain/time/state cue), so "close them and then close them" can
+  // never produce a fabricated carry source.
+  const STEP_INTENTS = new Set([
+    'close_tabs', 'group_tabs', 'bookmark_tabs', 'pin_tabs', 'unpin_tabs',
+    'mute_tabs', 'unmute_tabs', 'reload_tabs', 'sort_tabs', 'open_tabs',
+    'search_and_switch'
+  ]);
+  const STEP_PRONOUN_OBJ = /\b(them|those|these|it|each|all|everything)\b/;
+
+  function stepIntentOf(seg) {
+    if (/\bun-?pin\b/.test(seg)) return 'unpin_tabs';
+    if (/\bpin\b/.test(seg)) return 'pin_tabs';
+    if (/\bun-?mute\b/.test(seg)) return 'unmute_tabs';
+    if (/\bmute\b/.test(seg)) return 'mute_tabs';
+    if (/\b(bookmark|save)\b/.test(seg)) return 'bookmark_tabs';
+    if (/\b(group|cluster|organi[sz]e|collect|gather|bundle|tidy)\b/.test(seg)) return 'group_tabs';
+    if (/\b(reload|refresh)\b/.test(seg)) return 'reload_tabs';
+    if (/\bsort\b/.test(seg)) return 'sort_tabs';
+    if (/\b(close|remove|clear|kill|delete|get rid of)\b/.test(seg)) return 'close_tabs';
+    return null;
+  }
+
+  function stepsFromCommand(cmd) {
+    const s = String(cmd || '').toLowerCase();
+    if (!s.trim()) return null;
+    // Split on sequential connectors. The second branch of the alternation
+    // only splits "and <verb>" when what follows the verb names its object
+    // with a pronoun -- that is the only "and"-shape that carries SEQUENCE
+    // rather than a topic list.
+    const parts = s.split(/,\s*|\s+(?:and\s+then|then|and\s+also|after\s+that)\s+|\s+and\s+(?=(?:close|bookmark|group|pin|unpin|mute|unmute|reload|refresh|sort|delete|remove|open)\b\s+(?:them|those|these|it|each|all|everything|every\s+one)\b)/);
+    // >3-part chains (R4 documentation fix): a 4+-segment sequential command
+    // ("bookmark A and then close them and then group the rest and then
+    // reload") splits into parts.length > 3 and returns null here -- the
+    // chain is DISCARDED WHOLESALE and the command falls through as a plain
+    // single-intent parse (top-level intent of the whole text). It is NOT
+    // truncated to the first 3 steps: no steps[] reaches the planner at all.
+    // 3 segments ("A then B then C") stay fully chained.
+    if (parts.length < 2 || parts.length > 3) return null;
+
+    const C = (typeof self !== 'undefined' && self.ConceptCore) || require('./concept-core.js');
+    const steps = [];
+    let firstSelectionNamed = false;
+    for (let i = 0; i < parts.length; i++) {
+      const seg = parts[i].replace(/\s+/g, ' ').trim();
+      const intent = stepIntentOf(seg);
+      if (!intent || !STEP_INTENTS.has(intent)) return null;
+      let det = null;
+      try { det = C.parseCommand(seg); } catch { det = null; }
+      const include = [];
+      if (det && det.domains && det.domains.length) {
+        include.push({ field: 'domain', op: 'equals', value: det.domains[0] });
+      }
+      const concept = det && det.concept ? String(det.concept).trim() : '';
+      if (concept && i === 0) {
+        include.push({ field: 'topic', op: 'about', value: concept });
+      }
+      // Selection-carry: step 2+ referring to "them/those" inherits step 1's
+      // selection. Only allowed when step 1 named a real selection.
+      const pronounObj = STEP_PRONOUN_OBJ.test(seg);
+      const carry = i > 0 && pronounObj && !include.some(f => f.field === 'topic' || f.field === 'domain');
+      if (i === 0 && (concept || include.length || (det && det.isSelectAll))) {
+        firstSelectionNamed = true;
+      }
+      const cueSlots = slotsFromCommand(seg);
+      const stepSlots = {};
+      for (const k of ['urlShape', 'rank', 'retain', 'dedupe', 'scope', 'anchor',
+        'relationship', 'position', 'groupScope']) {
+        if (cueSlots[k] !== undefined) stepSlots[k] = cueSlots[k];
+      }
+      steps.push({ intent, include, exclude: [], slots: stepSlots, carry: carry && firstSelectionNamed });
+    }
+    if (steps.length < 2) return null;
+    return steps;
+  }
+
+  // Closed-enum validation for a model- or cue-emitted steps[]. A step that
+  // fails validation dies alone; the array survives with the valid steps.
+  function validateStepsRaw(raw) {
+    const arr = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.steps) ? raw.steps : null);
+    if (!arr) return null;
+    const out = [];
+    for (const st of arr.slice(0, 3)) {
+      if (!st || typeof st !== 'object' || !STEP_INTENTS.has(st.intent)) continue;
+      const include = Array.isArray(st.include)
+        ? st.include.filter(f => f && typeof f === 'object' && typeof f.value !== 'undefined' &&
+            ['topic', 'domain', 'title', 'state', 'time', 'url', 'content', 'any_text'].includes(f.field))
+          .map(f => ({ field: f.field, op: f.op === 'contains' || f.op === 'equals' ? f.op : (f.field === 'domain' ? 'equals' : 'about'), value: String(f.value).slice(0, 80) }))
+        : [];
+      const slots = {};
+      const vs = validateSlots(st.slots || {});
+      for (const k of ['urlShape', 'rank', 'retain', 'dedupe', 'scope', 'anchor',
+        'relationship', 'position', 'groupScope']) {
+        if (vs[k] !== undefined) slots[k] = vs[k];
+      }
+      out.push({ intent: st.intent, include, exclude: [], slots, carry: st.carry === true });
+      if (out.length >= 3) break;
+    }
+    return out.length ? out : null;
+  }
 
   // ---- GRAMMAR-TIGHTENED DECODE (M3, REVERTED) ----------------------------
   //
@@ -752,6 +919,14 @@ Examples:
     // survives. Old cached parses lack them entirely -> {}.
     const slots = validateSlots(raw);
 
+    // Chained-command steps (V3): emitted only when the command's own
+    // construction splits into sequential actions. Model-emitted steps are
+    // closed-enum validated; the deterministic cue is the rescue for a model
+    // that missed the chain. Absent on plain commands -> the parse is
+    // byte-identical to V2 output. (decode() stamps _cmdForSteps before
+    // validate so the deterministic cue can run from the raw command.)
+    const steps = validateStepsRaw(raw.steps) || stepsFromCommand(raw._cmdForSteps || '');
+
     return {
       intent: raw.intent,
       concepts,
@@ -763,6 +938,7 @@ Examples:
       time,
       state,
       ...slots,
+      ...(steps ? { steps } : {}),
       confidence: Number.isFinite(conf) ? Math.max(0, Math.min(1, conf)) : 0.7,
       source: 'llm'
     };
@@ -1219,7 +1395,12 @@ Examples:
     try {
       const text = await callModel(SYSTEM, `Command: "${cmd}"`, TIMEOUT_MS);
       const m = String(text || '').match(/\{[\s\S]*\}/);
-      if (m) parsed = validate(JSON.parse(m[0]));
+      if (m) {
+        const raw = JSON.parse(m[0]);
+        raw._cmdForSteps = cmd; // deterministic chained-command cue sees the raw text
+        parsed = validate(raw);
+        delete parsed._cmdForSteps;
+      }
     } catch (e) {
       console.warn('[LlmQuery] parse failed, using deterministic parser:', e.message);
     }
@@ -1337,6 +1518,18 @@ Examples:
         delete parsed.scope;
       }
     }
+
+    // Chained-command steps: cue emission for parses that lack them (cached
+    // parses, model laps that missed the chain). Deterministic, so a chained
+    // command always carries its steps regardless of which lap produced the
+    // rest of the parse.
+    if (parsed.steps === undefined) {
+      const cueSteps = stepsFromCommand(cmd);
+      if (cueSteps) {
+        const validated = validateStepsRaw(cueSteps);
+        if (validated) parsed.steps = validated;
+      }
+    }
     return parsed;
   }
 
@@ -1436,7 +1629,7 @@ Examples:
     }
   }
 
-  const LlmQuery = { parse, decode, reconcile, validate, normalizeCommand, SYSTEM, literalDomains, coverage, JSON_SCHEMA, slotsFromCommand, validateSlots, POLYSEMY_LEXICON, generateInterpretations };
+  const LlmQuery = { parse, decode, reconcile, validate, normalizeCommand, SYSTEM, literalDomains, coverage, JSON_SCHEMA, slotsFromCommand, validateSlots, stepsFromCommand, validateStepsRaw, POLYSEMY_LEXICON, generateInterpretations };
   if (typeof module !== 'undefined' && module.exports) module.exports = LlmQuery;
   if (typeof self !== 'undefined') self.LlmQuery = LlmQuery;
 })();

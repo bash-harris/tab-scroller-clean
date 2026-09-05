@@ -1,0 +1,275 @@
+﻿
+SUITE-V3 -- deterministic parser | all commands | all categories
+157 commands, 565-tab pool, 1 groups, 3 windows
+==============================================================================
+[NLI] 565 tabs: 558 by cosine (free), 7 by NLI -> 7 passes (+0 cached, 1 embeds) in 315ms = 45ms/pass  [simd=?]
+[NLI] 565 tabs: 466 by cosine (free), 99 by NLI -> 98 passes (+1 cached, 1 embeds) in 2917ms = 30ms/pass  [simd=?]
+[NLI] 565 tabs: 557 by cosine (free), 8 by NLI -> 8 passes (+0 cached, 1 embeds) in 439ms = 55ms/pass  [simd=?]
+[NLI] 565 tabs: 533 by cosine (free), 32 by NLI -> 31 passes (+1 cached, 1 embeds) in 1194ms = 39ms/pass  [simd=?]
+[NLI] 565 tabs: 299 by cosine (free), 266 by NLI -> 262 passes (+4 cached, 1 embeds) in 7332ms = 28ms/pass  [simd=?]
+[NLI] 565 tabs: 405 by cosine (free), 160 by NLI -> 159 passes (+1 cached, 1 embeds) in 4498ms = 28ms/pass  [simd=?]
+[NLI] 565 tabs: 499 by cosine (free), 66 by NLI -> 65 passes (+1 cached, 1 embeds) in 1999ms = 31ms/pass  [simd=?]
+[NLI] 565 tabs: 556 by cosine (free), 9 by NLI -> 9 passes (+0 cached, 1 embeds) in 392ms = 44ms/pass  [simd=?]
+[NLI] 565 tabs: 496 by cosine (free), 69 by NLI -> 62 passes (+7 cached, 1 embeds) in 1837ms = 30ms/pass  [simd=?]
+[NLI] 565 tabs: 558 by cosine (free), 7 by NLI -> 7 passes (+0 cached, 1 embeds) in 360ms = 51ms/pass  [simd=?]
+[NLI] 565 tabs: 561 by cosine (free), 4 by NLI -> 4 passes (+0 cached, 1 embeds) in 320ms = 80ms/pass  [simd=?]
+[NLI] 565 tabs: 561 by cosine (free), 4 by NLI -> 4 passes (+0 cached, 1 embeds) in 295ms = 74ms/pass  [simd=?]
+[NLI] 565 tabs: 565 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 3ms  [simd=?]
+[NLI] 565 tabs: 559 by cosine (free), 6 by NLI -> 6 passes (+0 cached, 1 embeds) in 341ms = 57ms/pass  [simd=?]
+[NLI] 565 tabs: 353 by cosine (free), 212 by NLI -> 209 passes (+3 cached, 1 embeds) in 6132ms = 29ms/pass  [simd=?]
+[NLI] 565 tabs: 353 by cosine (free), 212 by NLI -> 0 passes (+212 cached, 0 embeds) in 118ms  [simd=?]
+[NLI] 565 tabs: 535 by cosine (free), 30 by NLI -> 29 passes (+1 cached, 1 embeds) in 1059ms = 37ms/pass  [simd=?]
+[NLI] 565 tabs: 553 by cosine (free), 12 by NLI -> 12 passes (+0 cached, 1 embeds) in 498ms = 42ms/pass  [simd=?]
+[NLI] 565 tabs: 491 by cosine (free), 74 by NLI -> 68 passes (+6 cached, 1 embeds) in 1983ms = 29ms/pass  [simd=?]
+[NLI] 565 tabs: 557 by cosine (free), 8 by NLI -> 8 passes (+0 cached, 1 embeds) in 421ms = 53ms/pass  [simd=?]
+[NLI] 565 tabs: 509 by cosine (free), 56 by NLI -> 55 passes (+1 cached, 1 embeds) in 1590ms = 29ms/pass  [simd=?]
+[NLI] 565 tabs: 565 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 8ms  [simd=?]
+[NLI] 565 tabs: 561 by cosine (free), 4 by NLI -> 2 passes (+2 cached, 1 embeds) in 125ms = 63ms/pass  [simd=?]
+[NLI] 565 tabs: 561 by cosine (free), 4 by NLI -> 3 passes (+1 cached, 1 embeds) in 96ms = 32ms/pass  [simd=?]
+[NLI] 565 tabs: 561 by cosine (free), 4 by NLI -> 2 passes (+2 cached, 1 embeds) in 97ms = 49ms/pass  [simd=?]
+[NLI] 565 tabs: 559 by cosine (free), 6 by NLI -> 3 passes (+3 cached, 1 embeds) in 134ms = 45ms/pass  [simd=?]
+[NLI] 565 tabs: 563 by cosine (free), 2 by NLI -> 1 passes (+1 cached, 1 embeds) in 44ms = 44ms/pass  [simd=?]
+[NLI] 565 tabs: 565 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 13ms  [simd=?]
+[NLI] 565 tabs: 305 by cosine (free), 260 by NLI -> 256 passes (+4 cached, 1 embeds) in 7315ms = 29ms/pass  [simd=?]
+[NLI] 565 tabs: 546 by cosine (free), 19 by NLI -> 18 passes (+1 cached, 1 embeds) in 822ms = 46ms/pass  [simd=?]
+[NLI] 565 tabs: 548 by cosine (free), 17 by NLI -> 16 passes (+1 cached, 1 embeds) in 583ms = 36ms/pass  [simd=?]
+[NLI] 565 tabs: 532 by cosine (free), 33 by NLI -> 32 passes (+1 cached, 1 embeds) in 1262ms = 39ms/pass  [simd=?]
+[NLI] 565 tabs: 539 by cosine (free), 26 by NLI -> 26 passes (+0 cached, 1 embeds) in 943ms = 36ms/pass  [simd=?]
+[NLI] 565 tabs: 548 by cosine (free), 17 by NLI -> 17 passes (+0 cached, 1 embeds) in 599ms = 35ms/pass  [simd=?]
+[NLI] 565 tabs: 562 by cosine (free), 3 by NLI -> 3 passes (+0 cached, 1 embeds) in 269ms = 90ms/pass  [simd=?]
+[NLI] 565 tabs: 414 by cosine (free), 151 by NLI -> 150 passes (+1 cached, 1 embeds) in 4370ms = 29ms/pass  [simd=?]
+[NLI] 565 tabs: 417 by cosine (free), 148 by NLI -> 146 passes (+2 cached, 1 embeds) in 4228ms = 29ms/pass  [simd=?]
+[NLI] 565 tabs: 464 by cosine (free), 101 by NLI -> 94 passes (+7 cached, 1 embeds) in 2734ms = 29ms/pass  [simd=?]
+[NLI] 565 tabs: 547 by cosine (free), 18 by NLI -> 18 passes (+0 cached, 1 embeds) in 746ms = 41ms/pass  [simd=?]
+[NLI] 565 tabs: 460 by cosine (free), 105 by NLI -> 102 passes (+3 cached, 1 embeds) in 3178ms = 31ms/pass  [simd=?]
+[NLI] 565 tabs: 520 by cosine (free), 45 by NLI -> 44 passes (+1 cached, 1 embeds) in 1404ms = 32ms/pass  [simd=?]
+[NLI] 565 tabs: 552 by cosine (free), 13 by NLI -> 13 passes (+0 cached, 1 embeds) in 676ms = 52ms/pass  [simd=?]
+[NLI] 565 tabs: 165 by cosine (free), 400 by NLI -> 395 passes (+5 cached, 1 embeds) in 10956ms = 28ms/pass  [simd=?]
+[NLI] 565 tabs: 548 by cosine (free), 17 by NLI -> 17 passes (+0 cached, 1 embeds) in 682ms = 40ms/pass  [simd=?]
+[NLI] 565 tabs: 539 by cosine (free), 26 by NLI -> 26 passes (+0 cached, 1 embeds) in 896ms = 34ms/pass  [simd=?]
+[NLI] 565 tabs: 422 by cosine (free), 143 by NLI -> 140 passes (+3 cached, 1 embeds) in 4216ms = 30ms/pass  [simd=?]
+[NLI] 565 tabs: 176 by cosine (free), 389 by NLI -> 379 passes (+10 cached, 1 embeds) in 10030ms = 26ms/pass  [simd=?]
+[NLI] 565 tabs: 529 by cosine (free), 36 by NLI -> 36 passes (+0 cached, 1 embeds) in 1150ms = 32ms/pass  [simd=?]
+[NLI] 565 tabs: 541 by cosine (free), 24 by NLI -> 24 passes (+0 cached, 1 embeds) in 861ms = 36ms/pass  [simd=?]
+[NLI] 565 tabs: 538 by cosine (free), 27 by NLI -> 20 passes (+7 cached, 1 embeds) in 755ms = 38ms/pass  [simd=?]
+[NLI] 565 tabs: 512 by cosine (free), 53 by NLI -> 50 passes (+3 cached, 1 embeds) in 1600ms = 32ms/pass  [simd=?]
+[NLI] 565 tabs: 537 by cosine (free), 28 by NLI -> 28 passes (+0 cached, 1 embeds) in 1228ms = 44ms/pass  [simd=?]
+[NLI] 565 tabs: 549 by cosine (free), 16 by NLI -> 15 passes (+1 cached, 1 embeds) in 649ms = 43ms/pass  [simd=?]
+[NLI] 565 tabs: 157 by cosine (free), 408 by NLI -> 402 passes (+6 cached, 1 embeds) in 11016ms = 27ms/pass  [simd=?]
+[NLI] 565 tabs: 513 by cosine (free), 52 by NLI -> 50 passes (+2 cached, 1 embeds) in 1525ms = 31ms/pass  [simd=?]
+[NLI] 565 tabs: 553 by cosine (free), 12 by NLI -> 12 passes (+0 cached, 1 embeds) in 483ms = 40ms/pass  [simd=?]
+[NLI] 565 tabs: 559 by cosine (free), 6 by NLI -> 6 passes (+0 cached, 1 embeds) in 348ms = 58ms/pass  [simd=?]
+[NLI] 565 tabs: 520 by cosine (free), 45 by NLI -> 40 passes (+5 cached, 1 embeds) in 1239ms = 31ms/pass  [simd=?]
+[NLI] 565 tabs: 543 by cosine (free), 22 by NLI -> 22 passes (+0 cached, 1 embeds) in 761ms = 35ms/pass  [simd=?]
+[NLI] 565 tabs: 303 by cosine (free), 262 by NLI -> 252 passes (+10 cached, 1 embeds) in 6582ms = 26ms/pass  [simd=?]
+[NLI] 565 tabs: 476 by cosine (free), 89 by NLI -> 88 passes (+1 cached, 1 embeds) in 2389ms = 27ms/pass  [simd=?]
+[NLI] 565 tabs: 397 by cosine (free), 168 by NLI -> 160 passes (+8 cached, 1 embeds) in 4492ms = 28ms/pass  [simd=?]
+[NLI] 565 tabs: 528 by cosine (free), 37 by NLI -> 36 passes (+1 cached, 1 embeds) in 1223ms = 34ms/pass  [simd=?]
+[NLI] 565 tabs: 520 by cosine (free), 45 by NLI -> 44 passes (+1 cached, 0 embeds) in 1371ms = 31ms/pass  [simd=?]
+[NLI] 565 tabs: 550 by cosine (free), 15 by NLI -> 15 passes (+0 cached, 1 embeds) in 590ms = 39ms/pass  [simd=?]
+[NLI] 565 tabs: 558 by cosine (free), 7 by NLI -> 7 passes (+0 cached, 1 embeds) in 422ms = 60ms/pass  [simd=?]
+[NLI] 565 tabs: 416 by cosine (free), 149 by NLI -> 141 passes (+8 cached, 1 embeds) in 3839ms = 27ms/pass  [simd=?]
+[NLI] 565 tabs: 397 by cosine (free), 168 by NLI -> 161 passes (+7 cached, 1 embeds) in 4922ms = 31ms/pass  [simd=?]
+[NLI] 565 tabs: 513 by cosine (free), 52 by NLI -> 51 passes (+1 cached, 1 embeds) in 1613ms = 32ms/pass  [simd=?]
+[NLI] 565 tabs: 556 by cosine (free), 9 by NLI -> 8 passes (+1 cached, 1 embeds) in 394ms = 49ms/pass  [simd=?]
+[NLI] 565 tabs: 540 by cosine (free), 25 by NLI -> 25 passes (+0 cached, 1 embeds) in 823ms = 33ms/pass  [simd=?]
+[NLI] 565 tabs: 548 by cosine (free), 17 by NLI -> 17 passes (+0 cached, 1 embeds) in 594ms = 35ms/pass  [simd=?]
+[NLI] 565 tabs: 545 by cosine (free), 20 by NLI -> 19 passes (+1 cached, 1 embeds) in 661ms = 35ms/pass  [simd=?]
+[NLI] 565 tabs: 545 by cosine (free), 20 by NLI -> 20 passes (+0 cached, 1 embeds) in 668ms = 33ms/pass  [simd=?]
+[NLI] 565 tabs: 545 by cosine (free), 20 by NLI -> 20 passes (+0 cached, 1 embeds) in 700ms = 35ms/pass  [simd=?]
+[NLI] 565 tabs: 547 by cosine (free), 18 by NLI -> 17 passes (+1 cached, 1 embeds) in 661ms = 39ms/pass  [simd=?]
+[NLI] 565 tabs: 558 by cosine (free), 7 by NLI -> 7 passes (+0 cached, 1 embeds) in 402ms = 57ms/pass  [simd=?]
+[NLI] 565 tabs: 473 by cosine (free), 92 by NLI -> 90 passes (+2 cached, 1 embeds) in 2678ms = 30ms/pass  [simd=?]
+[NLI] 565 tabs: 468 by cosine (free), 97 by NLI -> 94 passes (+3 cached, 1 embeds) in 3100ms = 33ms/pass  [simd=?]
+[NLI] 565 tabs: 555 by cosine (free), 10 by NLI -> 10 passes (+0 cached, 1 embeds) in 438ms = 44ms/pass  [simd=?]
+[NLI] 565 tabs: 303 by cosine (free), 262 by NLI -> 257 passes (+5 cached, 1 embeds) in 7545ms = 29ms/pass  [simd=?]
+[NLI] 565 tabs: 551 by cosine (free), 14 by NLI -> 14 passes (+0 cached, 1 embeds) in 557ms = 40ms/pass  [simd=?]
+[NLI] 565 tabs: 565 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 6ms  [simd=?]
+[NLI] 565 tabs: 556 by cosine (free), 9 by NLI -> 9 passes (+0 cached, 1 embeds) in 450ms = 50ms/pass  [simd=?]
+[NLI] 565 tabs: 559 by cosine (free), 6 by NLI -> 5 passes (+1 cached, 1 embeds) in 293ms = 59ms/pass  [simd=?]
+[NLI] 565 tabs: 559 by cosine (free), 6 by NLI -> 6 passes (+0 cached, 1 embeds) in 306ms = 51ms/pass  [simd=?]
+[NLI] 565 tabs: 542 by cosine (free), 23 by NLI -> 17 passes (+6 cached, 1 embeds) in 612ms = 36ms/pass  [simd=?]
+[NLI] 565 tabs: 523 by cosine (free), 42 by NLI -> 40 passes (+2 cached, 1 embeds) in 1395ms = 35ms/pass  [simd=?]
+[NLI] 565 tabs: 509 by cosine (free), 56 by NLI -> 56 passes (+0 cached, 1 embeds) in 1764ms = 32ms/pass  [simd=?]
+[NLI] 565 tabs: 302 by cosine (free), 263 by NLI -> 259 passes (+4 cached, 1 embeds) in 7341ms = 28ms/pass  [simd=?]
+[NLI] 565 tabs: 505 by cosine (free), 60 by NLI -> 60 passes (+0 cached, 1 embeds) in 2247ms = 37ms/pass  [simd=?]
+[NLI] 565 tabs: 472 by cosine (free), 93 by NLI -> 93 passes (+0 cached, 1 embeds) in 2919ms = 31ms/pass  [simd=?]
+[NLI] 565 tabs: 225 by cosine (free), 340 by NLI -> 336 passes (+4 cached, 1 embeds) in 10211ms = 30ms/pass  [simd=?]
+[NLI] 565 tabs: 512 by cosine (free), 53 by NLI -> 50 passes (+3 cached, 1 embeds) in 1687ms = 34ms/pass  [simd=?]
+[NLI] 565 tabs: 521 by cosine (free), 44 by NLI -> 44 passes (+0 cached, 1 embeds) in 1435ms = 33ms/pass  [simd=?]
+[NLI] 565 tabs: 529 by cosine (free), 36 by NLI -> 29 passes (+7 cached, 1 embeds) in 978ms = 34ms/pass  [simd=?]
+[NLI] 565 tabs: 461 by cosine (free), 104 by NLI -> 100 passes (+4 cached, 1 embeds) in 3491ms = 35ms/pass  [simd=?]
+[NLI] 565 tabs: 520 by cosine (free), 45 by NLI -> 38 passes (+7 cached, 1 embeds) in 1375ms = 36ms/pass  [simd=?]
+[NLI] 565 tabs: 550 by cosine (free), 15 by NLI -> 15 passes (+0 cached, 1 embeds) in 581ms = 39ms/pass  [simd=?]
+[NLI] 565 tabs: 548 by cosine (free), 17 by NLI -> 17 passes (+0 cached, 1 embeds) in 660ms = 39ms/pass  [simd=?]
+[NLI] 565 tabs: 427 by cosine (free), 138 by NLI -> 129 passes (+9 cached, 1 embeds) in 4077ms = 32ms/pass  [simd=?]
+
+-- by bucket --------------------------------------------------
+implemented  set-exact 47/89 (53%)        P 0.69 R 0.71 F1 0.68 violations 13
+gap          set-exact 11/23 (48%)        P 0.56 R 0.65 F1 0.58 violations 0
+abstain      set-exact 34/45 (76%)        P 0.76 R 0.76 F1 0.76 violations 0
+TOTAL        set-exact 92/157 (59%)       violations 13
+
+-- by spec category ------------------------------------------
+cat  1 url-domain             set-exact 19/21 (90%)        violations 0
+cat  2 structured-url         set-exact 7/12 (58%)         violations 0
+cat  3 title                  set-exact 7/9 (78%)          violations 0
+cat  4 time                   set-exact 3/3 (100%)         violations 0
+cat  5 tab-state              set-exact 5/5 (100%)         violations 0
+cat  6 window-group-position  set-exact 5/8 (63%)          violations 0
+cat  7 relationship-current   set-exact 1/4 (25%)          violations 0
+cat  8 duplicates             set-exact 1/8 (13%)          violations 7
+cat  9 page-content           set-exact 3/3 (100%)         violations 0
+cat 10 content-type           set-exact 4/8 (50%)          violations 0
+cat 11 topic-category         set-exact 5/13 (38%)         violations 0
+cat 12 entities               set-exact 6/9 (67%)          violations 0
+cat 13 nav-origin             set-exact 1/2 (50%)          violations 0
+cat 14 search-query           set-exact 2/6 (33%)          violations 5
+cat 15 reading-progress       set-exact 2/2 (100%)         violations 0
+cat 16 bookmarks              set-exact 1/2 (50%)          violations 0
+cat 17 history-frequency      set-exact 2/2 (100%)         violations 0
+cat 18 error-health           set-exact 2/4 (50%)          violations 0
+cat 19 language-geo           set-exact 2/2 (100%)         violations 0
+cat 20 price-availability     set-exact 1/2 (50%)          violations 0
+cat 21 task-project           set-exact 2/3 (67%)          violations 0
+cat 22 quality-authority      set-exact 1/2 (50%)          violations 0
+cat 23 cross-tab              set-exact 2/2 (100%)         violations 0
+cat 24 ranking-limit          set-exact 3/7 (43%)          violations 0
+cat 25 compound-boolean       set-exact 1/10 (10%)         violations 1
+cat 26 conversational         set-exact 1/5 (20%)          violations 0
+cat 27 user-defined           set-exact 3/3 (100%)         violations 0
+
+llm 0ms (0 cache hits, 157 fresh) | nli 319727ms | result-cache undefined entries, code 662b57def072d03f
+clarify-fire 0/157 (0.0%) | correct-option-present 0/0
+
+-- failures (65) ---------------------------------------------
+[implemented] cat1 "close maang.in tabs"
+   got [184,257,258,259,406,407,411,412,416,417,419,420,426,485,493,494,495,496,497,498,499] exp [406,407,411,412,416,417,419,420,485]
+[implemented] cat1 "close chrome web store tabs"
+   got [195] exp []
+[gap] cat2 "group youtube watch pages"
+   got [53,464,212,509,51,39,404,330,386,43,246,225,316,42,445,423,289,457,46,372,504,45,319,385,484,492,521,315,9,4,409,297,272,503,261,273,278,508,41,395,266,210,520,538,318,373,143,140,249,204,38,260,85,242,425,482,402,48,290,317,224,443,355,447,527,211,491,446,277,448,200,489,145,281,405,399,398,424,512,6,220,52,394,265,539,515,40,288,240,141,205,291,400,465,383,561,282,471,239,382,55,306,47,196,262,10,397,37,172,356,275,8,429,456,478,329,50,44,340,442,3,422,1,5,144,286,49,7,54,139,142,274,441,483,501,528] exp [3,4,5,6,7,8,9,10,37,38,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,85,139,140,141,142,143,144,145,172,196,200,204,205,210,211,212,220,224,239,240,242,246,249,260,261,265,266,272,273,274,275,277,278,281,282,286,289,290,291,297,306,315,316,317,318,319,329,330,340,355,356,372,373,382,383,385,386,394,395,397,398,399,400,402,404,405,409,422,423,424,425,429,441,442,443,445,446,447,448,456,457,471,478,482,483,484,489,491,501,503,504,508,509,512,515,520,521,527,528,538,539,561]
+[gap] cat2 "close codeforces problem tabs"
+   got [203,190,167,415,189,442] exp [190,203]
+[gap] cat2 "close arxiv pdf tabs"
+   got [202,251,252,302,450,472] exp [248,361]
+[gap] cat2 "close google drive folder tabs"
+   got [188,243,547] exp [188,243]
+[gap] cat2 "close colab notebook tabs"
+   got [] exp [547]
+[implemented] cat3 "group tabs whose title contains amazon and interview"
+   got [394,395,438,443,448,548,551,552,553,554,555,557,558,559,561,562,565] exp [394,395,438,443,448,548,549,551,552,553,554,555,557,558,559,561,562,564,565]
+[implemented] cat3 "close tabs whose title contains interview experience"
+   got [11,174,226,443,483,548,551,552,553,554,555,557,558,559,562,565] exp [11,174,226,443,483,548,551,553,554,555,557,558,559,562,565]
+[implemented] cat6 "group my dev tabs"
+   got [166,531,266] exp [548,549,550,551,552,553,554,555,556,557,558,559,560,561,562,563,564,565]
+[implemented] cat6 "unpin the dev group tabs"
+   got [166,531,266] exp [548,549,550,551,552,553,554,555,556,557,558,559,560,561,562,563,564,565]
+[gap] cat6 "close all tabs to the right of the current tab in this window"
+   got [] exp [551,552,553,554,555,556,557,558,559,560,561,562,563,564,565]
+[gap] cat7 "group tabs from the same website as the current tab"
+   got [] exp [536,548,549,550,551,552,553,554,555,556,557,558,559,560,563]
+[gap] cat7 "close tabs from the same site as my current tab except this one"
+   got [] exp [536,548,549,551,552,553,554,555,556,557,558,559,560,563]
+[abstain] cat7 "group tabs related to my current tab"
+   got [39] exp []
+[implemented] cat8 "close duplicate tabs"
+   got [490,502,517,523,525,541,548,557] exp [502,525,541,557]  VIOLATIONS 4
+[gap] cat8 "group my duplicate leetcode problem tabs"
+   got [] exp [13,28,106,231,475,506]
+[implemented] cat8 "close the duplicate amazon interview experience tabs keeping the first"
+   got [548,557] exp [557]  VIOLATIONS 1
+[implemented] cat8 "close the duplicate whatsapp tab"
+   got [] exp [502]
+[implemented] cat8 "close duplicate gemini chats about merging alexa devices"
+   got [523,541] exp [541]  VIOLATIONS 1
+[implemented] cat8 "close duplicate hermes agent chatgpt tabs"
+   got [517,525] exp [525]  VIOLATIONS 1
+[gap] cat8 "close duplicate tabs of the 5 ai engineer projects youtube video keeping the first"
+   got [] exp [144]
+[implemented] cat10 "group local file tabs"
+   got [] exp [202,251,302,450,472]
+[implemented] cat10 "close google sheets tabs"
+   got [481] exp []
+[abstain] cat10 "close streaming site tabs"
+   got [372,520,153,53,484,527,316,204,261,386,319,38,404,273,464,318,282,315,482,242,509,225,508,9,504,272,423,445,212,492,330,42,521,140,85,385,41,141,51,457,297,52,373,317,424,278,290,275,266,291,425,4,383,395,512,260,45,491,446,306,239,538,448,196,48,394,443,539,37,46,224,211,39,399,356,355,503,210,422,43,471,402,277,8,429,55,246,561,6,240,220,489,447,205,400,478,47,7,329,10,405,340,54,262,5,144,289,1,172,3,40,44,49,50,139,142,143,145,200,249,265,274,281,286,288,382,397,398,409,441,442,456,465,483,501,515,528] exp []
+[abstain] cat10 "group documentation pages"
+   got [189,167,319,314,170,202,251,302,450,459,472] exp []
+[implemented] cat11 "group tabs about machine learning"
+   got [171,501] exp [44,45,171,501]
+[implemented] cat11 "close tabs about llms"
+   got [385,187,318,273,157,221,222,199,285] exp [149,157,164,171,187,199,200,220,221,222,273,285,302,318,385,512]
+[implemented] cat11 "group my amazon interview prep tabs"
+   got [552,558,549,555,548,557,553,438,448,564,395,394,561,563,559,562,554,565,551,443,511] exp [394,395,438,443,448,548,549,551,552,553,554,555,557,558,559,561,562,564,565]
+[implemented] cat11 "close fitness tabs"
+   got [186,191] exp [41,42,186,211,212,246,274,445,485]
+[implemented] cat11 "close competitive programming tabs"
+   got [311,428,436,417,247,236,124,13,231,235,178,215,414,370,228,121,58,487,104,227,25,534,86,378,183,161,21,23,57,338,351,99,476,76,500,22,415,26,393,169,391,486,226,268,339,24,67,331,93,321,68,92,401,362,349,328,390,342,62,380,167,94,293,29] exp [165,167,183,189,190,203,307,331,339,406,407,411,412,415,416,417,419,420,485]
+[implemented] cat11 "group tabs about rag"
+   got [372,399,471,277,472,49,308,508,239,281] exp [49,239,277,281,308,372,399,429,471,508]
+[implemented] cat11 "close backend course tabs"
+   got [196,281,282] exp [54,196,281,282,289,316]
+[implemented] cat11 "close vibe coding tabs"
+   got [294,406,420,124,352,293,179,369,91,132,416,463,101,485,16,214,62,120,180,87,138,114,321,175,384,417,127,119,102,129,123,167,130,209,345,507,135,419,413,88,31,134,432,364,411,74,15,136,94,348,197,77,379,73,78,533,111,110,374,218,96,20,133,68,71,437,30,346,351,217,467,232,126,284,215,407,410,268,412,176,34,32,328,60,131,453,470,82,35,178,227,28,106,524,238,235,89,58,233,375,500,475,506,434,229,333,479,181,301,11,12,92,61,510,287,90,476,390,363,342,414,291,454,169,213,322,118,112,312,360,137,370,362,33,208,365,100,264,256,14,371,13,231,349,428,462,313,311,518,84,389,283,334,247,228,279,344,241,189,19,18,206,444,430,63,401,72,70,154,392,237,65,296,23,83,305,337,174,280,436,393,116,335,435,194,93,29,427,113,57,183,125,81,64,25,310,431,128,323,66,104,230,86,226,157,468,236,207,325,166,17,103,303,295,378,21,95,27,270,469,332,26,263,269,300,107,161,22,80,324,359,271,69,320,292,115,480,56,155,339,505,99,160,146,366,59,455,276,98,358,75,105,164,326,24,152,149,367] exp [210,291]
+[implemented] cat12 "group tabs about claude"
+   got [272,306,224,477,222,275,220,159,357,382,49,505,261,383,459] exp [49,159,220,222,224,261,272,275,306,357,382,383,454,459,477,505,530]
+[implemented] cat12 "close tabs about gemini"
+   got [221,182,2,353,354,532,308,481,523,541,451,542,396,383,245,403,418,421,460,466,519] exp [2,182,221,245,308,353,354,383,396,403,408,418,421,451,454,460,466,481,519,523,532,541,542]
+[implemented] cat12 "close tabs about python"
+   got [166,539,343,504,531,512,6,471,44,429,303,164] exp [6,44,166,303,343,429,471,504,512,531,539]
+[abstain] cat13 "group tabs opened from google search results"
+   got [170,451,308,188,547,245,403,418,421,460,466,519,243] exp []
+[implemented] cat14 "close all google search tabs"
+   got [268,221,481,542,188,503,170,182,354,353,243,408,451,396,308,314,245,403,418,421,460,466,519,547,532,240,523,541,2,5,144] exp []  VIOLATIONS 5
+[implemented] cat14 "close youtube search results tabs"
+   got [210,286,51,386,249,445,212,464,400,272,492,330,211,246,404,53,425,489,85,260,385,143,482,405,515,48,402,503,508,43,289,484,39,316,240,383,373,290,372,38,457,521,49,355,205,465,317,46,394,172,277,446,200,448,399,224,520,9,318,561,4,204,441,278,538,409,478,141,442,139,45,266,447,10,225,539,443,395,329,356,8,291,140,315] exp []
+[gap] cat14 "close reddit search tabs"
+   got [550,526,527,563,549,536,558,559,560,553,555,548,557,554,556,531,529,551,552,530] exp [550]
+[implemented] cat14 "close search tabs about anime"
+   got [257,426,258,184,259] exp []
+[abstain] cat16 "group tabs bookmarked under research"
+   got [361] exp []
+[gap] cat18 "close broken pages"
+   got [277] exp [184,243]
+[abstain] cat18 "close tabs that failed to load"
+   got [184] exp []
+[abstain] cat20 "group products priced in inr"
+   got [298,499,498,496,493] exp []
+[abstain] cat21 "bookmark resources for my amazon prep ticket"
+   got [493,563,564] exp []
+[abstain] cat22 "group official documentation about claude code"
+   got [49,159,261,272,275,306,382,383,454,459] exp []
+[implemented] cat24 "close the last five tabs"
+   got [] exp [561,562,563,564,565]
+[implemented] cat24 "close the first three tabs"
+   got [] exp [1,2,3]
+[implemented] cat24 "group the last three gemini tabs"
+   got [] exp [523,541,542]
+[implemented] cat24 "bookmark the last two amazon shopping tabs"
+   got [298,388,493,494,495,496,497,498,499] exp [498,499]
+[implemented] cat25 "close leetcode tabs that are not about binary"
+   got [62,87,92,130,138,384,181,179,379,30,65,129,69,86,128,133,339,180,67,127,134,367,88,15,131,276,17,123] exp [11,12,13,14,16,18,19,20,21,22,23,24,25,26,27,28,29,31,32,33,34,35,56,57,58,59,60,61,63,64,66,68,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,89,90,91,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,124,125,126,132,135,136,137,169,174,175,176,177,178,194,197,206,207,208,209,213,214,215,217,218,219,226,227,228,229,230,231,232,233,235,236,237,238,241,247,256,263,264,267,268,269,270,271,279,280,283,284,287,292,293,294,295,296,299,300,301,305,310,311,312,313,320,321,322,323,324,325,326,332,333,334,335,336,337,342,344,345,346,348,349,350,351,352,358,359,360,363,364,365,366,368,369,370,371,374,375,377,378,380,389,390,392,393,401,410,413,414,427,430,431,432,433,434,435,436,437,444,453,455,462,463,467,468,469,470,475,476,479,480,500,506,507,510,514,518,524,533]
+[implemented] cat25 "close github tabs about llm or rag"
+   got [164,149,157,163,534,216,449,161,543,153,328] exp [149,157,164]
+[implemented] cat25 "close youtube tabs but keep shorts"
+   got [272,382,465,445] exp [1,3,4,5,6,7,8,9,10,37,38,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,85,139,140,141,142,143,144,145,172,196,200,204,205,210,211,212,220,224,225,239,240,242,246,249,260,261,262,265,266,272,273,274,275,277,278,281,282,286,289,290,291,297,306,315,316,317,318,319,329,330,340,355,356,372,373,382,383,385,386,394,395,397,398,399,400,402,404,405,409,422,423,424,425,429,441,442,443,445,446,447,448,456,457,471,478,482,483,484,489,491,501,503,504,508,509,512,515,520,521,527,528,538,539,561]  VIOLATIONS 1
+[implemented] cat25 "close tabs from codeforces or leetcode"
+   got [167,189,415,203,442,190] exp [11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,167,169,174,175,176,177,178,179,180,181,189,190,194,197,203,206,207,208,209,213,214,215,217,218,219,226,227,228,229,230,231,232,233,235,236,237,238,241,247,256,263,264,267,268,269,270,271,276,279,280,283,284,287,292,293,294,295,296,299,300,301,305,310,311,312,313,320,321,322,323,324,325,326,332,333,334,335,336,337,342,344,345,346,348,349,350,351,352,358,359,360,363,364,365,366,367,368,369,370,371,374,375,377,378,379,380,384,389,390,392,393,401,410,413,414,415,427,430,431,432,433,434,435,436,437,444,453,455,462,463,467,468,469,470,475,476,479,480,500,506,507,510,514,518,524,533]
+[implemented] cat25 "close amazon tabs that are not shopping pages"
+   got [498,493,499,495,494,496,497,388,298] exp [564]
+[implemented] cat25 "group machine learning tabs that are videos"
+   got [171,173,185,187,193,223,250,252,253,254,255,535] exp [44,45,501]
+[implemented] cat25 "close interview tabs except amazon ones"
+   got [] exp [11,51,147,174,224,226,234,244,277,317,329,331,355,356,386,409,429,456,457,473,478,483,511,520,542,545,546]
+[implemented] cat25 "close my fitness or anime tabs"
+   got [] exp [41,42,184,186,211,212,246,257,258,259,274,426,445,485]
+[implemented] cat25 "close reddit tabs that are not in the dev group"
+   got [548,549,550,551,552,553,554,555,556,557,558,559,560,561,562,563,564,565] exp [536]
+[implemented] cat26 "close all tabs except those in the dev group"
+   got [548,549,550,551,552,553,554,555,556,557,558,559,560,561,562,563,564,565] exp [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,282,283,284,285,286,287,288,289,290,291,292,293,294,295,296,297,298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320,321,322,323,324,325,326,327,328,329,330,331,332,333,334,335,336,337,338,339,340,341,342,343,344,345,346,347,348,349,350,351,352,353,354,355,356,357,358,359,360,361,362,363,364,365,366,367,368,369,370,371,372,373,374,375,376,377,378,379,380,381,382,383,384,385,386,387,388,389,390,391,392,393,394,395,396,397,398,399,400,401,402,403,404,405,406,407,408,409,410,411,412,413,414,415,416,417,418,419,420,421,422,423,424,425,426,427,428,429,430,431,432,433,434,435,436,437,438,439,440,441,442,443,444,445,446,447,448,449,450,451,452,453,454,455,456,457,458,459,460,461,462,463,464,465,466,467,468,469,470,471,472,473,474,475,476,477,478,479,480,481,482,483,484,485,486,487,488,489,490,491,492,493,494,495,496,497,498,499,500,501,502,503,504,505,506,507,508,509,510,511,512,513,514,515,516,517,518,519,520,521,522,523,524,525,526,527,528,529,530,531,532,533,534,535,536,537,538,539,540,541,542,543,544,545,546,547]
+[implemented] cat26 "close all gemini tabs except the rag ones"
+   got [] exp [2,182,221,245,353,354,396,403,408,418,421,451,460,466,481,519,523,541,542]
+[abstain] cat26 "close tabs similar to the amazon sde interview experience post"
+   got [549,443,552,553,558,561,559,548,557,555,448,438,394,11,554,395] exp []
+[abstain] cat26 "group tabs similar to my rag gemini chat"
+   got [308] exp []
