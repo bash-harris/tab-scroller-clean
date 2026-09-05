@@ -444,14 +444,46 @@ function detectIntent(cmdLower) {
 
 // Ambiguity: the command names more than one distinct action verb, so a preview
 // must be forced regardless of model confidence.
-function isAmbiguousIntent(cmdLower) {
+//
+// The raw INTENT_RULES ladder over-counts: state words and compound nouns trip
+// rules that were written for imperative verbs. A hit whose matched TOKEN is a
+// past participle ("opened", "pinned", "unpinned", "muted", "bookmarked") is a
+// qualifier or state adjective, never the action verb; "group"/"search"/"refresh"
+// inside a noun phrase ("in the dev group", "google search tabs", "refresh
+// tokens") is part of the topic. Both classes are suppressed when counting --
+// detectIntent itself is untouched (rule order already returns the right verb;
+// this function only decides whether TWO genuine verbs coexist).
+const AMBIG_PARTICIPLES = /^(opened|pinned|unpinned|muted|bookmarked)$/;
+const AMBIG_NOUN_GROUP = /\b(?:the|my|a|this|current)\s+(?:[a-z0-9-]+\s+)?group\b|\bgroup\s+(?:tabs?\b|pages?\b)/i;
+const AMBIG_NOUN_SEARCH = /\bsearch\s+(?:pages?|engines?|results?|tabs?|queries?|history)\b|\b(?:google|bing|duckduckgo)\s+search\b/i;
+const AMBIG_NOUN_REFRESH = /\brefresh\s+tokens?\b/i;
+const AMBIG_NOUN_OPEN = /\bopen\s+(?:tabs?|pages?)\b/i;
+// "bookmarks" / "already bookmarked" in an exception or qualifier clause is a
+// noun, not the bookmark verb.
+const AMBIG_NOUN_BOOKMARK = /\b(?:bookmarks?|bookmarked)\b/i;
+
+function ambiguousIntents(cmdLower) {
   const text = String(cmdLower || '').toLowerCase();
-  const hits = new Set();
+  const closeNegated = NEGATED_CLOSE.test(text);
+  const hits = [];
   for (const rule of INTENT_RULES) {
-    if (rule.intent === 'close_tabs' && NEGATED_CLOSE.test(text)) continue;
-    if (rule.re.test(text)) hits.add(rule.intent);
+    if (rule.intent === 'close_tabs' && closeNegated) continue;
+    const m = text.match(rule.re);
+    if (!m) continue;
+    const tok = String(m[0] || '').toLowerCase();
+    if (AMBIG_PARTICIPLES.test(tok)) continue; // state/qualifier, never a verb
+    if (rule.intent === 'group_tabs' && AMBIG_NOUN_GROUP.test(text)) continue;
+    if (rule.intent === 'search_and_switch' && AMBIG_NOUN_SEARCH.test(text)) continue;
+    if (rule.intent === 'reload_tabs' && AMBIG_NOUN_REFRESH.test(text)) continue;
+    if (rule.intent === 'bookmark_tabs' && AMBIG_NOUN_BOOKMARK.test(text) && tok !== 'bookmark') continue;
+    if (rule.intent === 'open_tabs' && AMBIG_NOUN_OPEN.test(text) && tok !== 'show') continue;
+    if (!hits.includes(rule.intent)) hits.push(rule.intent);
   }
-  return hits.size > 1;
+  return hits;
+}
+
+function isAmbiguousIntent(cmdLower) {
+  return ambiguousIntents(cmdLower).length > 1;
 }
 
 function classifyCommand(cmd) {
@@ -508,6 +540,195 @@ function parseBookmarkAll(cmd) {
   if (!m) return null;
   const folderName = (m[1] || '').trim();
   return { folderName: folderName || 'Saved Tabs' };
+}
+
+// ===========================================================================
+// CLARIFICATION LOOP (interpretation-level, V2-3)
+//
+// One choke point between selection and delivery. When the parse says the
+// command is genuinely ambiguous, the orchestrator builds CONCRETE
+// interpretations, scores each against the pool, and — only when the pool
+// cannot separate them — asks the user ONCE. The chosen interpretation's plan
+// flows through the normal preview/undo path; destructive intent still
+// previews. Mechanical invariants: max ONE clarification per command, at most
+// 3 options + a client-side Cancel, and no re-entry after resolution.
+// ===========================================================================
+
+// Near-tie threshold on the normalized leader margin of the split test.
+const CLARIFY_SPLIT_MARGIN = 0.1;
+const CLARIFY_MAX_OPTIONS = 3;
+
+// Pure split test. scores: [{label, concept, matchCount, topConf}] ordered
+// however; returns { required, ranked } — required when at least two senses
+// each match >=1 tab AND (the leader's normalized margin is a near-tie OR the
+// intent is destructive). A single matching sense is inert: the pool resolved
+// the ambiguity by itself.
+function senseSplitTest(scores, { destructive = false } = {}) {
+  const ranked = [...(scores || [])].sort((a, b) =>
+    (b.matchCount - a.matchCount) || ((b.topConf || 0) - (a.topConf || 0)));
+  const top = ranked[0], second = ranked[1];
+  if (!top || !second || top.matchCount < 1 || second.matchCount < 1) {
+    return { required: false, ranked };
+  }
+  const margin = (top.matchCount - second.matchCount) / Math.max(1, top.matchCount);
+  return { required: margin < CLARIFY_SPLIT_MARGIN || destructive, ranked, margin };
+}
+
+// Score one sense concept against the pool with the existing NLI machinery:
+// entail the concept text, count matches at the selection threshold. Injected
+// as `scorer` by the bench runner; defaults to self.NliSelect in production.
+async function defaultSenseScorer(conceptText, candidates) {
+  if (!self.NliSelect || !conceptText || !candidates || !candidates.length) {
+    return { matchCount: 0, topConf: 0, tabIds: [], perTab: {} };
+  }
+  const res = await self.NliSelect.select(String(conceptText), candidates, {});
+  const matches = (res && Array.isArray(res.matches) ? res.matches : [])
+    .filter(m => Number(m.confidence) >= 0.5);
+  const perTab = {};
+  let topConf = 0;
+  const tabIds = [];
+  for (const m of matches) {
+    const conf = Number(m.confidence) || 0;
+    topConf = Math.max(topConf, conf);
+    perTab[m.tabId] = m.reason || 'Sense match';
+    tabIds.push(m.tabId);
+  }
+  return { matchCount: tabIds.length, topConf, tabIds, perTab };
+}
+
+// Selection plan for one interpretation: re-run selection with that reading's
+// slot-set forced into the query channel. Reuses the live selection engine;
+// never re-parses and never re-enters the clarify decision.
+async function selectForInterpretation({ intent, queryOverride, command, candidates, basePlan }) {
+  let tabIds = [], perTab = {}, topConf = 0;
+  if (self.NliSelect && candidates && candidates.length) {
+    try {
+      const res = await self.NliSelect.select(String(command), candidates,
+        queryOverride ? { query: queryOverride } : {});
+      for (const m of (res.matches || [])) {
+        const conf = Number(m.confidence);
+        if (!(conf >= 0.5)) continue;
+        tabIds.push(m.tabId);
+        perTab[m.tabId] = m.reason || 'Interpretation match';
+        topConf = Math.max(topConf, conf);
+      }
+    } catch (e) {
+      console.warn('[CommandAgent] interpretation select failed:', e && e.message);
+    }
+  }
+  return {
+    intent: intent || (basePlan && basePlan.intent) || 'group_tabs',
+    tabIds,
+    perTabReasons: perTab,
+    uncertain: [],
+    confidence: tabIds.length ? (topConf || 1.0) : 0.0,
+    destructive: DESTRUCTIVE_INTENTS.has(intent || (basePlan && basePlan.intent)),
+    path: 'semantic'
+  };
+}
+
+/**
+ * Decide whether a plan needs one clarification. Returns the plan (with
+ * .clarify attached when required) — never mutates selection for the inert
+ * path: if the pool separates the senses by itself, the original plan runs.
+ *
+ * Triggers, in spec order:
+ *   1. query.answerable === false  -> interpretation options (parser-produced)
+ *   2. query.senses[]              -> sense split test against the pool
+ *   3. dual-intent (ambiguousIntents) -> one option per intent
+ * plus the pre-existing confidence band handled by background's preview gate.
+ */
+async function maybeClarify(plan, ctx) {
+  const { command, windowId, resolved = false, scorer = null } = ctx || {};
+  if (resolved || !plan || plan.clarify) return plan;
+  // Retrieval and multi-group flows have no single selectable pool to split.
+  if (plan.path === 'agent' && (plan.intent === 'retrieve_open' || plan.intent === 'group_multi')) return plan;
+
+  const cmdLower = String(command || '').toLowerCase();
+  let query = null;
+  try {
+    query = (typeof self.LlmQuery !== 'undefined') ? await self.LlmQuery.parse(command) : null;
+  } catch { query = null; }
+  const senses = (query && Array.isArray(query.senses)) ? query.senses : [];
+  const answerableFalse = !!(query && query.answerable === false);
+  const dualIntents = ambiguousIntents(cmdLower);
+  if (!senses.length && !answerableFalse && dualIntents.length < 2) return plan;
+
+  // Pool evidence is only fetched when a trigger can use it. self first so
+  // tests (and the SW, which exports the same fn) can own the seam.
+  let candidates = null;
+  if (senses.length >= 2 || answerableFalse) {
+    const getCandidates = (typeof self !== 'undefined' && typeof self.retrieveCandidates === 'function')
+      ? self.retrieveCandidates : retrieveCandidates;
+    try { candidates = await getCandidates(command, windowId, null); } catch { candidates = null; }
+  }
+  const doScore = scorer || defaultSenseScorer;
+  const destructive = DESTRUCTIVE_INTENTS.has(plan.intent);
+  let options = [];
+  let reason = null;
+
+  // 1. answerable:false — the parser abstained; offer concrete readings.
+  if (!senses.length && answerableFalse && typeof self.LlmQuery !== 'undefined') {
+    const interps = self.LlmQuery.generateInterpretations(command, CLARIFY_MAX_OPTIONS);
+    for (const interp of interps) {
+      const sel = await selectForInterpretation({
+        intent: interp.query.intent, command, candidates,
+        queryOverride: { ...query, ...interp.query, concepts: interp.query.concepts, selectAll: interp.query.selectAll },
+        basePlan: plan
+      });
+      options.push({
+        kind: 'interpretation', label: interp.label, summary: plan.intent,
+        matchCount: sel.tabIds.length, tabIds: sel.tabIds, plan: sel
+      });
+    }
+    if (options.length >= 2) reason = 'command references the conversation, not the pool';
+    else options = [];
+  }
+
+  // 2. senses — polysemy split test. Inert outcome keeps the original plan.
+  if (!reason && senses.length >= 2 && candidates && candidates.length) {
+    const scores = [];
+    for (const s of senses) {
+      try {
+        const sc = await doScore(s.concept, candidates);
+        scores.push({ label: s.label, concept: s.concept, matchCount: sc.matchCount, topConf: sc.topConf, tabIds: sc.tabIds, perTab: sc.perTab });
+      } catch { scores.push({ label: s.label, concept: s.concept, matchCount: 0, topConf: 0, tabIds: [], perTab: {} }); }
+    }
+    const split = senseSplitTest(scores, { destructive });
+    if (split.required) {
+      reason = 'polysemous topic matched under multiple senses';
+      for (const s of senses) {
+        const scored = split.ranked.find(r => r.concept === s.concept) || s;
+        const sel = scored.tabIds && scored.tabIds.length
+          ? {
+              intent: plan.intent, tabIds: scored.tabIds, perTabReasons: scored.perTab,
+              uncertain: [], confidence: scored.topConf || 1.0,
+              destructive: DESTRUCTIVE_INTENTS.has(plan.intent), path: 'semantic'
+            }
+          : await selectForInterpretation({ intent: plan.intent, command, candidates, basePlan: plan });
+        options.push({ kind: 'sense', label: s.label, summary: plan.intent, matchCount: sel.tabIds.length, tabIds: sel.tabIds, plan: sel });
+      }
+    }
+  }
+
+  // 3. dual-intent — two genuine action verbs; one option per intent. The
+  // existing selection is the shared candidate set: both intents act on the
+  // same tabs, the actions differ.
+  if (!reason && dualIntents.length >= 2) {
+    reason = 'command names more than one action';
+    for (const it of dualIntents.slice(0, CLARIFY_MAX_OPTIONS)) {
+      const sel = it === plan.intent && Array.isArray(plan.tabIds)
+        ? plan
+        : { ...plan, intent: it, destructive: DESTRUCTIVE_INTENTS.has(it) };
+      options.push({ kind: 'intent', label: `${it.replace(/_/g, ' ')} these tabs`, summary: it, matchCount: (plan.tabIds || []).length, tabIds: plan.tabIds || [], plan: sel });
+    }
+  }
+
+  if (!options.length || !reason) return plan;
+  options = options.slice(0, CLARIFY_MAX_OPTIONS); // hard cap: <=3 + client Cancel
+  plan.clarify = { command, reason, options };
+  console.log(`[CommandAgent] CLARIFY_NEEDED (${reason}): ${options.map(o => `${o.label}=${o.matchCount}`).join(' | ')}`);
+  return plan;
 }
 
 // Retrieval tuning. These are the knobs that decide how much of the browser
@@ -1101,7 +1322,7 @@ function createTracer(command) {
   };
 }
 
-async function runCommandPipeline(userCommand, windowId) {
+async function runCommandPipelineInner(userCommand, windowId) {
   if (self.ensureRagReady) {
     await self.ensureRagReady();
   }
@@ -1249,7 +1470,6 @@ async function runCommandPipeline(userCommand, windowId) {
       console.log('[CommandAgent] No structural/domain signal — falling through to semantic search');
       return await runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive, windowId);
     }
-
     const filteredTabs = self.smartPreFilter(allTabs, cleanCommand);
     if (filteredTabs && filteredTabs.length > 0) {
       const tabIds = filteredTabs.map(t => t.id);
@@ -1271,6 +1491,27 @@ async function runCommandPipeline(userCommand, windowId) {
 
   tracer.step('Router', 'Semantic path chosen');
   return await runSemanticPipeline(cleanCommand, cmdLower, intent, isDestructive, windowId, tracer);
+}
+
+// Clarification gate wrapper: the ONE place a finished plan passes before it
+// leaves the module. Inert outcome = plan unchanged; a required clarification
+// attaches plan.clarify and background converts it to CLARIFY_NEEDED. The
+// clarify-resolved re-entry (user picked an interpretation) skips evaluation,
+// which together with the background's single pendingClarify entry guarantees
+// at most one clarification per command.
+async function runCommandPipeline(userCommand, windowId, opts = {}) {
+  const plan = await runCommandPipelineInner(userCommand, windowId);
+  if (!plan || (opts && opts.clarifyResolved)) return plan;
+  try {
+    return await maybeClarify(plan, {
+      command: sanitizeQuery(userCommand),
+      windowId,
+      resolved: !!(opts && opts.clarifyResolved)
+    });
+  } catch (e) {
+    console.warn('[CommandAgent] clarify evaluation failed, executing plan:', e && e.message);
+    return plan;
+  }
 }
 
 // ===========================================================================
@@ -1695,6 +1936,10 @@ self.INTENT_TO_TOOL = INTENT_TO_TOOL;
 self.retrieveCandidates = retrieveCandidates;
 self.reasonOverCandidates = reasonOverCandidates;
 self.runCommandPipeline = runCommandPipeline;
+self.senseSplitTest = senseSplitTest;
+self.ambiguousIntents = ambiguousIntents;
+self.maybeClarify = maybeClarify;
+self.selectForInterpretation = selectForInterpretation;
 self.setProgressTarget = setProgressTarget;
 // Domain fast path (additive; existing keys untouched).
 self.BRAND_HOSTS = BRAND_HOSTS;
@@ -1707,10 +1952,12 @@ self.executeDomainScopePlan = executeDomainScopePlan;
 // Node-side export so the pure routing logic can be unit-tested without chrome.
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    detectIntent, isAmbiguousIntent, hasDomainPattern, classifyCommand, parseBookmarkAll,
+    detectIntent, isAmbiguousIntent, ambiguousIntents, hasDomainPattern, classifyCommand, parseBookmarkAll,
     DOMAIN_PATTERN, INTENT_RULES, DESTRUCTIVE_INTENTS,
     toolForIntent, deriveGroupName, INTENT_TO_TOOL, titleCase,
     BRAND_HOSTS, HOST_SERVICE_NARROWERS, registrable,
-    resolveDomainScopes, isDomainScopeCommand, executeDomainScopePlan
+    resolveDomainScopes, isDomainScopeCommand, executeDomainScopePlan,
+    senseSplitTest, maybeClarify, selectForInterpretation, defaultSenseScorer,
+    CLARIFY_SPLIT_MARGIN, CLARIFY_MAX_OPTIONS
   };
 }

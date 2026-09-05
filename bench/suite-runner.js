@@ -10,6 +10,17 @@
 // Two cuts are reported: implemented-only (what v2-style reporting gives) and
 // all commands (the spec-coverage gap measurement). Abstain/featureGap cases
 // pass only when the pipeline selects nothing.
+//
+// CLARIFY SIMULATION (V2-3): after selection, the runner replays the exact
+// orchestrator clarify decision from command-agent.js. If the pipeline would
+// return clarify-needed, the runner SIMULATES the user: it auto-picks the
+// option whose (a) label matches the gold notes (case-insensitive substring),
+// else (b) whose matchCount best matches |expectedTabIds| (nearest absolute
+// distance; TIE-BREAK: the FIRST such option in presentation order). The
+// picked option's plan is then what gets scored. Metrics printed per run:
+//   clarify-fire rate            clarify-needed decisions / gold commands
+//   correct-option-present rate  fired clarifications where the auto-picked
+//                                option reproduces the gold selection
 
 const fs = require('fs');
 const path = require('path');
@@ -30,6 +41,7 @@ global.self = global;
 require(path.join(__dirname, '..', 'concept-core.js'));
 const NliSelect = require(path.join(__dirname, '..', 'nli-select.js'));
 const LlmQuery = require(path.join(__dirname, '..', 'llm-query.js'));
+const CommandAgent = require(path.join(__dirname, '..', 'command-agent.js'));
 
 const { env } = require('@xenova/transformers');
 env.cacheDir = path.join(__dirname, '.model-cache');
@@ -44,8 +56,13 @@ const SUITE = (args.find(a=>a.startsWith('--suite')) || '--suite=suite-v3').spli
 const CMD_FILE = path.join(__dirname, SUITE + '.commands.jsonl');
 const POOL_FILE = path.join(__dirname, SUITE + '.pool.json');
 const QCACHE = path.join(__dirname, '.llm-query-cache.json');
+const CLARIFY_CACHE = path.join(__dirname, '.suite-clarify-cache.json');
 
 const qcache = (() => { try { return JSON.parse(fs.readFileSync(QCACHE, 'utf8')); } catch { return {}; } })();
+// Sense-score cache: sense concepts are command-derived, so scores are
+// deterministic per (suite, command, parse). Cached separately from the
+// selection result cache so a clarify replay never re-runs NLI passes.
+const clarifyCache = (() => { try { const j = JSON.parse(fs.readFileSync(CLARIFY_CACHE, 'utf8')); return (j && j.codeHash === codeHash) ? j.entries : {}; } catch { return {}; } })();
 
 const pool = JSON.parse(fs.readFileSync(POOL_FILE, 'utf8'));
 const CMDS = fs.readFileSync(CMD_FILE, 'utf8').trim().split('\n')
@@ -157,6 +174,9 @@ const CAT_NAMES = {
 
 (async () => {
   await NliSelect.load();
+  // defaultSenseScorer (command-agent) resolves the engine through self; the
+  // runner keeps its own const binding, so expose it for the clarify replay.
+  self.NliSelect = NliSelect;
 
   // Same reasoning as llm-nli-integration: hand every card the embedding the
   // indexer would have stored, or the bench exercises the abstaining path.
@@ -189,6 +209,8 @@ const CAT_NAMES = {
   const byBucket = { implemented: s(), gap: s(), abstain: s(), featureGap: s() };
   const byCategory = {};
   let llmMs = 0, nliMs = 0, cacheHits = 0, cacheMisses = 0, fallbacks = 0;
+  let clarifyFired = 0, clarifyCorrect = 0;
+  const clarifyFires = [];
 
   function s() { return { n: 0, exact: 0, pSum: 0, rSum: 0, f1Sum: 0, viol: 0 }; }
   function score(slot, c, got) {
@@ -248,14 +270,89 @@ const CAT_NAMES = {
     }
 
     const got = new Set(res.matches.filter(m => m.confidence >= 0.5).map(m => m.tabId));
+
+    // --- CLARIFY SIMULATION (orchestrator replay, triggers 1+2) ------------
+    // Replays command-agent.maybeClarify's decision on the bench pipeline:
+    // answerable===false interpretations and the polysemy sense split test.
+    // The dual-intent arm (trigger 3) is orchestrator-only in production and
+    // needs live-tab action routing; on these gold pools its detector is 0
+    // after the participle/noun-phrase suppression, so there is nothing to
+    // simulate. When the split test requires clarification, the runner plays
+    // the user: notes-label match first, else closest |matchCount| to
+    // |expectedTabIds|, tie-break FIRST. The picked option's plan replaces
+    // `got` for scoring (the orchestrator would execute exactly that plan).
+    let scoredGot = got;
+    try {
+      const senses = (query && Array.isArray(query.senses)) ? query.senses : [];
+      const answerableFalse = !!(query && query.answerable === false);
+      if ((senses.length >= 2 || answerableFalse) && CommandAgent.ambiguousIntents(c.command.toLowerCase()).length < 2) {
+        const destructive = CommandAgent.DESTRUCTIVE_INTENTS.has(CommandAgent.detectIntent(c.command.toLowerCase()));
+        const ckey = sha(SUITE + '|clarify|' + c.command + '|' + JSON.stringify(query));
+        let senseScores = clarifyCache[ckey];
+        if (!Array.isArray(senseScores)) {
+          senseScores = [];
+          for (const sense of senses) {
+            const sc = await CommandAgent.defaultSenseScorer(sense.concept, candidates);
+            senseScores.push({ label: sense.label, concept: sense.concept, matchCount: sc.matchCount, topConf: sc.topConf, tabIds: sc.tabIds });
+          }
+          clarifyCache[ckey] = senseScores;
+          fs.writeFileSync(CLARIFY_CACHE, JSON.stringify(clarifyCache, null, 1));
+        }
+        let options = null;
+        if (senses.length >= 2) {
+          const split = CommandAgent.senseSplitTest(senseScores, { destructive });
+          if (split.required) {
+            options = senseScores.map(sc => ({ label: sc.label, matchCount: sc.matchCount, tabIds: sc.tabIds }));
+          }
+        } else {
+          // answerable===false: score the parser's alternative readings.
+          const interps = LlmQuery.generateInterpretations(c.command, 3);
+          options = [];
+          for (const interp of interps) {
+            const sel = await NliSelect.select(c.command, candidates, {
+              query: { ...(query || {}), ...interp.query, concepts: interp.query.concepts, selectAll: interp.query.selectAll }
+            });
+            const ids = (sel.matches || []).filter(m => m.confidence >= 0.5).map(m => m.tabId);
+            options.push({ label: interp.label, matchCount: ids.length, tabIds: ids });
+          }
+          if (options.length < 2) options = null;
+        }
+
+        if (options && options.length) {
+          clarifyFired++;
+          const exp = c.expectedTabIds || [];
+          const notesLower = String(c.notes || '').toLowerCase();
+          // (a) gold notes name the reading; (b) nearest matchCount; tie -> first.
+          let pickIdx = options.findIndex(o => o.label && notesLower && notesLower.includes(o.label.split('—')[0].trim().toLowerCase()));
+          if (pickIdx === -1 && exp.length) {
+            let best = Infinity;
+            for (let i = 0; i < options.length; i++) {
+              const d = Math.abs(options[i].matchCount - exp.length);
+              if (d < best) { best = d; pickIdx = i; }
+            }
+          }
+          if (pickIdx === -1) pickIdx = 0;
+          const picked = options[pickIdx];
+          const pickedSet = new Set(picked.tabIds || []);
+          const correct = pickedSet.size === exp.length && exp.every(id => pickedSet.has(id));
+          if (correct) clarifyCorrect++;
+          clarifyFires.push({ id: c.command, suite: SUITE, reason: senses.length >= 2 ? 'senses' : 'answerable', picked: picked.label, pickCount: picked.matchCount, exp: exp.length, correct });
+          console.log(`[CLARIFY-FIRE] ${SUITE} "${c.command}" -> picked "${picked.label}" (${picked.matchCount}) exp ${exp.length}`);
+          scoredGot = pickedSet;
+        }
+      }
+    } catch (e) {
+      console.warn('[CLARIFY] evaluation failed (inert):', e && e.message);
+    }
+
     const b = bucketOf(c);
-    const r = score(byBucket[b], c, got);
+    const r = score(byBucket[b], c, scoredGot);
 
     byCategory[c.category] = byCategory[c.category] || s();
-    score(byCategory[c.category], c, got);
+    score(byCategory[c.category], c, scoredGot);
 
     if (!r.exact || r.v) {
-      failures.push({ id: c.command, bucket: b, cat: c.category, ...r, got: [...got], exp: c.expectedTabIds });
+      failures.push({ id: c.command, bucket: b, cat: c.category, ...r, got: [...scoredGot], exp: c.expectedTabIds });
     }
   }
 
@@ -276,6 +373,12 @@ const CAT_NAMES = {
   }
 
   console.log(`\nllm ${llmMs}ms (${cacheHits} cache hits, ${cacheMisses} fresh) | nli ${nliMs}ms${resultCache && Object.keys(resultCache).length ? ` | result-cache ${Object.keys(resultCache).size} entries, code ${codeHash}` : ''}`);
+  console.log(`clarify-fire ${clarifyFired}/${CMDS.length}${CMDS.length ? ` (${(100 * clarifyFired / CMDS.length).toFixed(1)}%)` : ''} | correct-option-present ${clarifyCorrect}/${clarifyFired}${clarifyFired ? ` (${Math.round(100 * clarifyCorrect / clarifyFired)}%)` : ''}`);
+  if (clarifyFires.length) {
+    for (const f of clarifyFires) {
+      console.log(`  [CLARIFY] ${f.suite} "${f.id}" reason=${f.reason} picked="${f.picked}" got ${f.pickCount} exp ${f.exp} correct=${f.correct}`);
+    }
+  }
   if (failures.length) {
     console.log(`\n-- failures (${failures.length}) ---------------------------------------------`);
     for (const f of failures) {

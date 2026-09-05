@@ -2029,17 +2029,28 @@
     const optionsList = document.createElement("div");
     optionsList.style.cssText = "display: flex; flex-direction: column; gap: 8px;";
 
-    (data.options || []).forEach((option) => {
+    (data.options || []).forEach((option, optionIndex) => {
       const btn = document.createElement("button");
-      btn.textContent = option.label;
+      // V2 interpretation loop: options carry a concrete reading, an action
+      // summary and the pool match count; legacy callers send label only.
+      const isV2 = !!data.clarifyId;
+      btn.textContent = isV2
+        ? `${option.label}${option.matchCount != null ? ` — ${option.matchCount} tab(s)` : ""}`
+        : option.label;
       btn.style.cssText = `
         padding: 10px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
         background: rgba(255,255,255,0.05); color: inherit; cursor: pointer;
         font-size: 14px; text-align: left; transition: background 0.15s ease;
       `;
+      if (isV2 && option.summary) {
+        const sub = document.createElement("div");
+        sub.textContent = option.summary.replace(/_/g, " ");
+        sub.style.cssText = "font-size: 11px; opacity: 0.6; margin-top: 2px;";
+        btn.appendChild(sub);
+      }
       btn.addEventListener("mouseenter", () => { btn.style.background = 'rgba(255,255,255,0.1)'; });
       btn.addEventListener("mouseleave", () => { btn.style.background = 'rgba(255,255,255,0.05)'; });
-      btn.addEventListener("click", () => close(option));
+      btn.addEventListener("click", () => close(option, optionIndex));
       optionsList.appendChild(btn);
     });
 
@@ -2052,7 +2063,7 @@
       border: 1px solid rgba(255,255,255,0.2); background: transparent;
       color: inherit; cursor: pointer; font-size: 14px; opacity: 0.7;
     `;
-    cancelBtn.addEventListener("click", () => close(null));
+    cancelBtn.addEventListener("click", () => close(null, -1));
     content.appendChild(cancelBtn);
 
     modal.appendChild(content);
@@ -2063,10 +2074,29 @@
       modal.style.pointerEvents = "auto";
     });
 
-    function close(selectedOption) {
+    function close(selectedOption, optionIndex) {
       modal.style.opacity = "0";
       modal.style.pointerEvents = "none";
       setTimeout(() => modal.remove(), 200);
+
+      if (data.clarifyId) {
+        // Interpretation loop round-trip: the orchestrator executes the chosen
+        // option's plan through the normal preview/undo path. Cancel (-1)
+        // aborts; either answer consumes the pending clarification.
+        safeSendMessage({
+          type: "CLARIFY_CHOSEN",
+          clarifyId: data.clarifyId,
+          optionIndex: selectedOption ? optionIndex : -1,
+          command: data.command
+        }, (response) => {
+          if (response && response.success) {
+            if (typeof showToast !== "undefined") showToast(response.message || "Done", "success");
+          } else if (!selectedOption || response) {
+            if (typeof showToast !== "undefined") showToast(response?.message || (selectedOption ? "Error" : "Cancelled"), selectedOption ? "error" : "info");
+          }
+        });
+        return;
+      }
 
       if (selectedOption) {
         safeSendMessage({
@@ -2352,6 +2382,10 @@
       clearTimeout(undoAutoHideTimer);
       undoAutoHideTimer = setTimeout(() => { undoBtn.style.display = "none"; }, 15000);
     } else if (msg.type === "CLARIFICATION_NEEDED") {
+      showClarificationModal(msg);
+    } else if (msg.type === "CLARIFY_NEEDED") {
+      // Interpretation-level clarification (V2-3): concrete readings with
+      // match counts; the pick returns via CLARIFY_CHOSEN.
       showClarificationModal(msg);
     } else if (msg.type === "OPEN_TABS_PICKER") {
       // background matched several tabs for an open command — surface every

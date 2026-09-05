@@ -774,6 +774,145 @@ Examples:
     return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
+  // ---- POLYSEMY LEXICON (senses[]) ------------------------------------------
+  //
+  // Curated, static, and deliberately SMALL: only tokens that genuinely name
+  // two unrelated things users actually have tabs about. This is the same
+  // design as domain-priors.js -- a handful of hand-curated entries, never a
+  // generated vocabulary -- and it carries ZERO pool knowledge: the parser
+  // only knows that a token is ambiguous, never which tabs exist.
+  //
+  // 'python' is deliberately absent: the programming/snake collision is already
+  // resolved by the existing python handling in the selection path.
+  //
+  // Sense order = presentation order in the clarify modal; the first sense is
+  // also the runner's tie-break winner. `concept` is the phrase the orchestrator
+  // entails against the pool (NLI) when running the sense split test.
+  const POLYSEMY_LEXICON = [
+    { token: 'apple',
+      senses: [{ label: 'apple — the company', concept: 'apple company technology brand' },
+               { label: 'apple — the fruit', concept: 'apple fruit orchard' }] },
+    { token: 'jaguar',
+      senses: [{ label: 'jaguar — the car', concept: 'jaguar car automobile brand' },
+               { label: 'jaguar — the animal', concept: 'jaguar animal big cat' }] },
+    { token: 'eclipse',
+      senses: [{ label: 'eclipse — the IDE', concept: 'eclipse IDE development environment' },
+               { label: 'eclipse — the astronomy event', concept: 'eclipse astronomy sun moon' }] },
+    { token: 'mercury',
+      senses: [{ label: 'mercury — the planet', concept: 'mercury planet solar system' },
+               { label: 'mercury — the element', concept: 'mercury element liquid metal chemistry' }] },
+    { token: 'amazon',
+      senses: [{ label: 'amazon — the company', concept: 'amazon company shopping ecommerce' },
+               { label: 'amazon — the river', concept: 'amazon river rainforest' }] },
+    { token: 'phoenix',
+      senses: [{ label: 'phoenix — the bird', concept: 'phoenix bird mythology' },
+               { label: 'phoenix — the city', concept: 'phoenix city arizona' },
+               { label: 'phoenix — the web framework', concept: 'phoenix web framework elixir' }] },
+    { token: 'go',
+      senses: [{ label: 'go — the programming language', concept: 'go programming language golang' },
+               { label: 'go — the board game', concept: 'go board game weiqi baduk' }] },
+    { token: 'rust',
+      senses: [{ label: 'rust — the programming language', concept: 'rust programming language code' },
+               { label: 'rust — the oxidation', concept: 'rust corrosion oxidation metal' }] },
+    { token: 'swift',
+      senses: [{ label: 'swift — the programming language', concept: 'swift programming language ios' },
+               { label: 'swift — the bird', concept: 'swift bird' }] },
+    { token: 'anchor',
+      senses: [{ label: 'anchor — the nautical gear', concept: 'anchor boat ship nautical' },
+               { label: 'anchor — the web element', concept: 'anchor hyperlink web page' }] }
+  ];
+
+  // Whole-word tokens harvested from a parse: concept words plus the site label
+  // of every named domain ("amazon.in" -> "amazon"). Domain labels count as
+  // concept tokens because a bare-brand scope ("close amazon.in tabs") is
+  // exactly where the collision bites.
+  function polysemyTokens(parsed) {
+    const toks = new Set();
+    for (const c of Array.isArray(parsed && parsed.concepts) ? parsed.concepts : []) {
+      for (const w of String(c).toLowerCase().split(/[^a-z0-9]+/)) if (w) toks.add(w);
+    }
+    for (const d of Array.isArray(parsed && parsed.domains) ? parsed.domains : []) {
+      const label = String(d).replace(/^www\./, '').split('.')[0];
+      if (label) toks.add(label.toLowerCase());
+    }
+    return toks;
+  }
+
+  // Attach `senses` when a concept token hits the lexicon. Idempotent: a query
+  // that already carries senses is never rewritten, so cache-hit returns and
+  // repeated reconciles are stable. Old cached parses (no senses key) gain the
+  // field transparently on their next parse() call.
+  function attachSenses(parsed) {
+    if (!parsed || Array.isArray(parsed.senses)) return parsed;
+    const toks = polysemyTokens(parsed);
+    const senses = [];
+    for (const entry of POLYSEMY_LEXICON) {
+      if (!toks.has(entry.token)) continue;
+      for (const s of entry.senses) senses.push({ label: s.label, concept: s.concept });
+    }
+    if (senses.length) parsed.senses = senses;
+    return parsed;
+  }
+
+  /**
+   * Deterministic alternative readings for a command the parser abstained on
+   * (answerable:false -- conversational referents with no pool evidence).
+   * Returns up to n slot-sets shaped like parse() output (no pool knowledge,
+   * no model): the parser's best-effort reading, a referent reading, and a
+   * universe reading. Every option carries a human label for the clarify
+   * modal; the orchestrator scores them and appends abstain/cancel itself.
+   */
+  function generateInterpretations(cmd, n = 3) {
+    const out = [];
+    const cap = Math.max(1, Math.min(3, Number(n) || 3));
+    const intentOf = (text) => {
+      if (/\b(close|closing|shut|kill|quit|dismiss|get rid of)\b/i.test(text)) return 'close_tabs';
+      if (/\b(bookmark|save for later)\b/i.test(text)) return 'bookmark_tabs';
+      if (/\b(pin)\b/i.test(text)) return 'pin_tabs';
+      if (/\b(mute|silence)\b/i.test(text)) return 'mute_tabs';
+      if (/\b(reload|refresh)\b/i.test(text)) return 'reload_tabs';
+      if (/\b(sort|order|arrange|reorder)\b/i.test(text)) return 'sort_tabs';
+      return 'group_tabs';
+    };
+    const C = (typeof self !== 'undefined' && self.ConceptCore) || require('./concept-core.js');
+    let det = null;
+    try { det = C.parseCommand(cmd); } catch { det = null; }
+    const detConcept = det && det.concept ? det.concept : null;
+    if (detConcept) {
+      out.push({
+        label: `the tabs about "${detConcept}"`,
+        query: {
+          intent: det && det.action ? det.action : intentOf(cmd),
+          concepts: [detConcept], domains: det.domains || [],
+          selectAll: false, exclude: [], time: null, state: [], source: 'interpretation'
+        }
+      });
+    }
+    // Referent reading: "those tabs" / "the last filter" map to recently-used
+    // tabs -- the only pool-side meaning a conversational referent can carry.
+    if (/\b(?:those|these)\s+(?:tabs?|pages?|ones)\b/i.test(cmd) ||
+        /\bthe (?:last|previous) (?:filter|search|results?|set|batch)\b/i.test(cmd)) {
+      out.push({
+        label: 'the tabs I used most recently',
+        query: {
+          intent: intentOf(cmd), concepts: [], domains: [],
+          selectAll: false, exclude: [], time: null, state: [], source: 'interpretation'
+        },
+        referent: 'recent'
+      });
+    }
+    // Universe reading: the command acts on every tab.
+    out.push({
+      label: 'all open tabs',
+      query: {
+        intent: intentOf(cmd), concepts: [], domains: [],
+        selectAll: true, exclude: [], time: null, state: [], source: 'interpretation'
+      }
+    });
+    return out.slice(0, cap);
+  }
+
+
   // True when a and b are the same word up to a single edit (substitution,
   // insertion, deletion, transposition-adjacent). Bounded two-pointer.
   function withinOneEdit(a, b) {
@@ -1130,6 +1269,11 @@ Examples:
   function reconcile(cmd, parsed) {
     if (!parsed) return parsed;
 
+    // Polysemy senses are cue-computed from the parse's own concept/domain
+    // tokens, so they attach here (and on cache hits in parse()) wherever the
+    // parse came from. An existing senses array is never rewritten.
+    attachSenses(parsed);
+
     // Hallucination guard: a domain the command never named must not reach the
     // selector (see literalDomains).
     parsed.domains = literalDomains(parsed.domains, cmd);
@@ -1232,7 +1376,12 @@ Examples:
     let cache = null;
     if (!opts.noCache) {
       cache = await readCache();
-      if (cache[key]) return { ...cache[key].q, source: 'cache' };
+      if (cache[key]) {
+        const q = { ...cache[key].q, source: 'cache' };
+        // Cached parses predate the senses field; re-attach so the clarify
+        // triggers work identically for old cache entries.
+        return attachSenses(q);
+      }
     }
 
     const callModel = opts.callModel || defaultCallModel;
@@ -1287,7 +1436,7 @@ Examples:
     }
   }
 
-  const LlmQuery = { parse, decode, reconcile, validate, normalizeCommand, SYSTEM, literalDomains, coverage, JSON_SCHEMA, slotsFromCommand, validateSlots };
+  const LlmQuery = { parse, decode, reconcile, validate, normalizeCommand, SYSTEM, literalDomains, coverage, JSON_SCHEMA, slotsFromCommand, validateSlots, POLYSEMY_LEXICON, generateInterpretations };
   if (typeof module !== 'undefined' && module.exports) module.exports = LlmQuery;
   if (typeof self !== 'undefined') self.LlmQuery = LlmQuery;
 })();

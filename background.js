@@ -46,6 +46,10 @@ let RANKING_WEIGHTS = {
 // Map<windowId, tabData[]>
 const tabCache = new Map();
 const pendingPlans = new Map();
+// Interpretation clarify round-trips: clarifyId -> {options, expiresAt}.
+// Entries live only between CLARIFY_NEEDED and CLARIFY_CHOSEN (5 min TTL),
+// which is what guarantees a command can never clarify twice.
+const pendingClarifies = new Map();
 const GROUP_COLORS = ['grey', 'blue', 'red', 'yellow', 'green', 'pink', 'purple', 'cyan', 'orange'];
 
 const thumbnailCache = new Map(); // tabId -> dataUrl
@@ -3317,6 +3321,162 @@ if (typeof self !== 'undefined') {
 
 // --- Message handling ---
 // --- Unified Message Router ---
+// =====================================================
+// PLAN DELIVERY (shared by AI_COMMAND and CLARIFY_CHOSEN)
+//
+// Everything between "a plan exists" and "the user sees/executes it":
+// retrieve_open and group_multi routing, the zero-match guard, the
+// open_tabs picker, the 2+-tabs grouping floor, destructive/low-confidence
+// preview, and direct execution. A clarify-chosen plan rides this exact
+// path, so a chosen destructive interpretation still previews.
+// =====================================================
+async function deliverCommandPlan(plan, { command, windowId, senderTabId, sendResponse }) {
+  // retrieve_open (agent path): a find-and-open command, not a bulk
+  // action over open tabs. handleRecallTabs runs the semantic history
+  // search and opens/focuses the results itself -- nothing to preview,
+  // nothing destructive. Handled before the zero-match guard because a
+  // retrieval legitimately carries no open-tab ids.
+  if (plan.path === 'agent' && plan.intent === 'retrieve_open') {
+    const r = plan.retrieval || {};
+    const result = await handleRecallTabs({ query: r.query, timeRange: r.timeRange });
+    sendResponse(result);
+    return;
+  }
+
+  if (plan.path === 'agent' && plan.intent === 'group_multi') {
+    sendResponse({ success: true, awaitingConfirmation: true });
+    return;
+  }
+
+  // Check if zero matches found in semantic OR agent path
+  if (plan.tabIds.length === 0 && plan.uncertain.length === 0 &&
+      (plan.path === 'semantic' || plan.path === 'agent')) {
+    console.log('[CommandAgent] Zero matches, sending clarification');
+    // Extract top categories from ontology to help user clarify
+    const topCategories = ["coding", "dev", "docs", "video", "social", "shopping", "news", "work", "learning"];
+    sendResponse({
+      success: false,
+      message: `No matching tabs found. Try using different keywords or targeting standard categories like: ${topCategories.slice(0, 3).join(', ')}.`,
+      categories: topCategories.slice(0, 3)
+    });
+    return;
+  }
+
+  // open_tabs (ANY path -- agent, semantic, or syntactic-domain): the
+  // user wants to SEE tabs that are already open (filtered by
+  // topic/time/domain/state), not act on them. Never auto-focus: hand
+  // the live matches to the content script as an OPEN_TABS_PICKER so
+  // the user picks what to surface; FOCUS_PICKED_TAB does the actual
+  // focusing. Closed-since-planning ids are skipped silently.
+  if (plan.intent === 'open_tabs') {
+    const options = [];
+    for (const id of [...(plan.tabIds || []), ...(plan.uncertain || [])]) {
+      try {
+        const t = await chrome.tabs.get(id);
+        if (t) options.push({
+          id: t.id,
+          title: t.title || 'Untitled',
+          url: t.url || '',
+          favIconUrl: t.favIconUrl || ''
+        });
+      } catch (e) { /* tab closed between planning and now */ }
+    }
+    sendResponse({
+      success: true,
+      awaitingSelection: true,
+      count: options.length,
+      message: `${options.length} matching tab(s) found`
+    });
+    if (senderTabId) chrome.tabs.sendMessage(senderTabId, { type: 'OPEN_TABS_PICKER', options }).catch(() => {});
+    return;
+  }
+
+  // Grouping needs 2+ tabs. Check BEFORE previewing, so the user is never
+  // asked to confirm a group that handleGroupTabs will then refuse at :2250.
+  if (plan.intent === 'group_tabs' &&
+      (plan.tabIds.length + plan.uncertain.length) < 2) {
+    sendResponse({
+      success: false,
+      message: 'Need at least 2 matching tabs to make a group.'
+    });
+    return;
+  }
+
+  // Destructive semantic actions must always be previewed
+  // (if only low-confidence matches exist, preview those too)
+  const candidateIds = plan.tabIds.length > 0 ? plan.tabIds : plan.uncertain;
+  const needPreview = plan.destructive || (candidateIds.length >= 3) || (plan.confidence < 0.75);
+
+  if (needPreview && senderTabId) {
+    const planId = generateTxId();
+    pendingPlans.set(planId, {
+      tabIds: [...plan.tabIds, ...plan.uncertain],
+      intent: plan.intent,
+      command,
+      groupName: plan.groupName || null,
+      actionParams: plan.action_params || {},
+      expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes TTL
+    });
+
+    const tabDetails = {};
+    for (const id of [...plan.tabIds, ...plan.uncertain]) {
+      try {
+        const t = await chrome.tabs.get(id);
+        if (t) {
+          tabDetails[id] = {
+            title: t.title || 'Untitled',
+            favIconUrl: t.favIconUrl || '',
+            reason: plan.perTabReasons[id] || 'Matched'
+          };
+        }
+      } catch (e) {}
+    }
+
+    chrome.tabs.sendMessage(senderTabId, {
+      type: 'PREVIEW_PLAN',
+      planId,
+      plan,
+      tabDetails
+    }).catch(() => { });
+
+    sendResponse({ success: true, awaitingConfirmation: true });
+    return;
+  }
+
+  // Execute immediately for high-confidence non-destructive cases.
+  // plan.intent is an INTENT, not a tool name: unpin_tabs/unmute_tabs have
+  // no handler of their own and must route to pin_tabs/mute_tabs with an
+  // action arg. groupName must be derived here or handleGroupTabs
+  // destructures undefined and titles every group "undefined".
+  const routed = toolForIntent(plan.intent);
+  const planCards = await collectCardsForTabs(plan.tabIds);
+  // Agent plans carry action_params (closeAfterBookmark, sortBy/order,
+  // group color/name...). Spread them first so an explicit groupName or
+  // tabIds below still wins; a blank groupName falls back to derivation.
+  const ap = plan.action_params || {};
+  const functionCall = {
+    name: routed.tool,
+    args: {
+      ...routed.args,
+      ...ap,
+      groupName: ap.groupName || deriveGroupName(command, planCards, plan.groupName),
+      tabIds: plan.tabIds
+    }
+  };
+  const result = await executeToolCall(functionCall, windowId, command, plan.tabIds);
+
+  if (result.success && senderTabId) {
+    chrome.tabs.sendMessage(senderTabId, {
+      type: 'UNDO_AVAILABLE',
+      action: plan.intent,
+      count: plan.tabIds.length,
+      message: result.message
+    }).catch(() => { });
+  }
+
+  sendResponse(result);
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   // S8: Message sender validation
   if (sender.id !== chrome.runtime.id) {
@@ -3427,8 +3587,45 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             return;
           }
 
-          // Call the new Agentic Command Pipeline
-          const plan = await runCommandPipeline(msg.command, windowId);
+          // Call the new Agentic Command Pipeline. A clarify-resolved re-entry
+          // (user picked an interpretation) executes that option's plan through
+          // the normal preview/undo path — it must NOT re-enter the clarify
+          // gate, which is what makes the loop exactly one round.
+          const plan = await runCommandPipeline(msg.command, windowId,
+            msg.clarifyResolved ? { clarifyResolved: true } : {});
+
+          // Interpretation-level clarification: instead of executing, hand the
+          // concrete options to the content script. Exactly one pendingClarify
+          // per sender at a time caps the loop at one round.
+          if (plan && plan.clarify && Array.isArray(plan.clarify.options) && plan.clarify.options.length) {
+            const clarifyId = generateTxId();
+            pendingClarifies.set(clarifyId, {
+              options: plan.clarify.options,
+              expiresAt: Date.now() + 5 * 60 * 1000
+            });
+            if (sender.tab && sender.tab.id) {
+              chrome.tabs.sendMessage(sender.tab.id, {
+                type: 'CLARIFY_NEEDED',
+                clarifyId,
+                command: plan.clarify.command || msg.command,
+                reason: plan.clarify.reason,
+                options: plan.clarify.options.map(o => ({
+                  label: o.label,
+                  summary: o.summary,
+                  matchCount: o.matchCount
+                }))
+              }).catch(() => {});
+              sendResponse({ success: true, awaitingClarification: true, clarifyId });
+            } else {
+              sendResponse({
+                success: false,
+                awaitingClarification: true,
+                clarifyId,
+                message: plan.clarify.options.map(o => `${o.label} (${o.matchCount})`).join(' | ')
+              });
+            }
+            return;
+          }
 
           if (!plan) {
             telemetry.recordPlanAbort('unknown', 'Could not understand command');
@@ -3436,150 +3633,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             return;
           }
 
-          // retrieve_open (agent path): a find-and-open command, not a bulk
-          // action over open tabs. handleRecallTabs runs the semantic history
-          // search and opens/focuses the results itself -- nothing to preview,
-          // nothing destructive. Handled before the zero-match guard because a
-          // retrieval legitimately carries no open-tab ids.
-          if (plan.path === 'agent' && plan.intent === 'retrieve_open') {
-            const r = plan.retrieval || {};
-            const result = await handleRecallTabs({ query: r.query, timeRange: r.timeRange });
-            sendResponse(result);
-            return;
-          }
-
-          if (plan.path === 'agent' && plan.intent === 'group_multi') {
-            sendResponse({ success: true, awaitingConfirmation: true });
-            return;
-          }
-
-          // Check if zero matches found in semantic OR agent path
-          if (plan.tabIds.length === 0 && plan.uncertain.length === 0 &&
-              (plan.path === 'semantic' || plan.path === 'agent')) {
-            console.log('[CommandAgent] Zero matches, sending clarification');
-            // Extract top categories from ontology to help user clarify
-            const topCategories = ["coding", "dev", "docs", "video", "social", "shopping", "news", "work", "learning"];
-            sendResponse({
-              success: false,
-              message: `No matching tabs found. Try using different keywords or targeting standard categories like: ${topCategories.slice(0, 3).join(', ')}.`,
-              categories: topCategories.slice(0, 3)
-            });
-            return;
-          }
-
-          // open_tabs (ANY path -- agent, semantic, or syntactic-domain): the
-          // user wants to SEE tabs that are already open (filtered by
-          // topic/time/domain/state), not act on them. Never auto-focus: hand
-          // the live matches to the content script as an OPEN_TABS_PICKER so
-          // the user picks what to surface; FOCUS_PICKED_TAB does the actual
-          // focusing. Closed-since-planning ids are skipped silently.
-          if (plan.intent === 'open_tabs') {
-            const options = [];
-            for (const id of [...(plan.tabIds || []), ...(plan.uncertain || [])]) {
-              try {
-                const t = await chrome.tabs.get(id);
-                if (t) options.push({
-                  id: t.id,
-                  title: t.title || 'Untitled',
-                  url: t.url || '',
-                  favIconUrl: t.favIconUrl || ''
-                });
-              } catch (e) { /* tab closed between planning and now */ }
-            }
-            sendResponse({
-              success: true,
-              awaitingSelection: true,
-              count: options.length,
-              message: `${options.length} matching tab(s) found`
-            });
-            chrome.tabs.sendMessage(sender.tab.id, { type: 'OPEN_TABS_PICKER', options }).catch(() => {});
-            return;
-          }
-
-          // Grouping needs 2+ tabs. Check BEFORE previewing, so the user is never
-          // asked to confirm a group that handleGroupTabs will then refuse at :2250.
-          if (plan.intent === 'group_tabs' &&
-              (plan.tabIds.length + plan.uncertain.length) < 2) {
-            sendResponse({
-              success: false,
-              message: 'Need at least 2 matching tabs to make a group.'
-            });
-            return;
-          }
-
-          // Destructive semantic actions must always be previewed
-          // (if only low-confidence matches exist, preview those too)
-          const candidateIds = plan.tabIds.length > 0 ? plan.tabIds : plan.uncertain;
-          const needPreview = plan.destructive || (candidateIds.length >= 3) || (plan.confidence < 0.75);
-
-          if (needPreview && sender.tab.id) {
-            const planId = generateTxId();
-            pendingPlans.set(planId, {
-              tabIds: [...plan.tabIds, ...plan.uncertain],
-              intent: plan.intent,
-              command: msg.command,
-              groupName: plan.groupName || null,
-              actionParams: plan.action_params || {},
-              expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes TTL
-            });
-
-            const tabDetails = {};
-            for (const id of [...plan.tabIds, ...plan.uncertain]) {
-              try {
-                const t = await chrome.tabs.get(id);
-                if (t) {
-                  tabDetails[id] = {
-                    title: t.title || 'Untitled',
-                    favIconUrl: t.favIconUrl || '',
-                    reason: plan.perTabReasons[id] || 'Matched'
-                  };
-                }
-              } catch (e) {}
-            }
-
-            chrome.tabs.sendMessage(sender.tab.id, {
-              type: 'PREVIEW_PLAN',
-              planId,
-              plan,
-              tabDetails
-            }).catch(() => { });
-
-            sendResponse({ success: true, awaitingConfirmation: true });
-            return;
-          }
-
-          // Execute immediately for high-confidence non-destructive cases.
-          // plan.intent is an INTENT, not a tool name: unpin_tabs/unmute_tabs have
-          // no handler of their own and must route to pin_tabs/mute_tabs with an
-          // action arg. groupName must be derived here or handleGroupTabs
-          // destructures undefined and titles every group "undefined".
-          const routed = toolForIntent(plan.intent);
-          const planCards = await collectCardsForTabs(plan.tabIds);
-          // Agent plans carry action_params (closeAfterBookmark, sortBy/order,
-          // group color/name...). Spread them first so an explicit groupName or
-          // tabIds below still wins; a blank groupName falls back to derivation.
-          const ap = plan.action_params || {};
-          const functionCall = {
-            name: routed.tool,
-            args: {
-              ...routed.args,
-              ...ap,
-              groupName: ap.groupName || deriveGroupName(msg.command, planCards, plan.groupName),
-              tabIds: plan.tabIds
-            }
-          };
-          const result = await executeToolCall(functionCall, windowId, msg.command, plan.tabIds);
-
-          if (result.success && sender.tab.id) {
-            chrome.tabs.sendMessage(sender.tab.id, {
-              type: 'UNDO_AVAILABLE',
-              action: plan.intent,
-              count: plan.tabIds.length,
-              message: result.message
-            }).catch(() => { });
-          }
-
-          sendResponse(result);
+          await deliverCommandPlan(plan, {
+            command: msg.command,
+            windowId,
+            senderTabId: sender.tab ? sender.tab.id : null,
+            sendResponse
+          });
 
         } catch (error) {
           console.error('[AI_COMMAND] Error:', error);
@@ -3593,8 +3652,43 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
       return true;
     }
-    case "EXECUTE_PLAN": {
-      const windowId = sender.tab.windowId;
+    case "CLARIFY_CHOSEN": {
+      // The interpretation modal answered. The stored option's plan re-enters
+      // the SAME delivery path as any other plan (preview for destructive /
+      // >=3 matches, execute otherwise) — selection is never re-run and the
+      // clarify gate never re-fires, so one command clarifies at most once.
+      const pending = pendingClarifies.get(msg.clarifyId);
+      if (!pending) {
+        sendResponse({ success: false, message: "Clarification expired. Please send the command again." });
+        return false;
+      }
+      pendingClarifies.delete(msg.clarifyId);
+      if (Date.now() > pending.expiresAt) {
+        sendResponse({ success: false, message: "Clarification expired. Please send the command again." });
+        return false;
+      }
+      const idx = Number(msg.optionIndex);
+      const option = Array.isArray(pending.options) && Number.isInteger(idx) && pending.options[idx] ? pending.options[idx] : null;
+      if (!option || !option.plan) {
+        sendResponse({ success: false, message: "Invalid clarification choice" });
+        return false;
+      }
+      const chosenPlan = option.plan;
+      delete chosenPlan.clarify;
+      const winId2 = sender.tab ? sender.tab.windowId : chrome.windows.WINDOW_ID_CURRENT;
+      deliverCommandPlan(chosenPlan, {
+        command: typeof msg.command === 'string' ? msg.command : undefined,
+        windowId: winId2,
+        senderTabId: sender.tab ? sender.tab.id : null,
+        sendResponse
+      }).catch(error => {
+        console.error('[CLARIFY_CHOSEN] delivery failed:', error);
+        sendResponse({ success: false, message: error.message || "Command failed" });
+      });
+      return true;
+    }
+
+    case "EXECUTE_PLAN": {      const windowId = sender.tab.windowId;
       const { planId, checkedTabIds } = msg;
 
       const pending = pendingPlans.get(planId);

@@ -16,6 +16,7 @@ const SUITES = [
   ['db-rekey',     'A5  tabCards urlHash re-key + v3->v4 migration'],
   ['enrich-math',  'pre-existing  tag/alias math'],
   ['domain-priors','pre-existing  domain priors'],
+  ['clarify',      'V2-3  interpretation clarify loop: lexicon + split test + no-loop'],
   ['agent',        'A6  bounded agent: planner validate + executor set-exact + fallback chain']
 ];
 
