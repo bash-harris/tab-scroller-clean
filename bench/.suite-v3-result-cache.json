@@ -1,665 +1,1134 @@
 {
- "codeHash": "662b57def072d03f",
- "poolHash": "52ce36f72d28cbbf",
+ "codeHash": "9013d0d37cd20c24",
+ "poolHash": "e9ecb07111869a9d",
  "entries": {
-  "3ac25e67eb97aa48": {
+  "db156b8568a91165": {
    "matches": [
     {
-     "tabId": 10,
-     "confidence": 1,
-     "reason": "Qualifier match"
+     "tabId": 7,
+     "confidence": 0.9950244215268808,
+     "reason": "Entails \"chess.com\" (1.00)"
     },
-    {
-     "tabId": 11,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 12,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 13,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 14,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 15,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 16,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 17,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 97,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    }
-   ],
-   "mode": [
-    "Qualifier match"
-   ]
-  },
-  "d25a39b8e242e331": {
-   "matches": [
-    {
-     "tabId": 31,
-     "confidence": 0.9771289731977695,
-     "reason": "Entails \"github.com OR stackoverflow.com\" (0.98)"
-    },
-    {
-     "tabId": 30,
-     "confidence": 0.9754857823202431,
-     "reason": "Entails \"github.com OR stackoverflow.com\" (0.98)"
-    },
-    {
-     "tabId": 12,
-     "confidence": 0.9704348576384119,
-     "reason": "Entails \"github.com OR stackoverflow.com\" (0.97)"
-    },
-    {
-     "tabId": 16,
-     "confidence": 0.9532121491879165,
-     "reason": "Entails \"github.com OR stackoverflow.com\" (0.95)"
-    },
-    {
-     "tabId": 97,
-     "confidence": 0.9371030027173167,
-     "reason": "Entails \"github.com OR stackoverflow.com\" (0.94)"
-    },
-    {
-     "tabId": 17,
-     "confidence": 0.9294231947700231,
-     "reason": "Entails \"github.com OR stackoverflow.com\" (0.93)"
-    },
-    {
-     "tabId": 15,
-     "confidence": 0.9293531927594069,
-     "reason": "Entails \"github.com OR stackoverflow.com\" (0.93)"
-    },
-    {
-     "tabId": 13,
-     "confidence": 0.9152691713629976,
-     "reason": "Entails \"github.com OR stackoverflow.com\" (0.92)"
-    },
-    {
-     "tabId": 14,
-     "confidence": 0.8548019854927464,
-     "reason": "Entails \"github.com OR stackoverflow.com\" (0.85)"
-    },
-    {
-     "tabId": 11,
-     "confidence": 0.8320886117924724,
-     "reason": "Entails \"github.com OR stackoverflow.com\" (0.83)"
-    },
-    {
-     "tabId": 32,
-     "confidence": 0.8050369174088076,
-     "reason": "Entails \"github.com OR stackoverflow.com\" (0.81)"
-    },
-    {
-     "tabId": 10,
-     "confidence": 0.7,
-     "reason": "Entails \"github.com OR stackoverflow.com\" (0.70)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "fd34637a24a9c642": {
-   "matches": [
-    {
-     "tabId": 16,
-     "confidence": 0.9853932806148467,
-     "reason": "Entails \"docs.github.com\" (0.99)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "8370040f9e70eb77": {
-   "matches": [
-    {
-     "tabId": 27,
-     "confidence": 1,
-     "reason": "URL contains: dashboard"
-    },
-    {
-     "tabId": 93,
-     "confidence": 1,
-     "reason": "URL contains: dashboard"
-    }
-   ],
-   "mode": [
-    "URL contains: dashboard"
-   ]
-  },
-  "79093aa94917b32e": {
-   "matches": [
     {
      "tabId": 33,
-     "confidence": 0.7,
-     "reason": "Entails \"developer.chrome.com\" (0.70)"
+     "confidence": 0.9608874758548911,
+     "reason": "Entails \"chess.com\" (0.96)"
     }
    ],
    "mode": [
     "nli"
    ]
   },
-  "077a62d580bc4950": {
+  "06209245a3a2df53": {
    "matches": [
     {
-     "tabId": 36,
-     "confidence": 1,
-     "reason": "URL ends with: .pdf"
+     "tabId": 58,
+     "confidence": 0.9862556726609338,
+     "reason": "Entails \"gardening-example.com\" (0.99)"
     },
     {
-     "tabId": 37,
-     "confidence": 1,
-     "reason": "URL ends with: .pdf"
+     "tabId": 5,
+     "confidence": 0.9850038898463522,
+     "reason": "Entails \"gardening-example.com\" (0.99)"
+    },
+    {
+     "tabId": 18,
+     "confidence": 0.9849126175511286,
+     "reason": "Entails \"gardening-example.com\" (0.98)"
+    },
+    {
+     "tabId": 6,
+     "confidence": 0.9834976489795381,
+     "reason": "Entails \"gardening-example.com\" (0.98)"
+    },
+    {
+     "tabId": 64,
+     "confidence": 0.7,
+     "reason": "Entails \"gardening-example.com\" (0.70)"
+    },
+    {
+     "tabId": 83,
+     "confidence": 0.7,
+     "reason": "Entails \"gardening-example.com\" (0.70)"
     }
    ],
    "mode": [
-    "URL ends with: .pdf"
+    "nli"
    ]
   },
-  "98c45b91a9d2c42f": {
-   "matches": [
-    {
-     "tabId": 74,
-     "confidence": 1,
-     "reason": "URL protocol: http"
-    },
-    {
-     "tabId": 75,
-     "confidence": 1,
-     "reason": "URL protocol: http"
-    },
-    {
-     "tabId": 76,
-     "confidence": 1,
-     "reason": "URL protocol: http"
-    },
-    {
-     "tabId": 77,
-     "confidence": 1,
-     "reason": "URL protocol: http"
-    }
-   ],
+  "74bd963dc4854cfd": {
+   "matches": [],
    "mode": [
-    "URL protocol: http"
+    "abstain_no_corroboration"
    ]
   },
-  "448e1bf0f4e917d3": {
-   "matches": [
-    {
-     "tabId": 75,
-     "confidence": 1,
-     "reason": "localhost except port 3000"
-    },
-    {
-     "tabId": 76,
-     "confidence": 1,
-     "reason": "localhost except port 3000"
-    }
-   ],
-   "mode": [
-    "localhost except port 3000"
-   ]
-  },
-  "336ee71e2c692687": {
+  "7efa8b429c981add": {
    "matches": [
     {
      "tabId": 1,
      "confidence": 1,
-     "reason": "Conjunct union of 2 literal clauses"
+     "reason": "All tabs except: 3000 server"
     },
     {
-     "tabId": 43,
+     "tabId": 2,
      "confidence": 1,
-     "reason": "Conjunct union of 2 literal clauses"
-    }
-   ],
-   "mode": [
-    "Conjunct union of 2 literal clauses"
-   ]
-  },
-  "10ec7474d01fb104": {
-   "matches": [
-    {
-     "tabId": 38,
-     "confidence": 1,
-     "reason": "TLD: .edu"
+     "reason": "All tabs except: 3000 server"
     },
     {
-     "tabId": 39,
+     "tabId": 3,
      "confidence": 1,
-     "reason": "TLD: .edu"
-    }
-   ],
-   "mode": [
-    "TLD: .edu"
-   ]
-  },
-  "238eae7cb5fa4993": {
-   "matches": [
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 4,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 5,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 6,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 7,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 8,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 9,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
     {
      "tabId": 10,
      "confidence": 1,
-     "reason": "Same site as current tab (github.com)"
+     "reason": "All tabs except: 3000 server"
     },
     {
      "tabId": 11,
      "confidence": 1,
-     "reason": "Same site as current tab (github.com)"
+     "reason": "All tabs except: 3000 server"
     },
     {
      "tabId": 12,
      "confidence": 1,
-     "reason": "Same site as current tab (github.com)"
+     "reason": "All tabs except: 3000 server"
     },
     {
      "tabId": 13,
      "confidence": 1,
-     "reason": "Same site as current tab (github.com)"
+     "reason": "All tabs except: 3000 server"
     },
     {
      "tabId": 14,
      "confidence": 1,
-     "reason": "Same site as current tab (github.com)"
+     "reason": "All tabs except: 3000 server"
     },
     {
      "tabId": 15,
      "confidence": 1,
-     "reason": "Same site as current tab (github.com)"
+     "reason": "All tabs except: 3000 server"
     },
     {
      "tabId": 16,
      "confidence": 1,
-     "reason": "Same site as current tab (github.com)"
+     "reason": "All tabs except: 3000 server"
     },
     {
      "tabId": 17,
      "confidence": 1,
-     "reason": "Same site as current tab (github.com)"
+     "reason": "All tabs except: 3000 server"
     },
-    {
-     "tabId": 97,
-     "confidence": 1,
-     "reason": "Same site as current tab (github.com)"
-    }
-   ],
-   "mode": [
-    "Same site as current tab (github.com)"
-   ]
-  },
-  "9997c193f51991b4": {
-   "matches": [
-    {
-     "tabId": 67,
-     "confidence": 1,
-     "reason": "URL contains: utm_source"
-    },
-    {
-     "tabId": 68,
-     "confidence": 1,
-     "reason": "URL contains: utm_source"
-    }
-   ],
-   "mode": [
-    "URL contains: utm_source"
-   ]
-  },
-  "1f3cbd6100d3c329": {
-   "matches": [
-    {
-     "tabId": 17,
-     "confidence": 0.9954395633185028,
-     "reason": "Entails \"gist\" (1.00)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "c6d9ae6154b7dac3": {
-   "matches": [
     {
      "tabId": 18,
-     "confidence": 0.9772315335779553,
-     "reason": "Entails \"docs.google.com\" (0.98)"
-    },
-    {
-     "tabId": 21,
-     "confidence": 0.9708531973613964,
-     "reason": "Entails \"docs.google.com\" (0.97)"
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
     },
     {
      "tabId": 19,
-     "confidence": 0.9680417631987949,
-     "reason": "Entails \"docs.google.com\" (0.97)"
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
     },
     {
      "tabId": 20,
-     "confidence": 0.8974477173413354,
-     "reason": "Entails \"docs.google.com\" (0.90)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "c2f17c94e528dfaf": {
-   "matches": [
-    {
-     "tabId": 47,
-     "confidence": 0.9936748313382099,
-     "reason": "Entails \"youtube\" (0.99)"
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
     },
     {
-     "tabId": 2,
-     "confidence": 0.9923036736836789,
-     "reason": "Entails \"youtube\" (0.99)"
+     "tabId": 21,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
     },
     {
-     "tabId": 48,
-     "confidence": 0.9901865068647174,
-     "reason": "Entails \"youtube\" (0.99)"
-    },
-    {
-     "tabId": 46,
-     "confidence": 0.9457375112772503,
-     "reason": "Entails \"youtube\" (0.95)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "4fba5c8f1146e495": {
-   "matches": [
-    {
-     "tabId": 78,
+     "tabId": 22,
      "confidence": 1,
-     "reason": "Chrome new-tab pages"
-    },
-    {
-     "tabId": 79,
-     "confidence": 1,
-     "reason": "Chrome new-tab pages"
-    },
-    {
-     "tabId": 80,
-     "confidence": 1,
-     "reason": "Chrome new-tab pages"
-    }
-   ],
-   "mode": [
-    "Chrome new-tab pages"
-   ]
-  },
-  "c654448b71dffcf2": {
-   "matches": [
-    {
-     "tabId": 82,
-     "confidence": 0.984558127422856,
-     "reason": "Entails \"spiegel.de\" (0.98)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "61392db68df925c5": {
-   "matches": [
-    {
-     "tabId": 60,
-     "confidence": 0.9697594314323947,
-     "reason": "Entails \"arxiv\" (0.97)"
-    },
-    {
-     "tabId": 36,
-     "confidence": 0.9422436359379066,
-     "reason": "Entails \"arxiv\" (0.94)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "fc2f6167abf0941a": {
-   "matches": [
-    {
-     "tabId": 40,
-     "confidence": 1,
-     "reason": "Host: wikipedia"
-    },
-    {
-     "tabId": 81,
-     "confidence": 1,
-     "reason": "Host: wikipedia"
-    },
-    {
-     "tabId": 86,
-     "confidence": 1,
-     "reason": "Host: wikipedia"
-    }
-   ],
-   "mode": [
-    "Host: wikipedia"
-   ]
-  },
-  "35af61e69bafa230": {
-   "matches": [
-    {
-     "tabId": 107,
-     "confidence": 0.9578087717560371,
-     "reason": "Entails \"spotify\" (0.96)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "a3d7d89b6aafd8e6": {
-   "matches": [
-    {
-     "tabId": 100,
-     "confidence": 1,
-     "reason": "Conjunct union of 2 literal clauses"
-    },
-    {
-     "tabId": 101,
-     "confidence": 1,
-     "reason": "Conjunct union of 2 literal clauses"
-    }
-   ],
-   "mode": [
-    "Conjunct union of 2 literal clauses"
-   ]
-  },
-  "7954e7bea25f1541": {
-   "matches": [
-    {
-     "tabId": 61,
-     "confidence": 1,
-     "reason": "Host: medium"
-    }
-   ],
-   "mode": [
-    "Host: medium"
-   ]
-  },
-  "50bb80c348b6de2e": {
-   "matches": [],
-   "mode": [
-    "abstain_no_corroboration"
-   ]
-  },
-  "ba8e07570858d218": {
-   "matches": [],
-   "mode": [
-    "abstain_no_corroboration"
-   ]
-  },
-  "642fc05ba9ac5fc2": {
-   "matches": [],
-   "mode": [
-    "abstain_no_corroboration"
-   ]
-  },
-  "7709c5c9548edeee": {
-   "matches": [
-    {
-     "tabId": 24,
-     "confidence": 1,
-     "reason": "Conjunct union of 2 literal clauses"
+     "reason": "All tabs except: 3000 server"
     },
     {
      "tabId": 23,
      "confidence": 1,
-     "reason": "Conjunct union of 2 literal clauses"
-    }
-   ],
-   "mode": [
-    "Conjunct union of 2 literal clauses"
-   ]
-  },
-  "2b5409abfd616e70": {
-   "matches": [
-    {
-     "tabId": 108,
-     "confidence": 1,
-     "reason": "Conjunct union of 2 literal clauses"
+     "reason": "All tabs except: 3000 server"
     },
     {
-     "tabId": 109,
+     "tabId": 24,
      "confidence": 1,
-     "reason": "Conjunct union of 2 literal clauses"
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 25,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 26,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 27,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 28,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 29,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 30,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 31,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 32,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 33,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 34,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 35,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 36,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 37,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 38,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 39,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 40,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 41,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 42,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 43,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 44,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 45,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 46,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 47,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 48,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 49,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 50,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 51,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 52,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 53,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 54,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 55,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 56,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 57,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 58,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 59,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 60,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 61,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 63,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 64,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 65,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 66,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 67,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 68,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 69,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 70,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 71,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 72,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 73,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 74,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 75,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 76,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 77,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 78,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 79,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 80,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 81,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 82,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 83,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 84,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 85,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 86,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 87,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 88,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 89,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
+    },
+    {
+     "tabId": 90,
+     "confidence": 1,
+     "reason": "All tabs except: 3000 server"
     }
    ],
    "mode": [
-    "Conjunct union of 2 literal clauses"
+    "All tabs except: 3000 server"
    ]
   },
-  "55fd3027c5d64a3f": {
+  "ba0799c63a99e637": {
    "matches": [
     {
-     "tabId": 116,
-     "confidence": 0.9965681528036716,
-     "reason": "Entails \"leetcode\" (1.00)"
+     "tabId": 1,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 2,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 3,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 4,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 5,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 6,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 7,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 8,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 9,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 10,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 11,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 12,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 13,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 14,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 15,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 16,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 17,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 18,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 19,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 20,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 21,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 22,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 23,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 24,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 25,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 26,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 27,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 28,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 29,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 30,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 31,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 32,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 33,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 34,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 35,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 36,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 37,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 38,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 39,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 40,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 41,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 42,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 43,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 44,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 45,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 46,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 47,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 48,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 49,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 50,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 51,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 52,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 53,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 54,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 55,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 56,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 57,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 58,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 59,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 60,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 61,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 62,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 63,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 64,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 65,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 66,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 67,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 68,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 69,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 70,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 71,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 72,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 73,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 74,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 75,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 76,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 77,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 78,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 79,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 80,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 81,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 82,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 83,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 84,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 85,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 86,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 87,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 88,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 89,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 90,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    }
+   ],
+   "mode": [
+    "Command targets all tabs"
+   ]
+  },
+  "99121d72ee1499d1": {
+   "matches": [
+    {
+     "tabId": 37,
+     "confidence": 1,
+     "reason": "TLD: .de"
+    },
+    {
+     "tabId": 38,
+     "confidence": 1,
+     "reason": "TLD: .de"
+    }
+   ],
+   "mode": [
+    "TLD: .de"
+   ]
+  },
+  "3a8a57a2169128f6": {
+   "matches": [
+    {
+     "tabId": 42,
+     "confidence": 0.7,
+     "reason": "Entails \"x.com OR netflix.com\" (0.99)"
     }
    ],
    "mode": [
     "nli"
    ]
   },
-  "ff64542c9c15f310": {
+  "43846c8fe0448fa4": {
    "matches": [
     {
-     "tabId": 13,
-     "confidence": 1,
-     "reason": "Section: /^issues?$/"
+     "tabId": 39,
+     "confidence": 0.7059009256394515,
+     "reason": "complement"
     },
     {
-     "tabId": 14,
-     "confidence": 1,
-     "reason": "Section: /^issues?$/"
+     "tabId": 41,
+     "confidence": 0.981553679327728,
+     "reason": "complement"
+    },
+    {
+     "tabId": 86,
+     "confidence": 0.7,
+     "reason": "complement"
+    },
+    {
+     "tabId": 87,
+     "confidence": 0.9413207156453073,
+     "reason": "complement"
+    },
+    {
+     "tabId": 88,
+     "confidence": 0.808428528468714,
+     "reason": "complement"
     }
    ],
    "mode": [
-    "Section: /^issues?$/"
+    "Scoped complement of: channel"
    ]
   },
-  "abe9a81d23192ccd": {
-   "matches": [
-    {
-     "tabId": 10,
-     "confidence": 1,
-     "reason": "GitHub repo: auth-service"
-    },
-    {
-     "tabId": 11,
-     "confidence": 1,
-     "reason": "GitHub repo: auth-service"
-    },
-    {
-     "tabId": 12,
-     "confidence": 1,
-     "reason": "GitHub repo: auth-service"
-    },
-    {
-     "tabId": 13,
-     "confidence": 1,
-     "reason": "GitHub repo: auth-service"
-    },
-    {
-     "tabId": 14,
-     "confidence": 1,
-     "reason": "GitHub repo: auth-service"
-    }
-   ],
+  "d7c28b795a1f61e9": {
+   "matches": [],
    "mode": [
-    "GitHub repo: auth-service"
+    "abstain_no_corroboration"
    ]
   },
-  "fad1866b0c2f65a6": {
+  "79c123e5c19e1c84": {
    "matches": [
+    {
+     "tabId": 31,
+     "confidence": 0.952973265971752,
+     "reason": "Entails \"recipe-card\" (0.95)"
+    },
+    {
+     "tabId": 32,
+     "confidence": 0.9315709203634147,
+     "reason": "Entails \"recipe-card\" (0.93)"
+    },
+    {
+     "tabId": 65,
+     "confidence": 0.9110290198302685,
+     "reason": "Entails \"recipe-card\" (0.91)"
+    },
+    {
+     "tabId": 1,
+     "confidence": 0.8893521458798461,
+     "reason": "Entails \"recipe-card\" (0.89)"
+    },
+    {
+     "tabId": 77,
+     "confidence": 0.8730893886559165,
+     "reason": "Entails \"recipe-card\" (0.87)"
+    },
+    {
+     "tabId": 89,
+     "confidence": 0.803247828940017,
+     "reason": "Entails \"recipe-card\" (0.80)"
+    },
+    {
+     "tabId": 3,
+     "confidence": 0.7774918791558727,
+     "reason": "Entails \"recipe-card\" (0.78)"
+    },
+    {
+     "tabId": 80,
+     "confidence": 0.7670761182018023,
+     "reason": "Entails \"recipe-card\" (0.77)"
+    },
     {
      "tabId": 2,
-     "confidence": 1,
-     "reason": "Section: /^watch$/"
+     "confidence": 0.7,
+     "reason": "Entails \"recipe-card\" (0.70)"
     },
+    {
+     "tabId": 4,
+     "confidence": 0.7,
+     "reason": "Entails \"recipe-card\" (0.70)"
+    },
+    {
+     "tabId": 30,
+     "confidence": 0.7,
+     "reason": "Entails \"recipe-card\" (0.70)"
+    },
+    {
+     "tabId": 41,
+     "confidence": 0.7,
+     "reason": "Entails \"recipe-card\" (0.70)"
+    },
+    {
+     "tabId": 74,
+     "confidence": 0.7,
+     "reason": "Entails \"recipe-card\" (0.70)"
+    },
+    {
+     "tabId": 76,
+     "confidence": 0.7,
+     "reason": "Entails \"recipe-card\" (0.70)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "cf8d357d86593a54": {
+   "matches": [
     {
      "tabId": 46,
      "confidence": 1,
-     "reason": "Section: /^watch$/"
+     "reason": "Product detail pages (3)"
     },
     {
-     "tabId": 48,
+     "tabId": 47,
      "confidence": 1,
-     "reason": "Section: /^watch$/"
+     "reason": "Product detail pages (3)"
     },
-    {
-     "tabId": 106,
-     "confidence": 1,
-     "reason": "Section: /^watch$/"
-    }
-   ],
-   "mode": [
-    "Section: /^watch$/"
-   ]
-  },
-  "f54bbebe9a94e14f": {
-   "matches": [
     {
      "tabId": 49,
-     "confidence": 1,
-     "reason": "Product detail pages (3)"
-    },
-    {
-     "tabId": 50,
-     "confidence": 1,
-     "reason": "Product detail pages (3)"
-    },
-    {
-     "tabId": 72,
      "confidence": 1,
      "reason": "Product detail pages (3)"
     }
@@ -668,178 +1137,201 @@
     "Product detail pages (3)"
    ]
   },
-  "d48a21a092f41780": {
+  "e37e6def071208a9": {
    "matches": [
     {
-     "tabId": 18,
-     "confidence": 0.9790571916815303,
-     "reason": "complement"
-    },
-    {
-     "tabId": 19,
-     "confidence": 0.9793169433895579,
-     "reason": "complement"
-    }
-   ],
-   "mode": [
-    "Scoped complement of: sheets, slides"
-   ]
-  },
-  "795cd710b0dd2409": {
-   "matches": [
-    {
-     "tabId": 25,
-     "confidence": 1,
-     "reason": "Project key: XC"
-    },
-    {
-     "tabId": 26,
-     "confidence": 1,
-     "reason": "Project key: XC"
-    }
-   ],
-   "mode": [
-    "Project key: XC"
-   ]
-  },
-  "9ef9247e8fecc61a": {
-   "matches": [
-    {
-     "tabId": 28,
-     "confidence": 1,
-     "reason": "Space key: DEV"
-    }
-   ],
-   "mode": [
-    "Space key: DEV"
-   ]
-  },
-  "e8b64048802fdf20": {
-   "matches": [
-    {
-     "tabId": 30,
-     "confidence": 1,
-     "reason": "Section: /^questions?$/"
-    }
-   ],
-   "mode": [
-    "Section: /^questions?$/"
-   ]
-  },
-  "7fb8542f9322ef9b": {
-   "matches": [
-    {
-     "tabId": 72,
+     "tabId": 82,
      "confidence": 0.7,
-     "reason": "Entails \"product\" (0.70)"
+     "reason": "Entails \"google docs OR garden spreadsheet\" (1.00)"
+    },
+    {
+     "tabId": 83,
+     "confidence": 0.7,
+     "reason": "Entails \"google docs OR garden spreadsheet\" (0.99)"
     }
    ],
    "mode": [
     "nli"
    ]
   },
-  "21dc448c7fa8e0bd": {
+  "e5f48a90fe0c4b6e": {
    "matches": [
     {
-     "tabId": 30,
-     "confidence": 1,
-     "reason": "Title contains: concurrency"
+     "tabId": 8,
+     "confidence": 0.9918691906076957,
+     "reason": "Entails \"lichess\" (0.99)"
     }
    ],
    "mode": [
-    "Title contains: concurrency"
+    "nli"
    ]
   },
-  "06384702ee1ed857": {
+  "f843d9db3441d609": {
    "matches": [
     {
-     "tabId": 91,
-     "confidence": 1,
-     "reason": "Title contains: 404 + page + found"
-    }
-   ],
-   "mode": [
-    "Title contains: 404 + page + found"
-   ]
-  },
-  "20469c142eb42e25": {
-   "matches": [
-    {
-     "tabId": 34,
-     "confidence": 1,
-     "reason": "Title contains: react + performance"
+     "tabId": 65,
+     "confidence": 0.998119584268846,
+     "reason": "Entails \"recipe\" (1.00)"
     },
     {
-     "tabId": 46,
-     "confidence": 1,
-     "reason": "Title contains: react + performance"
-    }
-   ],
-   "mode": [
-    "Title contains: react + performance"
-   ]
-  },
-  "4a25da73a3409507": {
-   "matches": [
-    {
-     "tabId": 94,
-     "confidence": 1,
-     "reason": "Title starts with: sign in"
-    }
-   ],
-   "mode": [
-    "Title starts with: sign in"
-   ]
-  },
-  "5c12f8ce6b23f83d": {
-   "matches": [
-    {
-     "tabId": 66,
-     "confidence": 1,
-     "reason": "Identical-title duplicates (oldest kept)"
+     "tabId": 32,
+     "confidence": 0.9978129912647059,
+     "reason": "Entails \"recipe\" (1.00)"
     },
     {
-     "tabId": 68,
-     "confidence": 1,
-     "reason": "Identical-title duplicates (oldest kept)"
+     "tabId": 31,
+     "confidence": 0.996857985512701,
+     "reason": "Entails \"recipe\" (1.00)"
     },
     {
-     "tabId": 71,
-     "confidence": 1,
-     "reason": "Identical-title duplicates (oldest kept)"
+     "tabId": 81,
+     "confidence": 0.9966884148383697,
+     "reason": "Entails \"recipe\" (1.00)"
     },
     {
-     "tabId": 79,
-     "confidence": 1,
-     "reason": "Identical-title duplicates (oldest kept)"
+     "tabId": 89,
+     "confidence": 0.9966611053873534,
+     "reason": "Entails \"recipe\" (1.00)"
+    },
+    {
+     "tabId": 1,
+     "confidence": 0.9953858441258857,
+     "reason": "Entails \"recipe\" (1.00)"
+    },
+    {
+     "tabId": 3,
+     "confidence": 0.9950442853337687,
+     "reason": "Entails \"recipe\" (1.00)"
+    },
+    {
+     "tabId": 77,
+     "confidence": 0.9918640907864367,
+     "reason": "Entails \"recipe\" (0.99)"
     },
     {
      "tabId": 80,
-     "confidence": 1,
-     "reason": "Identical-title duplicates (oldest kept)"
+     "confidence": 0.9900184491231416,
+     "reason": "Entails \"recipe\" (0.99)"
+    },
+    {
+     "tabId": 78,
+     "confidence": 0.9702761815545289,
+     "reason": "Entails \"recipe\" (0.97)"
+    },
+    {
+     "tabId": 30,
+     "confidence": 0.9100599919686914,
+     "reason": "Entails \"recipe\" (0.91)"
+    },
+    {
+     "tabId": 74,
+     "confidence": 0.8592353577733886,
+     "reason": "Entails \"recipe\" (0.86)"
     }
    ],
    "mode": [
-    "Identical-title duplicates (oldest kept)"
+    "nli"
    ]
   },
-  "d9da411d32ff0167": {
+  "57daf7759ad857ba": {
    "matches": [
     {
-     "tabId": 64,
-     "confidence": 1,
-     "reason": "Unusually long titles"
+     "tabId": 46,
+     "confidence": 0.9968763320974385,
+     "reason": "Entails \"compost tumbler\" (1.00)"
+    },
+    {
+     "tabId": 49,
+     "confidence": 0.996727172251386,
+     "reason": "Entails \"compost tumbler\" (1.00)"
+    },
+    {
+     "tabId": 47,
+     "confidence": 0.9697399774542655,
+     "reason": "Entails \"compost tumbler\" (0.97)"
     }
    ],
    "mode": [
-    "Unusually long titles"
+    "nli"
    ]
   },
-  "1305e43f096caa73": {
+  "0b877c6665f9a476": {
    "matches": [
     {
-     "tabId": 93,
-     "confidence": 0.9979745934461098,
+     "tabId": 10,
+     "confidence": 0.9951183980862979,
+     "reason": "Entails \"warbler\" (1.00)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "a5b053fdbe77f96e": {
+   "matches": [
+    {
+     "tabId": 77,
+     "confidence": 0.9886803561119216,
+     "reason": "Entails \"page not found\" (0.99)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "b8720a7fef6b6ac9": {
+   "matches": [
+    {
+     "tabId": 47,
+     "confidence": 0.9983532367529595,
+     "reason": "Entails \"compost\" (1.00)"
+    },
+    {
+     "tabId": 46,
+     "confidence": 0.997816064501868,
+     "reason": "Entails \"compost\" (1.00)"
+    },
+    {
+     "tabId": 50,
+     "confidence": 0.9958902365220089,
+     "reason": "Entails \"compost\" (1.00)"
+    },
+    {
+     "tabId": 5,
+     "confidence": 0.9957958481504859,
+     "reason": "Entails \"compost\" (1.00)"
+    },
+    {
+     "tabId": 49,
+     "confidence": 0.9949289722266984,
+     "reason": "Entails \"compost\" (0.99)"
+    },
+    {
+     "tabId": 72,
+     "confidence": 0.9941535644753093,
+     "reason": "Entails \"compost\" (0.99)"
+    },
+    {
+     "tabId": 48,
+     "confidence": 0.9936146884675423,
+     "reason": "Entails \"compost\" (0.99)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "e4739a913a9d2186": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "9dcd608df8f7ef08": {
+   "matches": [
+    {
+     "tabId": 59,
+     "confidence": 0.9977222603340377,
      "reason": "Entails \"loading\" (1.00)"
     }
    ],
@@ -847,67 +1339,91 @@
     "nli"
    ]
   },
-  "4721867b88b1f2e9": {
+  "64eebe1f3c657316": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "5b5c60a789ab3ee8": {
    "matches": [
     {
-     "tabId": 62,
+     "tabId": 2,
      "confidence": 1,
-     "reason": "Title contains: oauth"
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 14,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 22,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 31,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 32,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 46,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 47,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 48,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 53,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 59,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 88,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
     }
    ],
    "mode": [
-    "Title contains: oauth"
+    "Command targets all tabs"
    ]
   },
-  "0b56bf6a7e70f7b5": {
+  "a10da1bfdca61a1e": {
    "matches": [
     {
-     "tabId": 24,
+     "tabId": 1,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
-     "tabId": 49,
+     "tabId": 3,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
-     "tabId": 50,
+     "tabId": 5,
      "confidence": 1,
      "reason": "Qualifier match"
     },
-    {
-     "tabId": 51,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 52,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 66,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 93,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 100,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    }
-   ],
-   "mode": [
-    "Qualifier match"
-   ]
-  },
-  "d267c471f224ba06": {
-   "matches": [
     {
      "tabId": 9,
      "confidence": 1,
@@ -919,12 +1435,7 @@
      "reason": "Qualifier match"
     },
     {
-     "tabId": 16,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 18,
+     "tabId": 15,
      "confidence": 1,
      "reason": "Qualifier match"
     },
@@ -934,72 +1445,27 @@
      "reason": "Qualifier match"
     },
     {
-     "tabId": 20,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
      "tabId": 21,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
-     "tabId": 22,
+     "tabId": 25,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
-     "tabId": 24,
+     "tabId": 37,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
-     "tabId": 26,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 30,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 32,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 36,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 46,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 47,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 48,
+     "tabId": 38,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
      "tabId": 49,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 50,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 51,
      "confidence": 1,
      "reason": "Qualifier match"
     },
@@ -1014,7 +1480,7 @@
      "reason": "Qualifier match"
     },
     {
-     "tabId": 55,
+     "tabId": 56,
      "confidence": 1,
      "reason": "Qualifier match"
     },
@@ -1029,467 +1495,6 @@
      "reason": "Qualifier match"
     },
     {
-     "tabId": 65,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 66,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 67,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 68,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 69,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 70,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 71,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 73,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 74,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 75,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 78,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 79,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 80,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 83,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 89,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 90,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 92,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 93,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 94,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 95,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 96,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 97,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 98,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 99,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 100,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 106,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 107,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 112,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 116,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 117,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    }
-   ],
-   "mode": [
-    "Qualifier match"
-   ]
-  },
-  "fcc69ebba57e26b6": {
-   "matches": [
-    {
-     "tabId": 17,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 23,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 38,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 39,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 40,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 42,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 44,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 45,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 64,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 76,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 77,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 81,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 82,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 86,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 88,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 108,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 109,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 113,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 114,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    }
-   ],
-   "mode": [
-    "Qualifier match"
-   ]
-  },
-  "13576f7e94a2f315": {
-   "matches": [
-    {
-     "tabId": 22,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 24,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 46,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 49,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 50,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 51,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 52,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 65,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 66,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 73,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 74,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 75,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 78,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 92,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 93,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 100,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 101,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 107,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 111,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 112,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    }
-   ],
-   "mode": [
-    "Qualifier match"
-   ]
-  },
-  "19672218bb207bca": {
-   "matches": [
-    {
-     "tabId": 1,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 2,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 4,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 5,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 8,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 10,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 11,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 13,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 14,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 15,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 25,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 27,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 28,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 29,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 31,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 37,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 41,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 58,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 59,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
      "tabId": 61,
      "confidence": 1,
      "reason": "Qualifier match"
@@ -1500,32 +1505,37 @@
      "reason": "Qualifier match"
     },
     {
-     "tabId": 63,
+     "tabId": 64,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
-     "tabId": 84,
+     "tabId": 66,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
-     "tabId": 102,
+     "tabId": 74,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
-     "tabId": 104,
+     "tabId": 76,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
-     "tabId": 105,
+     "tabId": 80,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
-     "tabId": 110,
+     "tabId": 81,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 89,
      "confidence": 1,
      "reason": "Qualifier match"
     }
@@ -1534,7 +1544,7 @@
     "Qualifier match"
    ]
   },
-  "250658d67626e0ec": {
+  "b18265c931e527f8": {
    "matches": [
     {
      "tabId": 1,
@@ -1542,7 +1552,69 @@
      "reason": "Qualifier match"
     },
     {
-     "tabId": 2,
+     "tabId": 9,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 12,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 25,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 37,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 38,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 56,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 57,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 60,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 61,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 64,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 80,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    }
+   ],
+   "mode": [
+    "Qualifier match"
+   ]
+  },
+  "efd222c61e5891a9": {
+   "matches": [
+    {
+     "tabId": 1,
      "confidence": 1,
      "reason": "Qualifier match"
     },
@@ -1602,17 +1674,17 @@
      "reason": "Qualifier match"
     },
     {
-     "tabId": 14,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
      "tabId": 15,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
      "tabId": 16,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 17,
      "confidence": 1,
      "reason": "Qualifier match"
     },
@@ -1638,6 +1710,11 @@
     },
     {
      "tabId": 22,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 23,
      "confidence": 1,
      "reason": "Qualifier match"
     },
@@ -1673,16 +1750,6 @@
     },
     {
      "tabId": 30,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 31,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 32,
      "confidence": 1,
      "reason": "Qualifier match"
     },
@@ -1712,12 +1779,42 @@
      "reason": "Qualifier match"
     },
     {
+     "tabId": 38,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 39,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 40,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
      "tabId": 41,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
+     "tabId": 42,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
      "tabId": 43,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 44,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 45,
      "confidence": 1,
      "reason": "Qualifier match"
     },
@@ -1757,11 +1854,6 @@
      "reason": "Qualifier match"
     },
     {
-     "tabId": 53,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
      "tabId": 54,
      "confidence": 1,
      "reason": "Qualifier match"
@@ -1787,11 +1879,6 @@
      "reason": "Qualifier match"
     },
     {
-     "tabId": 59,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
      "tabId": 60,
      "confidence": 1,
      "reason": "Qualifier match"
@@ -1808,6 +1895,11 @@
     },
     {
      "tabId": 63,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 64,
      "confidence": 1,
      "reason": "Qualifier match"
     },
@@ -1867,6 +1959,16 @@
      "reason": "Qualifier match"
     },
     {
+     "tabId": 76,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 77,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
      "tabId": 78,
      "confidence": 1,
      "reason": "Qualifier match"
@@ -1882,6 +1984,16 @@
      "reason": "Qualifier match"
     },
     {
+     "tabId": 81,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 82,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
      "tabId": 83,
      "confidence": 1,
      "reason": "Qualifier match"
@@ -1897,7 +2009,17 @@
      "reason": "Qualifier match"
     },
     {
+     "tabId": 86,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
      "tabId": 87,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 88,
      "confidence": 1,
      "reason": "Qualifier match"
     },
@@ -1910,191 +2032,21 @@
      "tabId": 90,
      "confidence": 1,
      "reason": "Qualifier match"
-    },
-    {
-     "tabId": 91,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 92,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 93,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 94,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 95,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 96,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 97,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 98,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 99,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 100,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 101,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 102,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 104,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 105,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 106,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 107,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 110,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 112,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 115,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 116,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 117,
-     "confidence": 1,
-     "reason": "Qualifier match"
     }
    ],
    "mode": [
     "Qualifier match"
    ]
   },
-  "32dfb760efb42a69": {
+  "6d0c607549aa846a": {
    "matches": [
     {
-     "tabId": 2,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 5,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 8,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 10,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 11,
+     "tabId": 12,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
      "tabId": 13,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 14,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 15,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 17,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 23,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 25,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 27,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 28,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 29,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 31,
      "confidence": 1,
      "reason": "Qualifier match"
     },
@@ -2109,42 +2061,17 @@
      "reason": "Qualifier match"
     },
     {
-     "tabId": 39,
+     "tabId": 56,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
-     "tabId": 40,
+     "tabId": 57,
      "confidence": 1,
      "reason": "Qualifier match"
     },
     {
-     "tabId": 41,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 42,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 44,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 45,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 58,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 59,
+     "tabId": 61,
      "confidence": 1,
      "reason": "Qualifier match"
     },
@@ -2154,77 +2081,7 @@
      "reason": "Qualifier match"
     },
     {
-     "tabId": 76,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 77,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 81,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 82,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 84,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 86,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 88,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 102,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 104,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 105,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 108,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 109,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 110,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 113,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 114,
+     "tabId": 80,
      "confidence": 1,
      "reason": "Qualifier match"
     }
@@ -2233,533 +2090,82 @@
     "Qualifier match"
    ]
   },
-  "2c48bc0503aa7aab": {
+  "0520814ca06df029": {
+   "matches": [
+    {
+     "tabId": 42,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 43,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    }
+   ],
+   "mode": [
+    "Command targets all tabs"
+   ]
+  },
+  "f10f876bca13214b": {
+   "matches": [
+    {
+     "tabId": 87,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    },
+    {
+     "tabId": 88,
+     "confidence": 1,
+     "reason": "Qualifier match"
+    }
+   ],
+   "mode": [
+    "Qualifier match"
+   ]
+  },
+  "532ac6aab70b2aba": {
    "matches": [
     {
      "tabId": 7,
      "confidence": 1,
-     "reason": "Never activated this session"
+     "reason": "Group: chess"
     },
     {
-     "tabId": 14,
+     "tabId": 8,
      "confidence": 1,
-     "reason": "Never activated this session"
+     "reason": "Group: chess"
     },
     {
-     "tabId": 27,
+     "tabId": 9,
      "confidence": 1,
-     "reason": "Never activated this session"
+     "reason": "Group: chess"
     },
     {
-     "tabId": 32,
+     "tabId": 33,
      "confidence": 1,
-     "reason": "Never activated this session"
-    },
-    {
-     "tabId": 47,
-     "confidence": 1,
-     "reason": "Never activated this session"
+     "reason": "Group: chess"
     }
    ],
    "mode": [
-    "Never activated this session"
+    "Group: chess"
    ]
   },
-  "6677b4835bb93c6b": {
+  "24690c1deab555ab": {
    "matches": [],
    "mode": [
     "abstain_no_corroboration"
    ]
   },
-  "8a137e4fa8ed411e": {
+  "82e371d9dec7f274": {
    "matches": [
-    {
-     "tabId": 93,
-     "confidence": 1,
-     "reason": "Stuck loading"
-    }
-   ],
-   "mode": [
-    "Stuck loading"
-   ]
-  },
-  "67cd1685b62b6331": {
-   "matches": [
-    {
-     "tabId": 39,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 40,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 44,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 45,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 111,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 114,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    }
-   ],
-   "mode": [
-    "Qualifier match"
-   ]
-  },
-  "6554bf8e608f5f3e": {
-   "matches": [
-    {
-     "tabId": 49,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 66,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 93,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    }
-   ],
-   "mode": [
-    "Qualifier match"
-   ]
-  },
-  "358d42b183172d7c": {
-   "matches": [
-    {
-     "tabId": 1,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 2,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 3,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 4,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 5,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 6,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 7,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 8,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 9,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 10,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 11,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 12,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 13,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 14,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 15,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 16,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 17,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 18,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 19,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 20,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 21,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 23,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 24,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 25,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 26,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 27,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 28,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 29,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 30,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 31,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 32,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 34,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 35,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 36,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 37,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 38,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 39,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 40,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 41,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 42,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 43,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 54,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 55,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
     {
      "tabId": 56,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 57,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 58,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 59,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 60,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 65,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 67,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 69,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 70,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 74,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 75,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 77,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 78,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 81,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 82,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 83,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 84,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 85,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 86,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 87,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 88,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 89,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 90,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 91,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 92,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 93,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 94,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 95,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 96,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 97,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 98,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 99,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 110,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    },
-    {
-     "tabId": 112,
-     "confidence": 1,
-     "reason": "Unpinned tabs in window 1"
-    }
-   ],
-   "mode": [
-    "Unpinned tabs in window 1"
-   ]
-  },
-  "9fe8f0fecf19f8b3": {
-   "matches": [
-    {
-     "tabId": 48,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    },
-    {
-     "tabId": 107,
-     "confidence": 1,
-     "reason": "Qualifier match"
-    }
-   ],
-   "mode": [
-    "Qualifier match"
-   ]
-  },
-  "0ffdbe746515a22e": {
-   "matches": [
-    {
-     "tabId": 23,
      "confidence": 1,
      "reason": "Discarded tabs"
     },
     {
-     "tabId": 44,
+     "tabId": 57,
      "confidence": 1,
      "reason": "Discarded tabs"
     }
@@ -2768,1603 +2174,1073 @@
     "Discarded tabs"
    ]
   },
-  "c984bc1be5d86493": {
+  "ccb308499cf118b2": {
    "matches": [
     {
-     "tabId": 44,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
+     "tabId": 34,
+     "confidence": 0.998946074114528,
+     "reason": "Entails \"chess\" (1.00)"
     },
     {
-     "tabId": 45,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
+     "tabId": 33,
+     "confidence": 0.9984917207823252,
+     "reason": "Entails \"chess\" (1.00)"
     },
     {
-     "tabId": 46,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
+     "tabId": 63,
+     "confidence": 0.9981019239822297,
+     "reason": "Entails \"chess\" (1.00)"
     },
     {
-     "tabId": 47,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
+     "tabId": 7,
+     "confidence": 0.9980663863909254,
+     "reason": "Entails \"chess\" (1.00)"
     },
     {
-     "tabId": 48,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
-    },
-    {
-     "tabId": 66,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
-    },
-    {
-     "tabId": 68,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
-    },
-    {
-     "tabId": 71,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
-    },
-    {
-     "tabId": 72,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
-    },
-    {
-     "tabId": 73,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
+     "tabId": 40,
+     "confidence": 0.9969708569874081,
+     "reason": "Entails \"chess\" (1.00)"
     },
     {
      "tabId": 79,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
+     "confidence": 0.9965504891340566,
+     "reason": "Entails \"chess\" (1.00)"
     },
     {
-     "tabId": 100,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
+     "tabId": 67,
+     "confidence": 0.9953970501798798,
+     "reason": "Entails \"chess\" (1.00)"
     },
     {
-     "tabId": 101,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
+     "tabId": 36,
+     "confidence": 0.994779031107511,
+     "reason": "Entails \"chess\" (0.99)"
     },
     {
-     "tabId": 102,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
+     "tabId": 35,
+     "confidence": 0.9945391057054993,
+     "reason": "Entails \"chess\" (0.99)"
     },
     {
-     "tabId": 106,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
+     "tabId": 9,
+     "confidence": 0.9939822880294814,
+     "reason": "Entails \"chess\" (0.99)"
     },
     {
-     "tabId": 107,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
-    },
-    {
-     "tabId": 115,
-     "confidence": 1,
-     "reason": "Ungrouped tabs in window 2"
-    }
-   ],
-   "mode": [
-    "Ungrouped tabs in window 2"
-   ]
-  },
-  "6894fa5287d2b6e9": {
-   "matches": [
-    {
-     "tabId": 1,
-     "confidence": 1,
-     "reason": "Group: cricket"
-    },
-    {
-     "tabId": 2,
-     "confidence": 1,
-     "reason": "Group: cricket"
-    },
-    {
-     "tabId": 4,
-     "confidence": 1,
-     "reason": "Group: cricket"
+     "tabId": 51,
+     "confidence": 0.9914638816176919,
+     "reason": "Entails \"chess\" (0.99)"
     },
     {
      "tabId": 8,
-     "confidence": 1,
-     "reason": "Group: cricket"
+     "confidence": 0.9843983950320836,
+     "reason": "Entails \"chess\" (0.98)"
     },
     {
-     "tabId": 43,
-     "confidence": 1,
-     "reason": "Group: cricket"
-    }
-   ],
-   "mode": [
-    "Group: cricket"
-   ]
-  },
-  "27d5c11ae96fd70e": {
-   "matches": [
-    {
-     "tabId": 55,
-     "confidence": 1,
-     "reason": "Incognito tabs"
-    }
-   ],
-   "mode": [
-    "Incognito tabs"
-   ]
-  },
-  "c3809ae2117bb9b3": {
-   "matches": [
-    {
-     "tabId": 1,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
+     "tabId": 71,
+     "confidence": 0.9831863984449717,
+     "reason": "Entails \"chess\" (0.98)"
     },
     {
-     "tabId": 2,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 4,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 8,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 43,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    }
-   ],
-   "mode": [
-    "Sport tag identity: cricket"
-   ]
-  },
-  "67ebc8cb4af430b2": {
-   "matches": [
-    {
-     "tabId": 46,
-     "confidence": 1,
-     "reason": "Muted tabs in window 2"
-    },
-    {
-     "tabId": 106,
-     "confidence": 1,
-     "reason": "Muted tabs in window 2"
-    }
-   ],
-   "mode": [
-    "Muted tabs in window 2"
-   ]
-  },
-  "5d6779be7cca0292": {
-   "matches": [
-    {
-     "tabId": 27,
-     "confidence": 0.8725434282500163,
-     "reason": "Entails \"jira\" (0.87)"
-    },
-    {
-     "tabId": 25,
-     "confidence": 0.7,
-     "reason": "Entails \"jira\" (0.70)"
-    },
-    {
-     "tabId": 26,
-     "confidence": 0.7,
-     "reason": "Entails \"jira\" (0.70)"
+     "tabId": 38,
+     "confidence": 0.9621569777485854,
+     "reason": "Entails \"chess\" (0.96)"
     }
    ],
    "mode": [
     "nli"
    ]
   },
-  "556cf3b318433908": {
+  "29574c8f209d5e80": {
    "matches": [
-    {
-     "tabId": 20,
-     "confidence": 1,
-     "reason": "Named sheet: q3 + budget"
-    }
-   ],
-   "mode": [
-    "Named sheet: q3 + budget"
-   ]
-  },
-  "9a2ee0c119501f44": {
-   "matches": [
-    {
-     "tabId": 113,
-     "confidence": 1,
-     "reason": "Group: archive"
-    },
-    {
-     "tabId": 114,
-     "confidence": 1,
-     "reason": "Group: archive"
-    }
-   ],
-   "mode": [
-    "Group: archive"
-   ]
-  },
-  "b76f338a5cd8dc30": {
-   "matches": [
-    {
-     "tabId": 18,
-     "confidence": 1,
-     "reason": "grey groups"
-    },
-    {
-     "tabId": 19,
-     "confidence": 1,
-     "reason": "grey groups"
-    },
-    {
-     "tabId": 20,
-     "confidence": 1,
-     "reason": "grey groups"
-    },
-    {
-     "tabId": 21,
-     "confidence": 1,
-     "reason": "grey groups"
-    },
-    {
-     "tabId": 22,
-     "confidence": 1,
-     "reason": "grey groups"
-    },
-    {
-     "tabId": 23,
-     "confidence": 1,
-     "reason": "grey groups"
-    },
     {
      "tabId": 24,
      "confidence": 1,
-     "reason": "grey groups"
+     "reason": "Group: cycling"
     },
     {
      "tabId": 25,
      "confidence": 1,
-     "reason": "grey groups"
+     "reason": "Group: cycling"
     },
     {
      "tabId": 26,
      "confidence": 1,
-     "reason": "grey groups"
-    },
-    {
-     "tabId": 27,
-     "confidence": 1,
-     "reason": "grey groups"
-    },
-    {
-     "tabId": 28,
-     "confidence": 1,
-     "reason": "grey groups"
-    },
-    {
-     "tabId": 29,
-     "confidence": 1,
-     "reason": "grey groups"
-    },
-    {
-     "tabId": 113,
-     "confidence": 1,
-     "reason": "grey groups"
-    },
-    {
-     "tabId": 114,
-     "confidence": 1,
-     "reason": "grey groups"
+     "reason": "Group: cycling"
     }
    ],
    "mode": [
-    "grey groups"
+    "Group: cycling"
    ]
   },
-  "83c3b5022c222eb3": {
+  "1c197d460ce8c04e": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "2cea907f9cd33766": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "0d092e4829e64483": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "f5f32d86b1239d6d": {
    "matches": [
-    {
-     "tabId": 11,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 12,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 13,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 14,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 15,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 16,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 17,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 18,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 19,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 20,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 21,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 23,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 24,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 25,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 26,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 27,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 28,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 29,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 30,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 31,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 32,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 34,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
     {
      "tabId": 35,
      "confidence": 1,
-     "reason": "Right of the current tab"
+     "reason": "Opened from named page"
     },
     {
      "tabId": 36,
      "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 37,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 38,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 39,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 40,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 41,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 42,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 54,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 55,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 56,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 57,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 58,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 59,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 60,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 65,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 67,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 69,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 70,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 74,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 75,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 77,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 78,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 81,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 82,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 83,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 84,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 85,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 86,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 87,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 88,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 89,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 90,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 91,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 92,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 93,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 94,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 95,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 96,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 97,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 98,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 99,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 110,
-     "confidence": 1,
-     "reason": "Right of the current tab"
-    },
-    {
-     "tabId": 112,
-     "confidence": 1,
-     "reason": "Right of the current tab"
+     "reason": "Opened from named page"
     }
    ],
    "mode": [
-    "Right of the current tab"
+    "Opened from named page"
    ]
   },
-  "e083c379af26a53f": {
+  "ef0fd56f337f3e1f": {
    "matches": [
-    {
-     "tabId": 22,
-     "confidence": 1,
-     "reason": "First 5 tabs in window"
-    },
-    {
-     "tabId": 111,
-     "confidence": 1,
-     "reason": "First 5 tabs in window"
-    },
     {
      "tabId": 1,
      "confidence": 1,
-     "reason": "First 5 tabs in window"
+     "reason": "Command targets all tabs"
     },
     {
      "tabId": 2,
      "confidence": 1,
-     "reason": "First 5 tabs in window"
-    },
-    {
-     "tabId": 4,
-     "confidence": 1,
-     "reason": "First 5 tabs in window"
-    }
-   ],
-   "mode": [
-    "First 5 tabs in window"
-   ]
-  },
-  "3de770621c8fde1d": {
-   "matches": [
-    {
-     "tabId": 49,
-     "confidence": 1,
-     "reason": "Group: shopping"
-    },
-    {
-     "tabId": 50,
-     "confidence": 1,
-     "reason": "Group: shopping"
-    },
-    {
-     "tabId": 51,
-     "confidence": 1,
-     "reason": "Group: shopping"
-    },
-    {
-     "tabId": 52,
-     "confidence": 1,
-     "reason": "Group: shopping"
-    },
-    {
-     "tabId": 53,
-     "confidence": 1,
-     "reason": "Group: shopping"
-    }
-   ],
-   "mode": [
-    "Group: shopping"
-   ]
-  },
-  "d44176b308be718a": {
-   "matches": [
-    {
-     "tabId": 18,
-     "confidence": 1,
-     "reason": "Group: work"
-    },
-    {
-     "tabId": 19,
-     "confidence": 1,
-     "reason": "Group: work"
-    },
-    {
-     "tabId": 20,
-     "confidence": 1,
-     "reason": "Group: work"
-    },
-    {
-     "tabId": 21,
-     "confidence": 1,
-     "reason": "Group: work"
-    },
-    {
-     "tabId": 22,
-     "confidence": 1,
-     "reason": "Group: work"
-    },
-    {
-     "tabId": 23,
-     "confidence": 1,
-     "reason": "Group: work"
-    },
-    {
-     "tabId": 24,
-     "confidence": 1,
-     "reason": "Group: work"
-    },
-    {
-     "tabId": 25,
-     "confidence": 1,
-     "reason": "Group: work"
-    },
-    {
-     "tabId": 26,
-     "confidence": 1,
-     "reason": "Group: work"
-    },
-    {
-     "tabId": 27,
-     "confidence": 1,
-     "reason": "Group: work"
-    },
-    {
-     "tabId": 28,
-     "confidence": 1,
-     "reason": "Group: work"
-    },
-    {
-     "tabId": 29,
-     "confidence": 1,
-     "reason": "Group: work"
-    }
-   ],
-   "mode": [
-    "Group: work"
-   ]
-  },
-  "0217b34a44e229ed": {
-   "matches": [
-    {
-     "tabId": 76,
-     "confidence": 1,
-     "reason": "Dev tools in window 3"
-    },
-    {
-     "tabId": 103,
-     "confidence": 1,
-     "reason": "Dev tools in window 3"
-    },
-    {
-     "tabId": 104,
-     "confidence": 1,
-     "reason": "Dev tools in window 3"
-    },
-    {
-     "tabId": 105,
-     "confidence": 1,
-     "reason": "Dev tools in window 3"
-    }
-   ],
-   "mode": [
-    "Dev tools in window 3"
-   ]
-  },
-  "216e2be405078399": {
-   "matches": [
-    {
-     "tabId": 11,
-     "confidence": 1,
-     "reason": "Related to the current tab (identity cluster)"
-    },
-    {
-     "tabId": 12,
-     "confidence": 1,
-     "reason": "Related to the current tab (identity cluster)"
-    },
-    {
-     "tabId": 13,
-     "confidence": 1,
-     "reason": "Related to the current tab (identity cluster)"
-    },
-    {
-     "tabId": 14,
-     "confidence": 1,
-     "reason": "Related to the current tab (identity cluster)"
-    },
-    {
-     "tabId": 25,
-     "confidence": 1,
-     "reason": "Related to the current tab (identity cluster)"
-    },
-    {
-     "tabId": 62,
-     "confidence": 1,
-     "reason": "Related to the current tab (identity cluster)"
-    },
-    {
-     "tabId": 94,
-     "confidence": 1,
-     "reason": "Related to the current tab (identity cluster)"
-    },
-    {
-     "tabId": 26,
-     "confidence": 1,
-     "reason": "Related to the current tab (identity cluster)"
-    }
-   ],
-   "mode": [
-    "Related to the current tab (identity cluster)"
-   ]
-  },
-  "c1b7efed79671091": {
-   "matches": [
-    {
-     "tabId": 96,
-     "confidence": 1,
-     "reason": "Opened from named page"
-    },
-    {
-     "tabId": 97,
-     "confidence": 1,
-     "reason": "Opened from named page"
-    },
-    {
-     "tabId": 98,
-     "confidence": 1,
-     "reason": "Opened from named page"
-    }
-   ],
-   "mode": [
-    "Opened from named page"
-   ]
-  },
-  "7a7f50ee5b63d785": {
-   "matches": [
-    {
-     "tabId": 97,
-     "confidence": 0.996878887928838,
-     "reason": "Entails \"fastmcp\" (1.00)"
-    },
-    {
-     "tabId": 95,
-     "confidence": 0.9966402737328007,
-     "reason": "Entails \"fastmcp\" (1.00)"
-    },
-    {
-     "tabId": 96,
-     "confidence": 0.9960371595834732,
-     "reason": "Entails \"fastmcp\" (1.00)"
-    },
-    {
-     "tabId": 98,
-     "confidence": 0.9941464235334644,
-     "reason": "Entails \"fastmcp\" (0.99)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "6e6b0060c1e364a5": {
-   "matches": [
-    {
-     "tabId": 98,
-     "confidence": 1,
-     "reason": "Opened from named page"
-    }
-   ],
-   "mode": [
-    "Opened from named page"
-   ]
-  },
-  "f6195a033606bf43": {
-   "matches": [
-    {
-     "tabId": 66,
-     "confidence": 1,
-     "reason": "Qualifier match (state)"
-    },
-    {
-     "tabId": 68,
-     "confidence": 1,
-     "reason": "Qualifier match (state)"
-    },
-    {
-     "tabId": 71,
-     "confidence": 1,
-     "reason": "Qualifier match (state)"
-    },
-    {
-     "tabId": 72,
-     "confidence": 1,
-     "reason": "Qualifier match (state)"
-    },
-    {
-     "tabId": 73,
-     "confidence": 1,
-     "reason": "Qualifier match (state)"
-    }
-   ],
-   "mode": [
-    "Qualifier match (state)"
-   ]
-  },
-  "6d56e0637db38596": {
-   "matches": [
-    {
-     "tabId": 66,
-     "confidence": 1,
-     "reason": "Qualifier match (state)"
-    },
-    {
-     "tabId": 68,
-     "confidence": 1,
-     "reason": "Qualifier match (state)"
-    },
-    {
-     "tabId": 71,
-     "confidence": 1,
-     "reason": "Qualifier match (state)"
-    },
-    {
-     "tabId": 72,
-     "confidence": 1,
-     "reason": "Qualifier match (state)"
-    },
-    {
-     "tabId": 73,
-     "confidence": 1,
-     "reason": "Qualifier match (state)"
-    }
-   ],
-   "mode": [
-    "Qualifier match (state)"
-   ]
-  },
-  "5f46f9e5df1c3ca9": {
-   "matches": [
-    {
-     "tabId": 66,
-     "confidence": 0.9938222519217008,
-     "reason": "Entails \"news\" (0.99)"
-    },
-    {
-     "tabId": 73,
-     "confidence": 0.9926641700898342,
-     "reason": "Entails \"news\" (0.99)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "8330cda0180d627b": {
-   "matches": [
-    {
-     "tabId": 71,
-     "confidence": 0.9918020973125163,
-     "reason": "Entails \"mdn\" (0.99)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "1542d80ee1460d2c": {
-   "matches": [
-    {
-     "tabId": 1,
-     "confidence": 0.9983882724425452,
-     "reason": "Entails \"cricket\" (1.00)"
-    },
-    {
-     "tabId": 43,
-     "confidence": 0.9979160070715466,
-     "reason": "Entails \"cricket\" (1.00)"
-    },
-    {
-     "tabId": 4,
-     "confidence": 0.9964287834497856,
-     "reason": "Entails \"cricket\" (1.00)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "f52f99a5ff19a662": {
-   "matches": [
-    {
-     "tabId": 22,
-     "confidence": 1,
-     "reason": "Top 5 by visit count"
-    },
-    {
-     "tabId": 111,
-     "confidence": 1,
-     "reason": "Top 5 by visit count"
-    },
-    {
-     "tabId": 1,
-     "confidence": 1,
-     "reason": "Top 5 by visit count"
-    },
-    {
-     "tabId": 41,
-     "confidence": 1,
-     "reason": "Top 5 by visit count"
-    },
-    {
-     "tabId": 110,
-     "confidence": 1,
-     "reason": "Top 5 by visit count"
-    }
-   ],
-   "mode": [
-    "Top 5 by visit count"
-   ]
-  },
-  "9f6f37eef7fabd1c": {
-   "matches": [
-    {
-     "tabId": 61,
-     "confidence": 1,
-     "reason": "Not bookmarked, tagged research"
-    },
-    {
-     "tabId": 63,
-     "confidence": 1,
-     "reason": "Not bookmarked, tagged research"
-    }
-   ],
-   "mode": [
-    "Not bookmarked, tagged research"
-   ]
-  },
-  "bff51a5439876e03": {
-   "matches": [
-    {
-     "tabId": 1,
-     "confidence": 1,
-     "reason": "Already bookmarked"
+     "reason": "Command targets all tabs"
     },
     {
      "tabId": 3,
      "confidence": 1,
-     "reason": "Already bookmarked"
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 4,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 5,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 6,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 7,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 8,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 9,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 10,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 11,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 12,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 13,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 14,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 15,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 16,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 17,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
     },
     {
      "tabId": 18,
      "confidence": 1,
-     "reason": "Already bookmarked"
+     "reason": "Command targets all tabs"
     },
     {
-     "tabId": 33,
+     "tabId": 19,
      "confidence": 1,
-     "reason": "Already bookmarked"
+     "reason": "Command targets all tabs"
     },
     {
-     "tabId": 36,
+     "tabId": 20,
      "confidence": 1,
-     "reason": "Already bookmarked"
+     "reason": "Command targets all tabs"
     },
     {
-     "tabId": 62,
+     "tabId": 21,
      "confidence": 1,
-     "reason": "Already bookmarked"
+     "reason": "Command targets all tabs"
     },
     {
-     "tabId": 65,
+     "tabId": 22,
      "confidence": 1,
-     "reason": "Already bookmarked"
+     "reason": "Command targets all tabs"
     },
     {
-     "tabId": 69,
+     "tabId": 23,
      "confidence": 1,
-     "reason": "Already bookmarked"
-    }
-   ],
-   "mode": [
-    "Already bookmarked"
-   ]
-  },
-  "4cca2409ebf161da": {
-   "matches": [
-    {
-     "tabId": 33,
-     "confidence": 1,
-     "reason": "Bookmarked under: research"
+     "reason": "Command targets all tabs"
     },
     {
-     "tabId": 36,
+     "tabId": 24,
      "confidence": 1,
-     "reason": "Bookmarked under: research"
+     "reason": "Command targets all tabs"
     },
-    {
-     "tabId": 62,
-     "confidence": 1,
-     "reason": "Bookmarked under: research"
-    }
-   ],
-   "mode": [
-    "Bookmarked under: research"
-   ]
-  },
-  "140742b1c34da8a6": {
-   "matches": [
-    {
-     "tabId": 30,
-     "confidence": 1,
-     "reason": "Content contains: c++ + code"
-    }
-   ],
-   "mode": [
-    "Content contains: c++ + code"
-   ]
-  },
-  "50ef3abc8a7874b3": {
-   "matches": [
-    {
-     "tabId": 62,
-     "confidence": 1,
-     "reason": "Content contains: oauth + refresh + tokens"
-    }
-   ],
-   "mode": [
-    "Content contains: oauth + refresh + tokens"
-   ]
-  },
-  "9c531f035bb58b1e": {
-   "matches": [
-    {
-     "tabId": 50,
-     "confidence": 1,
-     "reason": "Out of stock"
-    }
-   ],
-   "mode": [
-    "Out of stock"
-   ]
-  },
-  "bbb20fcceb8948c6": {
-   "matches": [
-    {
-     "tabId": 37,
-     "confidence": 1,
-     "reason": "Content contains: downloadable + pdfs"
-    },
-    {
-     "tabId": 57,
-     "confidence": 1,
-     "reason": "Content contains: downloadable + pdfs"
-    }
-   ],
-   "mode": [
-    "Content contains: downloadable + pdfs"
-   ]
-  },
-  "cbc3c7d4738b75b4": {
-   "matches": [
-    {
-     "tabId": 64,
-     "confidence": 1,
-     "reason": "Contains an email address"
-    },
-    {
-     "tabId": 91,
-     "confidence": 1,
-     "reason": "Contains an email address"
-    }
-   ],
-   "mode": [
-    "Contains an email address"
-   ]
-  },
-  "64db9c4c1428405b": {
-   "matches": [
-    {
-     "tabId": 37,
-     "confidence": 1,
-     "reason": "Published before 2020"
-    },
-    {
-     "tabId": 113,
-     "confidence": 1,
-     "reason": "Published before 2020"
-    }
-   ],
-   "mode": [
-    "Published before 2020"
-   ]
-  },
-  "1418d351ee0db43e": {
-   "matches": [
-    {
-     "tabId": 10,
-     "confidence": 1,
-     "reason": "Content contains: code + blocks"
-    },
-    {
-     "tabId": 30,
-     "confidence": 1,
-     "reason": "Content contains: code + blocks"
-    }
-   ],
-   "mode": [
-    "Content contains: code + blocks"
-   ]
-  },
-  "8fc7b4a0ef92c0b9": {
-   "matches": [
-    {
-     "tabId": 16,
-     "confidence": 1,
-     "reason": "Documentation pages"
-    },
-    {
-     "tabId": 28,
-     "confidence": 1,
-     "reason": "Documentation pages"
-    },
-    {
-     "tabId": 29,
-     "confidence": 1,
-     "reason": "Documentation pages"
-    },
-    {
-     "tabId": 33,
-     "confidence": 1,
-     "reason": "Documentation pages"
-    },
-    {
-     "tabId": 35,
-     "confidence": 1,
-     "reason": "Documentation pages"
-    },
-    {
-     "tabId": 41,
-     "confidence": 1,
-     "reason": "Documentation pages"
-    },
-    {
-     "tabId": 70,
-     "confidence": 1,
-     "reason": "Documentation pages"
-    },
-    {
-     "tabId": 85,
-     "confidence": 1,
-     "reason": "Documentation pages"
-    },
-    {
-     "tabId": 88,
-     "confidence": 1,
-     "reason": "Documentation pages"
-    },
-    {
-     "tabId": 96,
-     "confidence": 1,
-     "reason": "Documentation pages"
-    },
-    {
-     "tabId": 98,
-     "confidence": 1,
-     "reason": "Documentation pages"
-    },
-    {
-     "tabId": 117,
-     "confidence": 1,
-     "reason": "Documentation pages"
-    }
-   ],
-   "mode": [
-    "Documentation pages"
-   ]
-  },
-  "3f5702b1cb3929d7": {
-   "matches": [
-    {
-     "tabId": 34,
-     "confidence": 1,
-     "reason": "All matching: tutorial"
-    },
-    {
-     "tabId": 41,
-     "confidence": 1,
-     "reason": "All matching: tutorial"
-    },
-    {
-     "tabId": 85,
-     "confidence": 1,
-     "reason": "All matching: tutorial"
-    },
-    {
-     "tabId": 96,
-     "confidence": 1,
-     "reason": "All matching: tutorial"
-    },
-    {
-     "tabId": 117,
-     "confidence": 1,
-     "reason": "All matching: tutorial"
-    }
-   ],
-   "mode": [
-    "All matching: tutorial"
-   ]
-  },
-  "2543f61cdca2d8e6": {
-   "matches": [
-    {
-     "tabId": 115,
-     "confidence": 0.9933558494959,
-     "reason": "Entails \"promotional popup\" (0.99)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "acb36b15be3afcd4": {
-   "matches": [
-    {
-     "tabId": 96,
-     "confidence": 1,
-     "reason": "Official documentation"
-    },
-    {
-     "tabId": 98,
-     "confidence": 1,
-     "reason": "Official documentation"
-    }
-   ],
-   "mode": [
-    "Official documentation"
-   ]
-  },
-  "6303afcd03f58e27": {
-   "matches": [
-    {
-     "tabId": 94,
-     "confidence": 1,
-     "reason": "Login pages"
-    }
-   ],
-   "mode": [
-    "Login pages"
-   ]
-  },
-  "bec3b2318b80e61d": {
-   "matches": [
-    {
-     "tabId": 94,
-     "confidence": 1,
-     "reason": "Login and form pages"
-    },
-    {
-     "tabId": 51,
-     "confidence": 1,
-     "reason": "Login and form pages"
-    }
-   ],
-   "mode": [
-    "Login and form pages"
-   ]
-  },
-  "acb7a2de4562e99c": {
-   "matches": [
-    {
-     "tabId": 99,
-     "confidence": 0.9970680203227246,
-     "reason": "Entails \"c++ OR concurrency\" (1.00)"
-    },
-    {
-     "tabId": 30,
-     "confidence": 0.994786623678392,
-     "reason": "Entails \"c++ OR concurrency\" (0.99)"
-    },
-    {
-     "tabId": 32,
-     "confidence": 0.9745048426455294,
-     "reason": "Entails \"c++ OR concurrency\" (0.97)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "820e4a2b3a3f3cc7": {
-   "matches": [
-    {
-     "tabId": 36,
-     "confidence": 1,
-     "reason": "AI topic"
-    },
-    {
-     "tabId": 58,
-     "confidence": 1,
-     "reason": "AI topic"
-    },
-    {
-     "tabId": 60,
-     "confidence": 1,
-     "reason": "AI topic"
-    }
-   ],
-   "mode": [
-    "AI topic"
-   ]
-  },
-  "248fa452f5cd7302": {
-   "matches": [
-    {
-     "tabId": 56,
-     "confidence": 0.9942506899246535,
-     "reason": "Entails \"bengaluru\" (0.99)"
-    },
-    {
-     "tabId": 112,
-     "confidence": 0.9914202009101644,
-     "reason": "Entails \"bengaluru\" (0.99)"
-    },
-    {
-     "tabId": 110,
-     "confidence": 0.9884368703927923,
-     "reason": "Entails \"bengaluru\" (0.99)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "6d4e4cb661637548": {
-   "matches": [
-    {
-     "tabId": 34,
-     "confidence": 0.9973449935665313,
-     "reason": "complement"
-    },
-    {
-     "tabId": 46,
-     "confidence": 0.9964481407656978,
-     "reason": "complement"
-    },
-    {
-     "tabId": 105,
-     "confidence": 0.9983046710117539,
-     "reason": "complement"
-    }
-   ],
-   "mode": [
-    "Scoped complement of: react native"
-   ]
-  },
-  "ac5de69b2347c3d5": {
-   "matches": [
-    {
-     "tabId": 44,
-     "confidence": 1,
-     "reason": "Python 2"
-    },
-    {
-     "tabId": 45,
-     "confidence": 1,
-     "reason": "Python 2"
-    }
-   ],
-   "mode": [
-    "Python 2"
-   ]
-  },
-  "1348337edc38b9a9": {
-   "matches": [
     {
      "tabId": 25,
      "confidence": 1,
-     "reason": "Keys XC-120 through XC-150"
+     "reason": "Command targets all tabs"
     },
     {
      "tabId": 26,
      "confidence": 1,
-     "reason": "Keys XC-120 through XC-150"
-    }
-   ],
-   "mode": [
-    "Keys XC-120 through XC-150"
-   ]
-  },
-  "e11c4f012cf08691": {
-   "matches": [
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 27,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 28,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 29,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 30,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 31,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 32,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 33,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 34,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 35,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 36,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 37,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 38,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 39,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 40,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 41,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 42,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 43,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 44,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 45,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 46,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 47,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 48,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 49,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 50,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 51,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 52,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 53,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 54,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 55,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 56,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 57,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 58,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 59,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 60,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 61,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 62,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 63,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 64,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 65,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 66,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 67,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 68,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 69,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 70,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 71,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 72,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 73,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 74,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 75,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 76,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 77,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 78,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 79,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 80,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 81,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 82,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 83,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 84,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 85,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 86,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 87,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
     {
      "tabId": 88,
      "confidence": 1,
-     "reason": "Java (language)"
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 89,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 90,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
     }
    ],
    "mode": [
-    "Java (language)"
+    "Command targets all tabs"
    ]
   },
-  "827a9356ad08c2c7": {
+  "66b5768eed54a8f3": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "fc4eafa1a83df772": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "088b7fd4676ba965": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "f48e35edec968286": {
    "matches": [
     {
-     "tabId": 97,
-     "confidence": 0.996878887928838,
-     "reason": "Entails \"fastmcp\" (1.00)"
+     "tabId": 65,
+     "confidence": 0.998119584268846,
+     "reason": "Entails \"recipe\" (1.00)"
     },
     {
-     "tabId": 95,
-     "confidence": 0.9966402737328007,
-     "reason": "Entails \"fastmcp\" (1.00)"
+     "tabId": 32,
+     "confidence": 0.9978129912647059,
+     "reason": "Entails \"recipe\" (1.00)"
     },
     {
-     "tabId": 96,
-     "confidence": 0.9960371595834732,
-     "reason": "Entails \"fastmcp\" (1.00)"
+     "tabId": 31,
+     "confidence": 0.996857985512701,
+     "reason": "Entails \"recipe\" (1.00)"
     },
     {
-     "tabId": 98,
-     "confidence": 0.9941464235334644,
-     "reason": "Entails \"fastmcp\" (0.99)"
+     "tabId": 81,
+     "confidence": 0.9966884148383697,
+     "reason": "Entails \"recipe\" (1.00)"
+    },
+    {
+     "tabId": 89,
+     "confidence": 0.9966611053873534,
+     "reason": "Entails \"recipe\" (1.00)"
+    },
+    {
+     "tabId": 1,
+     "confidence": 0.9953858441258857,
+     "reason": "Entails \"recipe\" (1.00)"
+    },
+    {
+     "tabId": 3,
+     "confidence": 0.9950442853337687,
+     "reason": "Entails \"recipe\" (1.00)"
+    },
+    {
+     "tabId": 77,
+     "confidence": 0.9918640907864367,
+     "reason": "Entails \"recipe\" (0.99)"
+    },
+    {
+     "tabId": 80,
+     "confidence": 0.9900184491231416,
+     "reason": "Entails \"recipe\" (0.99)"
+    },
+    {
+     "tabId": 78,
+     "confidence": 0.9702761815545289,
+     "reason": "Entails \"recipe\" (0.97)"
+    },
+    {
+     "tabId": 30,
+     "confidence": 0.9100599919686914,
+     "reason": "Entails \"recipe\" (0.91)"
+    },
+    {
+     "tabId": 74,
+     "confidence": 0.8592353577733886,
+     "reason": "Entails \"recipe\" (0.86)"
+    },
+    {
+     "tabId": 41,
+     "confidence": 0.8067043262488255,
+     "reason": "Entails \"recipe\" (0.81)"
+    },
+    {
+     "tabId": 2,
+     "confidence": 0.7,
+     "reason": "Entails \"recipe\" (0.70)"
+    },
+    {
+     "tabId": 4,
+     "confidence": 0.7,
+     "reason": "Entails \"recipe\" (0.70)"
+    },
+    {
+     "tabId": 76,
+     "confidence": 0.7,
+     "reason": "Entails \"recipe\" (0.70)"
     }
    ],
    "mode": [
     "nli"
    ]
   },
-  "151f638dc009ef04": {
+  "61a02a5f5b230d5a": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "3a4bd358e030ea11": {
    "matches": [
     {
-     "tabId": 115,
-     "confidence": 1,
-     "reason": "Automatically opened"
+     "tabId": 44,
+     "confidence": 0.9393592824580105,
+     "reason": "Entails \"new tab pages\" (0.94)"
+    },
+    {
+     "tabId": 45,
+     "confidence": 0.9393592824580105,
+     "reason": "Entails \"new tab pages\" (0.94)"
     }
    ],
    "mode": [
-    "Automatically opened"
+    "nli"
    ]
   },
-  "73722cfd8ad2d0e0": {
+  "f9e26a6851f8dd9f": {
    "matches": [
     {
-     "tabId": 96,
+     "tabId": 55,
+     "confidence": 0.9471575379004296,
+     "reason": "Entails \"contact email\" (0.95)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "465b75ed6c2e74b8": {
+   "matches": [
+    {
+     "tabId": 74,
+     "confidence": 0.9769387459934911,
+     "reason": "Entails \"season a cast iron pan\" (0.98)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "2aa1f2b4e5e81ff4": {
+   "matches": [
+    {
+     "tabId": 22,
+     "confidence": 0.9913086316250751,
+     "reason": "Entails \"kimchi fermentation\" (0.99)"
+    },
+    {
+     "tabId": 90,
+     "confidence": 0.7769180377486083,
+     "reason": "Entails \"kimchi fermentation\" (0.78)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "568aec9cc86036bc": {
+   "matches": [
+    {
+     "tabId": 65,
+     "confidence": 0.8896432202038531,
+     "reason": "Entails \"index page\" (0.89)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "7b580f621308467f": {
+   "matches": [
+    {
+     "tabId": 81,
+     "confidence": 0.9962299532546416,
+     "reason": "Entails \"drive\" (1.00)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "784f0517dd660187": {
+   "matches": [
+    {
+     "tabId": 42,
+     "confidence": 0.9952794883916959,
+     "reason": "Entails \"streaming video service\" (1.00)"
+    },
+    {
+     "tabId": 86,
+     "confidence": 0.9816180836207962,
+     "reason": "Entails \"streaming video service\" (0.98)"
+    },
+    {
+     "tabId": 40,
+     "confidence": 0.9815630897968887,
+     "reason": "Entails \"streaming video service\" (0.98)"
+    },
+    {
+     "tabId": 88,
+     "confidence": 0.9680678342113994,
+     "reason": "Entails \"streaming video service\" (0.97)"
+    },
+    {
+     "tabId": 41,
+     "confidence": 0.9390458999776905,
+     "reason": "Entails \"streaming video service\" (0.94)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "f736d43a8f4e69ba": {
+   "matches": [
+    {
+     "tabId": 90,
+     "confidence": 0.9971161540497983,
+     "reason": "Entails \"fermentation\" (1.00)"
+    },
+    {
+     "tabId": 86,
+     "confidence": 0.9951469150492772,
+     "reason": "Entails \"fermentation\" (1.00)"
+    },
+    {
+     "tabId": 22,
+     "confidence": 0.9936220644803222,
+     "reason": "Entails \"fermentation\" (0.99)"
+    },
+    {
+     "tabId": 23,
+     "confidence": 0.9836569630633146,
+     "reason": "Entails \"fermentation\" (0.98)"
+    },
+    {
+     "tabId": 60,
+     "confidence": 0.9434016485850889,
+     "reason": "Entails \"fermentation\" (0.94)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "1cbfe5accb626e03": {
+   "matches": [
+    {
+     "tabId": 10,
+     "confidence": 0.9942871509677184,
+     "reason": "Entails \"birdwatching\" (0.99)"
+    },
+    {
+     "tabId": 11,
+     "confidence": 0.9828566276260154,
+     "reason": "Entails \"birdwatching\" (0.98)"
+    },
+    {
+     "tabId": 68,
+     "confidence": 0.9560311265558515,
+     "reason": "Entails \"birdwatching\" (0.96)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "ae0464ce6f82a70d": {
+   "matches": [
+    {
+     "tabId": 21,
+     "confidence": 0.9976555447020686,
+     "reason": "Entails \"k-drama\" (1.00)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "73d0f936baf0f18b": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "e2ef7b0e6bddc660": {
+   "matches": [
+    {
+     "tabId": 26,
+     "confidence": 0.9972441663373146,
+     "reason": "Entails \"cycling news OR results\" (1.00)"
+    },
+    {
+     "tabId": 24,
+     "confidence": 0.9890196435946708,
+     "reason": "Entails \"cycling news OR results\" (0.99)"
+    },
+    {
+     "tabId": 25,
+     "confidence": 0.8091923705784791,
+     "reason": "Entails \"cycling news OR results\" (0.81)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "d5aa73b322485336": {
+   "matches": [
+    {
+     "tabId": 4,
+     "confidence": 0.9926381652651686,
+     "reason": "complement"
+    },
+    {
+     "tabId": 70,
+     "confidence": 0.9968923826748515,
+     "reason": "complement"
+    },
+    {
+     "tabId": 76,
+     "confidence": 0.9358755791535044,
+     "reason": "complement"
+    },
+    {
+     "tabId": 82,
+     "confidence": 0.9982296223875782,
+     "reason": "complement"
+    }
+   ],
+   "mode": [
+    "Scoped complement of: videos"
+   ]
+  },
+  "5fec95df4052ebfd": {
+   "matches": [],
+   "mode": [
+    "Scoped complement of: chess"
+   ]
+  },
+  "c87a9fa6948e9162": {
+   "matches": [
+    {
+     "tabId": 27,
+     "confidence": 0.9881240598066103,
+     "reason": "complement"
+    },
+    {
+     "tabId": 39,
+     "confidence": 0.991013426854659,
+     "reason": "complement"
+    }
+   ],
+   "mode": [
+    "Scoped complement of: netflix"
+   ]
+  },
+  "a8b7c08b0002eed5": {
+   "matches": [],
+   "mode": [
+    "Scoped complement of: chess openings"
+   ]
+  },
+  "bb1a5fbf77b63e4b": {
+   "matches": [
+    {
+     "tabId": 46,
+     "confidence": 0.9968763320974385,
+     "reason": "Entails \"compost tumbler\" (1.00)"
+    },
+    {
+     "tabId": 49,
+     "confidence": 0.996727172251386,
+     "reason": "Entails \"compost tumbler\" (1.00)"
+    },
+    {
+     "tabId": 47,
+     "confidence": 0.9697399774542655,
+     "reason": "Entails \"compost tumbler\" (0.97)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "353ccc33dc03c8de": {
+   "matches": [
+    {
+     "tabId": 36,
+     "confidence": 0.9956930557165556,
+     "reason": "Entails \"silman endgame course review\" (1.00)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "389abcffe5e63890": {
+   "matches": [
+    {
+     "tabId": 33,
+     "confidence": 0.9944210457252669,
+     "reason": "Entails \"chess news\" (0.99)"
+    },
+    {
+     "tabId": 7,
+     "confidence": 0.9938520416451765,
+     "reason": "Entails \"chess news\" (0.99)"
+    },
+    {
+     "tabId": 71,
+     "confidence": 0.9847423233660042,
+     "reason": "Entails \"chess news\" (0.98)"
+    },
+    {
+     "tabId": 40,
+     "confidence": 0.9842982222410493,
+     "reason": "Entails \"chess news\" (0.98)"
+    },
+    {
+     "tabId": 51,
+     "confidence": 0.9647218404730026,
+     "reason": "Entails \"chess news\" (0.96)"
+    },
+    {
+     "tabId": 38,
+     "confidence": 0.9637054901289769,
+     "reason": "Entails \"chess news\" (0.96)"
+    },
+    {
+     "tabId": 34,
+     "confidence": 0.9600390711222202,
+     "reason": "Entails \"chess news\" (0.96)"
+    },
+    {
+     "tabId": 36,
+     "confidence": 0.9377487058831864,
+     "reason": "Entails \"chess news\" (0.94)"
+    },
+    {
+     "tabId": 35,
+     "confidence": 0.9084649996475233,
+     "reason": "Entails \"chess news\" (0.91)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "1506037ef80d4fe4": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "174fea4bc55f4121": {
+   "matches": [
+    {
+     "tabId": 35,
      "confidence": 1,
      "reason": "Opened from named page"
     },
     {
-     "tabId": 97,
-     "confidence": 1,
-     "reason": "Opened from named page"
-    },
-    {
-     "tabId": 98,
+     "tabId": 36,
      "confidence": 1,
      "reason": "Opened from named page"
     }
@@ -4373,39 +3249,116 @@
     "Opened from named page"
    ]
   },
-  "575f0eb5f785ac5d": {
+  "fd7d8c52aa08372f": {
    "matches": [
     {
-     "tabId": 95,
-     "confidence": 1,
-     "reason": "Search engine result pages"
+     "tabId": 34,
+     "confidence": 0.9986129140477433,
+     "reason": "Entails \"chess endgames\" (1.00)"
     }
    ],
    "mode": [
-    "Search engine result pages"
+    "nli"
    ]
   },
-  "d135e64ed23d84f5": {
+  "de9fd5b4bc0c32f8": {
    "matches": [
     {
-     "tabId": 95,
-     "confidence": 1,
-     "reason": "Search engine result pages"
+     "tabId": 47,
+     "confidence": 0.9943314185132084,
+     "reason": "Entails \"amazon\" (0.99)"
     },
     {
-     "tabId": 99,
-     "confidence": 1,
-     "reason": "Search engine result pages"
+     "tabId": 49,
+     "confidence": 0.9931696466805268,
+     "reason": "Entails \"amazon\" (0.99)"
+    },
+    {
+     "tabId": 48,
+     "confidence": 0.9913621023871015,
+     "reason": "Entails \"amazon\" (0.99)"
+    },
+    {
+     "tabId": 46,
+     "confidence": 0.9789398728256734,
+     "reason": "Entails \"amazon\" (0.98)"
     }
    ],
    "mode": [
-    "Search engine result pages"
+    "nli"
    ]
   },
-  "91b611ec9bf5d522": {
+  "470ee19c11a756ba": {
    "matches": [
     {
-     "tabId": 61,
+     "tabId": 71,
+     "confidence": 0.9898911450597608,
+     "reason": "Entails \"r chess endgame discussion\" (0.99)"
+    },
+    {
+     "tabId": 51,
+     "confidence": 0.9894361583919744,
+     "reason": "Entails \"r chess endgame discussion\" (0.99)"
+    },
+    {
+     "tabId": 35,
+     "confidence": 0.982512263664127,
+     "reason": "Entails \"r chess endgame discussion\" (0.98)"
+    },
+    {
+     "tabId": 34,
+     "confidence": 0.9751122068811064,
+     "reason": "Entails \"r chess endgame discussion\" (0.98)"
+    },
+    {
+     "tabId": 7,
+     "confidence": 0.9058313292149489,
+     "reason": "Entails \"r chess endgame discussion\" (0.91)"
+    },
+    {
+     "tabId": 36,
+     "confidence": 0.8806965361641275,
+     "reason": "Entails \"r chess endgame discussion\" (0.88)"
+    },
+    {
+     "tabId": 33,
+     "confidence": 0.7444079370257745,
+     "reason": "Entails \"r chess endgame discussion\" (0.74)"
+    },
+    {
+     "tabId": 8,
+     "confidence": 0.7,
+     "reason": "Entails \"r chess endgame discussion\" (0.70)"
+    },
+    {
+     "tabId": 9,
+     "confidence": 0.7,
+     "reason": "Entails \"r chess endgame discussion\" (0.70)"
+    },
+    {
+     "tabId": 63,
+     "confidence": 0.7,
+     "reason": "Entails \"r chess endgame discussion\" (0.70)"
+    },
+    {
+     "tabId": 67,
+     "confidence": 0.7,
+     "reason": "Entails \"r chess endgame discussion\" (0.70)"
+    },
+    {
+     "tabId": 79,
+     "confidence": 0.7,
+     "reason": "Entails \"r chess endgame discussion\" (0.70)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "9c5e332e31000740": {
+   "matches": [
+    {
+     "tabId": 72,
      "confidence": 1,
      "reason": "Unread (never scrolled)"
     }
@@ -4414,400 +3367,133 @@
     "Unread (never scrolled)"
    ]
   },
-  "78b0add0e1826078": {
-   "matches": [
-    {
-     "tabId": 63,
-     "confidence": 1,
-     "reason": "Finished reading"
-    }
-   ],
+  "515e8407fb8d2054": {
+   "matches": [],
    "mode": [
-    "Finished reading"
+    "abstain_no_corroboration"
    ]
   },
-  "8e163598ec0bdfcf": {
-   "matches": [
-    {
-     "tabId": 62,
-     "confidence": 1,
-     "reason": "Partially read"
-    }
-   ],
+  "bf32ebd51f64a135": {
+   "matches": [],
    "mode": [
-    "Partially read"
+    "abstain_no_corroboration"
    ]
   },
-  "7824a2285431cd9e": {
+  "81244f2d9b00a8a4": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "de4f818b609fb300": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "2891510783f9cf4e": {
    "matches": [
     {
      "tabId": 61,
-     "confidence": 1,
-     "reason": "Long, unfinished"
-    },
-    {
-     "tabId": 62,
-     "confidence": 1,
-     "reason": "Long, unfinished"
-    }
-   ],
-   "mode": [
-    "Long, unfinished"
-   ]
-  },
-  "b62ba0f1ecee6bce": {
-   "matches": [
-    {
-     "tabId": 106,
-     "confidence": 1,
-     "reason": "Finished watching"
-    }
-   ],
-   "mode": [
-    "Finished watching"
-   ]
-  },
-  "6cb7d37fe586756e": {
-   "matches": [
-    {
-     "tabId": 1,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 2,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 4,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 8,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 43,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    }
-   ],
-   "mode": [
-    "Sport tag identity: cricket"
-   ]
-  },
-  "3d6ac7b0b11de073": {
-   "matches": [
-    {
-     "tabId": 1,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 2,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 4,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 8,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 43,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    }
-   ],
-   "mode": [
-    "Sport tag identity: cricket"
-   ]
-  },
-  "9ba01dea9962fa3d": {
-   "matches": [
-    {
-     "tabId": 1,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 2,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 4,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 8,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 43,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    }
-   ],
-   "mode": [
-    "Sport tag identity: cricket"
-   ]
-  },
-  "747c46a6fa6feb6c": {
-   "matches": [
-    {
-     "tabId": 1,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 2,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 4,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 8,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    },
-    {
-     "tabId": 43,
-     "confidence": 1,
-     "reason": "Sport tag identity: cricket"
-    }
-   ],
-   "mode": [
-    "Sport tag identity: cricket"
-   ]
-  },
-  "29cc2f0dff70d538": {
-   "matches": [
-    {
-     "tabId": 1,
-     "confidence": 1,
-     "reason": "sports news"
-    },
-    {
-     "tabId": 8,
-     "confidence": 1,
-     "reason": "sports news"
-    },
-    {
-     "tabId": 43,
-     "confidence": 1,
-     "reason": "sports news"
-    }
-   ],
-   "mode": [
-    "sports news"
-   ]
-  },
-  "83e81dacad6f0e04": {
-   "matches": [
-    {
-     "tabId": 1,
-     "confidence": 0.9983882724425452,
-     "reason": "Entails \"cricket OR football\" (1.00)"
-    },
-    {
-     "tabId": 2,
-     "confidence": 0.9981121274606766,
-     "reason": "Entails \"cricket OR football\" (1.00)"
-    },
-    {
-     "tabId": 43,
-     "confidence": 0.9979160070715466,
-     "reason": "Entails \"cricket OR football\" (1.00)"
-    },
-    {
-     "tabId": 4,
-     "confidence": 0.9964287834497856,
-     "reason": "Entails \"cricket OR football\" (1.00)"
-    },
-    {
-     "tabId": 8,
-     "confidence": 0.9963769514716405,
-     "reason": "Entails \"cricket OR football\" (1.00)"
-    },
-    {
-     "tabId": 7,
-     "confidence": 0.9885375183481412,
-     "reason": "Entails \"cricket OR football\" (0.99)"
-    },
-    {
-     "tabId": 3,
-     "confidence": 0.821547740714162,
-     "reason": "Entails \"cricket OR football\" (0.82)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "d09f40fa00999d1d": {
-   "matches": [
-    {
-     "tabId": 107,
-     "confidence": 0.9969238786208829,
-     "reason": "Entails \"music\" (1.00)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "9cda149cc07eef40": {
-   "matches": [
-    {
-     "tabId": 56,
-     "confidence": 1,
-     "reason": "bengaluru weather"
-    },
-    {
-     "tabId": 112,
-     "confidence": 1,
-     "reason": "bengaluru weather"
-    }
-   ],
-   "mode": [
-    "bengaluru weather"
-   ]
-  },
-  "5f0116f9a5b4d36b": {
-   "matches": [
-    {
-     "tabId": 36,
-     "confidence": 1,
-     "reason": "AI topic"
-    },
-    {
-     "tabId": 57,
-     "confidence": 1,
-     "reason": "AI topic"
-    },
-    {
-     "tabId": 58,
-     "confidence": 1,
-     "reason": "AI topic"
-    },
-    {
-     "tabId": 59,
-     "confidence": 1,
-     "reason": "AI topic"
+     "confidence": 0.9759086056410278,
+     "reason": "Entails \"reference\" (0.98)"
     },
     {
      "tabId": 60,
-     "confidence": 1,
-     "reason": "AI topic"
-    }
-   ],
-   "mode": [
-    "AI topic"
-   ]
-  },
-  "7f75ca9ced8a54aa": {
-   "matches": [],
-   "mode": [
-    "abstain_no_corroboration"
-   ]
-  },
-  "eda195f1cbfc54ce": {
-   "matches": [],
-   "mode": [
-    "abstain_no_corroboration"
-   ]
-  },
-  "c236157aaaa520aa": {
-   "matches": [
-    {
-     "tabId": 53,
-     "confidence": 0.996844592358603,
-     "reason": "Entails \"shopping\" (1.00)"
-    },
-    {
-     "tabId": 51,
-     "confidence": 0.9966109624922062,
-     "reason": "Entails \"shopping\" (1.00)"
-    },
-    {
-     "tabId": 50,
-     "confidence": 0.995788571479724,
-     "reason": "Entails \"shopping\" (1.00)"
-    },
-    {
-     "tabId": 72,
-     "confidence": 0.9921371672873066,
-     "reason": "Entails \"shopping\" (0.99)"
-    },
-    {
-     "tabId": 87,
-     "confidence": 0.9919982396880453,
-     "reason": "Entails \"shopping\" (0.99)"
-    },
-    {
-     "tabId": 49,
-     "confidence": 0.988153717806885,
-     "reason": "Entails \"shopping\" (0.99)"
-    },
-    {
-     "tabId": 89,
-     "confidence": 0.9806078845719636,
-     "reason": "Entails \"shopping\" (0.98)"
-    },
-    {
-     "tabId": 52,
-     "confidence": 0.9783027050272389,
-     "reason": "Entails \"shopping\" (0.98)"
-    },
-    {
-     "tabId": 90,
-     "confidence": 0.8549159863844054,
-     "reason": "Entails \"shopping\" (0.85)"
+     "confidence": 0.966211976717457,
+     "reason": "Entails \"reference\" (0.97)"
     }
    ],
    "mode": [
     "nli"
    ]
   },
-  "be0b6a2d2f9840f6": {
+  "41a3e8d021280cb7": {
    "matches": [
     {
-     "tabId": 38,
+     "tabId": 65,
+     "confidence": 0.9973068159251322,
+     "reason": "Entails \"cooking\" (1.00)"
+    },
+    {
+     "tabId": 1,
+     "confidence": 0.9966750203530518,
+     "reason": "Entails \"cooking\" (1.00)"
+    },
+    {
+     "tabId": 3,
+     "confidence": 0.996050729214451,
+     "reason": "Entails \"cooking\" (1.00)"
+    },
+    {
+     "tabId": 31,
+     "confidence": 0.9933670925923277,
+     "reason": "Entails \"cooking\" (0.99)"
+    },
+    {
+     "tabId": 22,
+     "confidence": 0.9932703685211538,
+     "reason": "Entails \"cooking\" (0.99)"
+    },
+    {
+     "tabId": 74,
+     "confidence": 0.9860565907815251,
+     "reason": "Entails \"cooking\" (0.99)"
+    },
+    {
+     "tabId": 2,
+     "confidence": 0.9856227227364837,
+     "reason": "Entails \"cooking\" (0.99)"
+    },
+    {
+     "tabId": 77,
+     "confidence": 0.9845199156742306,
+     "reason": "Entails \"cooking\" (0.98)"
+    },
+    {
+     "tabId": 32,
+     "confidence": 0.9844676066841476,
+     "reason": "Entails \"cooking\" (0.98)"
+    },
+    {
+     "tabId": 30,
+     "confidence": 0.9570179672274443,
+     "reason": "Entails \"cooking\" (0.96)"
+    },
+    {
+     "tabId": 4,
+     "confidence": 0.7,
+     "reason": "Entails \"cooking\" (0.70)"
+    },
+    {
+     "tabId": 41,
+     "confidence": 0.7,
+     "reason": "Entails \"cooking\" (0.70)"
+    },
+    {
+     "tabId": 76,
+     "confidence": 0.7,
+     "reason": "Entails \"cooking\" (0.70)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "505085668764eeeb": {
+   "matches": [
+    {
+     "tabId": 62,
      "confidence": 1,
      "reason": "Study material"
     },
     {
-     "tabId": 39,
+     "tabId": 63,
      "confidence": 1,
      "reason": "Study material"
     },
     {
-     "tabId": 108,
-     "confidence": 1,
-     "reason": "Study material"
-    },
-    {
-     "tabId": 109,
-     "confidence": 1,
-     "reason": "Study material"
-    },
-    {
-     "tabId": 116,
+     "tabId": 64,
      "confidence": 1,
      "reason": "Study material"
     }
@@ -4816,1132 +3502,1467 @@
     "Study material"
    ]
   },
-  "ada04b26d814f673": {
-   "matches": [
-    {
-     "tabId": 37,
-     "confidence": 1,
-     "reason": "Visited once, not used today"
-    }
-   ],
-   "mode": [
-    "Visited once, not used today"
-   ]
-  },
-  "c50af2543de33e9e": {
-   "matches": [
-    {
-     "tabId": 22,
-     "confidence": 1,
-     "reason": "Top 2 by visit count"
-    },
-    {
-     "tabId": 111,
-     "confidence": 1,
-     "reason": "Top 2 by visit count"
-    }
-   ],
-   "mode": [
-    "Top 2 by visit count"
-   ]
-  },
-  "598ad66edcc24a14": {
-   "matches": [
-    {
-     "tabId": 91,
-     "confidence": 1,
-     "reason": "Failed to load / error pages"
-    },
-    {
-     "tabId": 92,
-     "confidence": 1,
-     "reason": "Failed to load / error pages"
-    }
-   ],
-   "mode": [
-    "Failed to load / error pages"
-   ]
-  },
-  "8f78bd3e82f6dfd8": {
-   "matches": [
-    {
-     "tabId": 94,
-     "confidence": 1,
-     "reason": "Login pages"
-    }
-   ],
-   "mode": [
-    "Login pages"
-   ]
-  },
-  "a2e837c946f66e55": {
-   "matches": [
-    {
-     "tabId": 50,
-     "confidence": 1,
-     "reason": "Out of stock"
-    }
-   ],
-   "mode": [
-    "Out of stock"
-   ]
-  },
-  "be08bf6274e34189": {
-   "matches": [
-    {
-     "tabId": 81,
-     "confidence": 1,
-     "reason": "Language: german"
-    },
-    {
-     "tabId": 82,
-     "confidence": 1,
-     "reason": "Language: german"
-    }
-   ],
-   "mode": [
-    "Language: german"
-   ]
-  },
-  "048d55aacc41fe37": {
-   "matches": [
-    {
-     "tabId": 81,
-     "confidence": 1,
-     "reason": "Language: german"
-    }
-   ],
-   "mode": [
-    "Language: german"
-   ]
-  },
-  "7c063bd77acf663e": {
-   "matches": [
-    {
-     "tabId": 55,
-     "confidence": 1,
-     "reason": "News about india"
-    },
-    {
-     "tabId": 83,
-     "confidence": 1,
-     "reason": "News about india"
-    }
-   ],
-   "mode": [
-    "News about india"
-   ]
-  },
-  "d580914eec8c3fca": {
-   "matches": [
-    {
-     "tabId": 49,
-     "confidence": 1,
-     "reason": "Priced in INR"
-    },
-    {
-     "tabId": 50,
-     "confidence": 1,
-     "reason": "Priced in INR"
-    },
-    {
-     "tabId": 89,
-     "confidence": 1,
-     "reason": "Priced in INR"
-    }
-   ],
-   "mode": [
-    "Priced in INR"
-   ]
-  },
-  "2dca614b6dac2e22": {
-   "matches": [
-    {
-     "tabId": 49,
-     "confidence": 1,
-     "reason": "Price > 80000 INR"
-    }
-   ],
-   "mode": [
-    "Price > 80000 INR"
-   ]
-  },
-  "51843ed71c46c4a0": {
-   "matches": [
-    {
-     "tabId": 49,
-     "confidence": 1,
-     "reason": "In stock"
-    },
-    {
-     "tabId": 89,
-     "confidence": 1,
-     "reason": "In stock"
-    }
-   ],
-   "mode": [
-    "In stock"
-   ]
-  },
-  "a22352739ad28c94": {
-   "matches": [
-    {
-     "tabId": 50,
-     "confidence": 1,
-     "reason": "Does not ship to India"
-    }
-   ],
-   "mode": [
-    "Does not ship to India"
-   ]
-  },
-  "ab6fdde107a26e88": {
-   "matches": [
-    {
-     "tabId": 49,
-     "confidence": 1,
-     "reason": "Rating > 4"
-    },
-    {
-     "tabId": 89,
-     "confidence": 1,
-     "reason": "Rating > 4"
-    }
-   ],
-   "mode": [
-    "Rating > 4"
-   ]
-  },
-  "78974af4cd248322": {
-   "matches": [
-    {
-     "tabId": 10,
-     "confidence": 1,
-     "reason": "Auth workstream cluster"
-    },
-    {
-     "tabId": 11,
-     "confidence": 1,
-     "reason": "Auth workstream cluster"
-    },
-    {
-     "tabId": 12,
-     "confidence": 1,
-     "reason": "Auth workstream cluster"
-    },
-    {
-     "tabId": 13,
-     "confidence": 1,
-     "reason": "Auth workstream cluster"
-    },
-    {
-     "tabId": 14,
-     "confidence": 1,
-     "reason": "Auth workstream cluster"
-    },
-    {
-     "tabId": 25,
-     "confidence": 1,
-     "reason": "Auth workstream cluster"
-    },
-    {
-     "tabId": 62,
-     "confidence": 1,
-     "reason": "Auth workstream cluster"
-    },
-    {
-     "tabId": 94,
-     "confidence": 1,
-     "reason": "Auth workstream cluster"
-    }
-   ],
-   "mode": [
-    "Auth workstream cluster"
-   ]
-  },
-  "7faf943c8b3c5c7d": {
-   "matches": [
-    {
-     "tabId": 26,
-     "confidence": 1,
-     "reason": "Tracker key XC-142"
-    },
-    {
-     "tabId": 96,
-     "confidence": 1,
-     "reason": "Tracker key XC-142"
-    }
-   ],
-   "mode": [
-    "Tracker key XC-142"
-   ]
-  },
-  "f7c3d15308d9d0dc": {
-   "matches": [
-    {
-     "tabId": 33,
-     "confidence": 0.9845156892217948,
-     "reason": "Entails \"browser extension project\" (0.98)"
-    },
-    {
-     "tabId": 63,
-     "confidence": 0.9604435208137745,
-     "reason": "Entails \"browser extension project\" (0.96)"
-    },
-    {
-     "tabId": 61,
-     "confidence": 0.7,
-     "reason": "Entails \"browser extension project\" (0.70)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "7e96944ae3ef46c9": {
-   "matches": [
-    {
-     "tabId": 21,
-     "confidence": 0.9850743213933892,
-     "reason": "Entails \"all hands presentation\" (0.99)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "9c8a00dbd82b4f1c": {
-   "matches": [
-    {
-     "tabId": 117,
-     "confidence": 1,
-     "reason": "Community tutorial copies"
-    }
-   ],
-   "mode": [
-    "Community tutorial copies"
-   ]
-  },
-  "e7fea1bd35c804f3": {
-   "matches": [
-    {
-     "tabId": 33,
-     "confidence": 1,
-     "reason": "Official documentation"
-    }
-   ],
-   "mode": [
-    "Official documentation"
-   ]
-  },
-  "40f4e612b7752939": {
-   "matches": [
-    {
-     "tabId": 44,
-     "confidence": 1,
-     "reason": "Outdated pages"
-    },
-    {
-     "tabId": 45,
-     "confidence": 1,
-     "reason": "Outdated pages"
-    },
-    {
-     "tabId": 113,
-     "confidence": 1,
-     "reason": "Outdated pages"
-    }
-   ],
-   "mode": [
-    "Outdated pages"
-   ]
-  },
-  "57ad050cadc4a7ba": {
-   "matches": [
-    {
-     "tabId": 54,
-     "confidence": 1,
-     "reason": "Near-duplicate article (no new information)"
-    }
-   ],
-   "mode": [
-    "Near-duplicate article (no new information)"
-   ]
-  },
-  "df8a0e4becc92486": {
+  "42a9547e0c1af1e4": {
    "matches": [],
    "mode": [
     "abstain_no_corroboration"
    ]
   },
-  "d0990c0342623ed3": {
+  "257a0e9a3a787734": {
    "matches": [
     {
-     "tabId": 51,
-     "confidence": 0.9966109624922062,
-     "reason": "Entails \"shopping\" (1.00)"
-    },
-    {
-     "tabId": 50,
-     "confidence": 0.995788571479724,
-     "reason": "Entails \"shopping\" (1.00)"
-    },
-    {
-     "tabId": 49,
-     "confidence": 0.988153717806885,
-     "reason": "Entails \"shopping\" (0.99)"
-    },
-    {
-     "tabId": 52,
-     "confidence": 0.9783027050272389,
-     "reason": "Entails \"shopping\" (0.98)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "e137be117c93e87a": {
-   "matches": [
-    {
-     "tabId": 50,
-     "confidence": 1,
-     "reason": "Category: shopping except pinned/audible"
-    },
-    {
-     "tabId": 51,
-     "confidence": 1,
-     "reason": "Category: shopping except pinned/audible"
-    },
-    {
-     "tabId": 52,
-     "confidence": 1,
-     "reason": "Category: shopping except pinned/audible"
-    },
-    {
-     "tabId": 53,
-     "confidence": 1,
-     "reason": "Category: shopping except pinned/audible"
-    },
-    {
-     "tabId": 72,
-     "confidence": 1,
-     "reason": "Category: shopping except pinned/audible"
-    },
-    {
-     "tabId": 87,
-     "confidence": 1,
-     "reason": "Category: shopping except pinned/audible"
-    },
-    {
-     "tabId": 89,
-     "confidence": 1,
-     "reason": "Category: shopping except pinned/audible"
-    },
-    {
-     "tabId": 90,
-     "confidence": 1,
-     "reason": "Category: shopping except pinned/audible"
-    }
-   ],
-   "mode": [
-    "Category: shopping except pinned/audible"
-   ]
-  },
-  "1dbc8153ddb4332a": {
-   "matches": [
-    {
-     "tabId": 17,
+     "tabId": 77,
      "confidence": 0.7,
-     "reason": "Entails \"github OR gitlab\" (0.98)"
+     "reason": "Entails \"access-denied OR not-found\" (0.99)"
     }
    ],
    "mode": [
     "nli"
    ]
   },
-  "410c5febd7077272": {
+  "d9f8fb60eec8fcd7": {
    "matches": [
     {
-     "tabId": 30,
-     "confidence": 0.994786623678392,
-     "reason": "complement"
+     "tabId": 59,
+     "confidence": 0.9977222603340377,
+     "reason": "Entails \"loading\" (1.00)"
     }
    ],
    "mode": [
-    "Scoped complement of: videos"
+    "nli"
    ]
   },
-  "dea09fb892ab50d4": {
+  "53fa304f2814bb19": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "a635c101246fc591": {
    "matches": [
     {
-     "tabId": 9,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 12,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 16,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 19,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 20,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 21,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 24,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 26,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 30,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 32,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 46,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
+     "tabId": 37,
+     "confidence": 0.9307347841865531,
+     "reason": "Entails \"german woodworking guide\" (0.93)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "eac60a697f049eb5": {
+   "matches": [
     {
      "tabId": 47,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
+     "confidence": 0.9958458348584152,
+     "reason": "Entails \"compost gear\" (1.00)"
     },
     {
      "tabId": 48,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
+     "confidence": 0.9738758025614526,
+     "reason": "Entails \"compost gear\" (0.97)"
     },
     {
      "tabId": 50,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
+     "confidence": 0.9554688499507509,
+     "reason": "Entails \"compost gear\" (0.96)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "219be142f8101eb8": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "1f921753ae5fa57a": {
+   "matches": [
+    {
+     "tabId": 48,
+     "confidence": 0.9965832422069281,
+     "reason": "Entails \"compost bin\" (1.00)"
     },
     {
-     "tabId": 51,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
+     "tabId": 47,
+     "confidence": 0.9964521550935019,
+     "reason": "Entails \"compost bin\" (1.00)"
     },
     {
-     "tabId": 52,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
+     "tabId": 49,
+     "confidence": 0.9956723059313517,
+     "reason": "Entails \"compost bin\" (1.00)"
     },
     {
-     "tabId": 54,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
+     "tabId": 50,
+     "confidence": 0.9915721181957182,
+     "reason": "Entails \"compost bin\" (0.99)"
     },
     {
-     "tabId": 55,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
+     "tabId": 46,
+     "confidence": 0.9892046045669324,
+     "reason": "Entails \"compost bin\" (0.99)"
     },
     {
-     "tabId": 57,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
+     "tabId": 5,
+     "confidence": 0.7782760696216525,
+     "reason": "Entails \"compost bin\" (0.78)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "27b66bc5bbce3a87": {
+   "matches": [
+    {
+     "tabId": 69,
+     "confidence": 0.9963010718096273,
+     "reason": "Entails \"copenhagen OR van OR trip\" (1.00)"
+    },
+    {
+     "tabId": 12,
+     "confidence": 0.9957620626033747,
+     "reason": "Entails \"copenhagen OR van OR trip\" (1.00)"
+    },
+    {
+     "tabId": 88,
+     "confidence": 0.9949903681637903,
+     "reason": "Entails \"copenhagen OR van OR trip\" (0.99)"
+    },
+    {
+     "tabId": 85,
+     "confidence": 0.9942513018170986,
+     "reason": "Entails \"copenhagen OR van OR trip\" (0.99)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "3a6bcd1a2aa6d89b": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "96bf4614513d6e51": {
+   "matches": [
+    {
+     "tabId": 80,
+     "confidence": 0.792491053290355,
+     "reason": "Entails \"flash-era recipe archive\" (0.79)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "fd5bfeefb88c9a3f": {
+   "matches": [
+    {
+     "tabId": 7,
+     "confidence": 0.9729409149060083,
+     "reason": "Entails \"official chess sites\" (0.97)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "d4dd0ad1a9fb889a": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "0904206bddcd64af": {
+   "matches": [
+    {
+     "tabId": 90,
+     "confidence": 0.9971161540497983,
+     "reason": "Entails \"fermentation\" (1.00)"
+    },
+    {
+     "tabId": 86,
+     "confidence": 0.9951469150492772,
+     "reason": "Entails \"fermentation\" (1.00)"
+    },
+    {
+     "tabId": 22,
+     "confidence": 0.9936220644803222,
+     "reason": "Entails \"fermentation\" (0.99)"
+    },
+    {
+     "tabId": 23,
+     "confidence": 0.9836569630633146,
+     "reason": "Entails \"fermentation\" (0.98)"
     },
     {
      "tabId": 60,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
+     "confidence": 0.9434016485850889,
+     "reason": "Entails \"fermentation\" (0.94)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "9c501a70cf692f5c": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "cf0832f5b572bff1": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "b8f5c5c8748a106e": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "3498b236d90f8254": {
+   "matches": [
     {
-     "tabId": 66,
+     "tabId": 33,
      "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
+     "reason": "Superlative: two newest opened"
     },
     {
      "tabId": 67,
      "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 68,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 70,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 71,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 73,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 74,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 75,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 78,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 79,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 80,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 83,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 89,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 90,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 92,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 93,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 94,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 95,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 96,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 97,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 98,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 99,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 100,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 106,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 107,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 112,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 116,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
-    },
-    {
-     "tabId": 117,
-     "confidence": 1,
-     "reason": "Unpinned, not bookmarked, opened in last 24hours"
+     "reason": "Superlative: two newest opened"
     }
    ],
    "mode": [
-    "Unpinned, not bookmarked, opened in last 24hours"
+    "Superlative: two newest opened"
    ]
   },
-  "fa099c7950bd8dba": {
-   "matches": [],
-   "mode": [
-    "abstain_ambiguous_scope"
-   ]
-  },
-  "0cbd5ca9411d188c": {
+  "b5f5ff1cd412d5d1": {
    "matches": [
     {
-     "tabId": 95,
-     "confidence": 1,
-     "reason": "Core google.com site (surface subdomains excluded)"
-    }
-   ],
-   "mode": [
-    "Core google.com site (surface subdomains excluded)"
-   ]
-  },
-  "fddc25e6d180ad52": {
-   "matches": [
-    {
-     "tabId": 52,
-     "confidence": 1,
-     "reason": "Conjunct union of 2 literal clauses"
-    },
-    {
-     "tabId": 78,
-     "confidence": 1,
-     "reason": "Conjunct union of 2 literal clauses"
-    },
-    {
-     "tabId": 79,
-     "confidence": 1,
-     "reason": "Conjunct union of 2 literal clauses"
-    },
-    {
-     "tabId": 80,
-     "confidence": 1,
-     "reason": "Conjunct union of 2 literal clauses"
-    }
-   ],
-   "mode": [
-    "Conjunct union of 2 literal clauses"
-   ]
-  },
-  "de87c1534b22a541": {
-   "matches": [
-    {
-     "tabId": 51,
-     "confidence": 0.9966109624922062,
-     "reason": "Entails \"shopping\" (1.00)"
-    },
-    {
-     "tabId": 50,
-     "confidence": 0.995788571479724,
-     "reason": "Entails \"shopping\" (1.00)"
-    },
-    {
-     "tabId": 72,
-     "confidence": 0.9921371672873066,
-     "reason": "Entails \"shopping\" (0.99)"
-    },
-    {
-     "tabId": 49,
-     "confidence": 0.988153717806885,
-     "reason": "Entails \"shopping\" (0.99)"
-    },
-    {
-     "tabId": 52,
-     "confidence": 0.9783027050272389,
-     "reason": "Entails \"shopping\" (0.98)"
+     "tabId": 76,
+     "confidence": 0.9862646059014561,
+     "reason": "Entails \"baking guide\" (0.99)"
     }
    ],
    "mode": [
     "nli"
    ]
   },
-  "c497326720bac228": {
-   "matches": [],
-   "mode": [
-    "abstain_mass_close_requires_confirmation"
-   ]
-  },
-  "db8fec4c3fb0d11a": {
-   "matches": [],
-   "mode": [
-    "abstain_ambiguous_time_anchor"
-   ]
-  },
-  "f1bf84853a74ed2d": {
-   "matches": [],
-   "mode": [
-    "abstain_no_corroboration"
-   ]
-  },
-  "bfd55b012de0c4a5": {
-   "matches": [],
-   "mode": [
-    "abstain_content_date"
-   ]
-  },
-  "92afc7e2be657e7d": {
-   "matches": [],
-   "mode": [
-    "abstain_no_corroboration"
-   ]
-  },
-  "3090c15f47401895": {
+  "9c20ddaaff98b61c": {
    "matches": [
     {
-     "tabId": 76,
-     "confidence": 1,
-     "reason": "Window 3 except leetcode one"
+     "tabId": 1,
+     "confidence": 0.9953858441258857,
+     "reason": "Entails \"recipe OR fermentation\" (1.00)"
+    },
+    {
+     "tabId": 3,
+     "confidence": 0.9950442853337687,
+     "reason": "Entails \"recipe OR fermentation\" (1.00)"
     },
     {
      "tabId": 80,
-     "confidence": 1,
-     "reason": "Window 3 except leetcode one"
+     "confidence": 0.9900184491231416,
+     "reason": "Entails \"recipe OR fermentation\" (0.99)"
     },
     {
-     "tabId": 103,
-     "confidence": 1,
-     "reason": "Window 3 except leetcode one"
+     "tabId": 60,
+     "confidence": 0.9434016485850889,
+     "reason": "Entails \"recipe OR fermentation\" (0.94)"
     },
     {
-     "tabId": 104,
-     "confidence": 1,
-     "reason": "Window 3 except leetcode one"
-    },
-    {
-     "tabId": 105,
-     "confidence": 1,
-     "reason": "Window 3 except leetcode one"
-    },
-    {
-     "tabId": 108,
-     "confidence": 1,
-     "reason": "Window 3 except leetcode one"
-    },
-    {
-     "tabId": 109,
-     "confidence": 1,
-     "reason": "Window 3 except leetcode one"
-    },
-    {
-     "tabId": 113,
-     "confidence": 1,
-     "reason": "Window 3 except leetcode one"
-    },
-    {
-     "tabId": 114,
-     "confidence": 1,
-     "reason": "Window 3 except leetcode one"
-    },
-    {
-     "tabId": 117,
-     "confidence": 1,
-     "reason": "Window 3 except leetcode one"
+     "tabId": 76,
+     "confidence": 0.7,
+     "reason": "Entails \"recipe OR fermentation\" (0.70)"
     }
    ],
    "mode": [
-    "Window 3 except leetcode one"
+    "nli"
    ]
   },
-  "bd04b345727411a6": {
+  "4d1fc9ed91cfb388": {
    "matches": [
+    {
+     "tabId": 25,
+     "confidence": 0.9982911616241725,
+     "reason": "complement"
+    },
+    {
+     "tabId": 26,
+     "confidence": 0.9971132251427487,
+     "reason": "complement"
+    }
+   ],
+   "mode": [
+    "Scoped complement of: buyers guide"
+   ]
+  },
+  "9c3ec5016c5384d8": {
+   "matches": [
+    {
+     "tabId": 1,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 2,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 3,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 4,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 5,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 6,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 7,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 8,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 9,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
     {
      "tabId": 10,
      "confidence": 1,
-     "reason": "Similar to: Deep Dive: OAuth and Refresh Tokens - TechWriting"
+     "reason": "Command targets all tabs"
     },
     {
      "tabId": 11,
      "confidence": 1,
-     "reason": "Similar to: Deep Dive: OAuth and Refresh Tokens - TechWriting"
+     "reason": "Command targets all tabs"
     },
     {
      "tabId": 12,
      "confidence": 1,
-     "reason": "Similar to: Deep Dive: OAuth and Refresh Tokens - TechWriting"
+     "reason": "Command targets all tabs"
     },
     {
      "tabId": 13,
      "confidence": 1,
-     "reason": "Similar to: Deep Dive: OAuth and Refresh Tokens - TechWriting"
+     "reason": "Command targets all tabs"
     },
     {
      "tabId": 14,
      "confidence": 1,
-     "reason": "Similar to: Deep Dive: OAuth and Refresh Tokens - TechWriting"
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 15,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 16,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 17,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 18,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 19,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 20,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 21,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 22,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 23,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 24,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
     },
     {
      "tabId": 25,
      "confidence": 1,
-     "reason": "Similar to: Deep Dive: OAuth and Refresh Tokens - TechWriting"
+     "reason": "Command targets all tabs"
     },
-    {
-     "tabId": 94,
-     "confidence": 1,
-     "reason": "Similar to: Deep Dive: OAuth and Refresh Tokens - TechWriting"
-    }
-   ],
-   "mode": [
-    "Similar to: Deep Dive: OAuth and Refresh Tokens - TechWriting"
-   ]
-  },
-  "095d000492adf390": {
-   "matches": [
-    {
-     "tabId": 115,
-     "confidence": 1,
-     "reason": "Temporary (user tag)"
-    }
-   ],
-   "mode": [
-    "Temporary (user tag)"
-   ]
-  },
-  "83a970ab8a0c33ea": {
-   "matches": [
     {
      "tabId": 26,
      "confidence": 1,
-     "reason": "high priority"
+     "reason": "Command targets all tabs"
     },
     {
-     "tabId": 116,
+     "tabId": 27,
      "confidence": 1,
-     "reason": "high priority"
-    }
-   ],
-   "mode": [
-    "high priority"
-   ]
-  },
-  "3d9060d480021ea0": {
-   "matches": [
+     "reason": "Command targets all tabs"
+    },
     {
-     "tabId": 96,
+     "tabId": 28,
      "confidence": 1,
-     "reason": "Tagged: onboarding"
-    }
-   ],
-   "mode": [
-    "Tagged: onboarding"
-   ]
-  },
-  "63fe84ff2fcce164": {
-   "matches": [
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 29,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 30,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 31,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 32,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 33,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 34,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 35,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 36,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 37,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 38,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 39,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 40,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 41,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 42,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 43,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 44,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 45,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 46,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 47,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 48,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 49,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 50,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 51,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 52,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 53,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 54,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 55,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 56,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 57,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 58,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 59,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 60,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
     {
      "tabId": 61,
      "confidence": 1,
-     "reason": "Tagged: research"
+     "reason": "Command targets all tabs"
     },
     {
      "tabId": 62,
      "confidence": 1,
-     "reason": "Tagged: research"
+     "reason": "Command targets all tabs"
     },
     {
      "tabId": 63,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 64,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 65,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 66,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 67,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 68,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 69,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 70,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 71,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 72,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 73,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 74,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 75,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 76,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 77,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 78,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 79,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 80,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 81,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 82,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 83,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 84,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 85,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 86,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 87,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 88,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 89,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    },
+    {
+     "tabId": 90,
+     "confidence": 1,
+     "reason": "Command targets all tabs"
+    }
+   ],
+   "mode": [
+    "Command targets all tabs"
+   ]
+  },
+  "8cbc8e33a0865ea1": {
+   "matches": [
+    {
+     "tabId": 4,
+     "confidence": 0.9926381652651686,
+     "reason": "complement"
+    },
+    {
+     "tabId": 70,
+     "confidence": 0.9968923826748515,
+     "reason": "complement"
+    },
+    {
+     "tabId": 76,
+     "confidence": 0.9358755791535044,
+     "reason": "complement"
+    },
+    {
+     "tabId": 82,
+     "confidence": 0.9982296223875782,
+     "reason": "complement"
+    }
+   ],
+   "mode": [
+    "Scoped complement of: video, bookmarked"
+   ]
+  },
+  "3cd3eb90a1c4f5b2": {
+   "matches": [
+    {
+     "tabId": 38,
+     "confidence": 0.9833014262166595,
+     "reason": "Entails \"german OR pdf\" (0.98)"
+    },
+    {
+     "tabId": 37,
+     "confidence": 0.9774672656025645,
+     "reason": "Entails \"german OR pdf\" (0.98)"
+    },
+    {
+     "tabId": 83,
+     "confidence": 0.8846698970144883,
+     "reason": "Entails \"german OR pdf\" (0.88)"
+    },
+    {
+     "tabId": 29,
+     "confidence": 0.7,
+     "reason": "Entails \"german OR pdf\" (0.70)"
+    },
+    {
+     "tabId": 56,
+     "confidence": 0.7,
+     "reason": "Entails \"german OR pdf\" (0.70)"
+    },
+    {
+     "tabId": 57,
+     "confidence": 0.7,
+     "reason": "Entails \"german OR pdf\" (0.70)"
+    },
+    {
+     "tabId": 82,
+     "confidence": 0.7,
+     "reason": "Entails \"german OR pdf\" (0.70)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "9d5071ea656faf57": {
+   "matches": [
+    {
+     "tabId": 65,
+     "confidence": 0.998119584268846,
+     "reason": "Entails \"recipe\" (1.00)"
+    },
+    {
+     "tabId": 32,
+     "confidence": 0.9978129912647059,
+     "reason": "Entails \"recipe\" (1.00)"
+    },
+    {
+     "tabId": 31,
+     "confidence": 0.996857985512701,
+     "reason": "Entails \"recipe\" (1.00)"
+    },
+    {
+     "tabId": 81,
+     "confidence": 0.9966884148383697,
+     "reason": "Entails \"recipe\" (1.00)"
+    },
+    {
+     "tabId": 89,
+     "confidence": 0.9966611053873534,
+     "reason": "Entails \"recipe\" (1.00)"
+    },
+    {
+     "tabId": 1,
+     "confidence": 0.9953858441258857,
+     "reason": "Entails \"recipe\" (1.00)"
+    },
+    {
+     "tabId": 3,
+     "confidence": 0.9950442853337687,
+     "reason": "Entails \"recipe\" (1.00)"
+    },
+    {
+     "tabId": 77,
+     "confidence": 0.9918640907864367,
+     "reason": "Entails \"recipe\" (0.99)"
+    },
+    {
+     "tabId": 80,
+     "confidence": 0.9900184491231416,
+     "reason": "Entails \"recipe\" (0.99)"
+    },
+    {
+     "tabId": 78,
+     "confidence": 0.9702761815545289,
+     "reason": "Entails \"recipe\" (0.97)"
+    },
+    {
+     "tabId": 30,
+     "confidence": 0.9100599919686914,
+     "reason": "Entails \"recipe\" (0.91)"
+    },
+    {
+     "tabId": 74,
+     "confidence": 0.8592353577733886,
+     "reason": "Entails \"recipe\" (0.86)"
+    },
+    {
+     "tabId": 2,
+     "confidence": 0.7,
+     "reason": "Entails \"recipe\" (0.70)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "729570b94148d688": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "ad17713c442c69cc": {
+   "matches": [
+    {
+     "tabId": 35,
+     "confidence": 0.9430313251562099,
+     "reason": "Entails \"chess group\" (0.94)"
+    },
+    {
+     "tabId": 33,
+     "confidence": 0.9368435643144639,
+     "reason": "Entails \"chess group\" (0.94)"
+    },
+    {
+     "tabId": 8,
+     "confidence": 0.9137372895409415,
+     "reason": "Entails \"chess group\" (0.91)"
+    },
+    {
+     "tabId": 36,
+     "confidence": 0.9123825328194058,
+     "reason": "Entails \"chess group\" (0.91)"
+    },
+    {
+     "tabId": 9,
+     "confidence": 0.9032218616119456,
+     "reason": "Entails \"chess group\" (0.90)"
+    },
+    {
+     "tabId": 63,
+     "confidence": 0.9024373459195613,
+     "reason": "Entails \"chess group\" (0.90)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "937bf6132076f4cf": {
+   "matches": [
+    {
+     "tabId": 90,
+     "confidence": 0.9971161540497983,
+     "reason": "Entails \"fermentation\" (1.00)"
+    },
+    {
+     "tabId": 86,
+     "confidence": 0.9951469150492772,
+     "reason": "Entails \"fermentation\" (1.00)"
+    },
+    {
+     "tabId": 22,
+     "confidence": 0.9936220644803222,
+     "reason": "Entails \"fermentation\" (0.99)"
+    },
+    {
+     "tabId": 23,
+     "confidence": 0.9836569630633146,
+     "reason": "Entails \"fermentation\" (0.98)"
+    },
+    {
+     "tabId": 60,
+     "confidence": 0.9434016485850889,
+     "reason": "Entails \"fermentation\" (0.94)"
+    }
+   ],
+   "mode": [
+    "nli"
+   ]
+  },
+  "5a70e9c2ca0d838f": {
+   "matches": [
+    {
+     "tabId": 1,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 3,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 4,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 5,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 6,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 7,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 8,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 9,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 10,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 11,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 12,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 13,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 14,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 15,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 16,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 17,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 18,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 19,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 20,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 21,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 22,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 23,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 24,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 25,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 26,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 27,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 28,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 29,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 30,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 31,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 32,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 33,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 34,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 35,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 36,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 37,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 38,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 39,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 40,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 41,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 42,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 43,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 44,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 45,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 46,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 47,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 48,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 49,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 50,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 51,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 52,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 53,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 54,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 55,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 56,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 57,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 58,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 59,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 60,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 61,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 62,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 63,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 64,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 65,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 66,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 67,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 68,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 69,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 70,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 71,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 72,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 73,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 74,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 75,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 76,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 77,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 78,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 79,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 80,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 81,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 82,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 83,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 84,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 85,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 86,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 87,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 88,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 89,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    },
+    {
+     "tabId": 90,
+     "confidence": 1,
+     "reason": "Complement of: beef"
+    }
+   ],
+   "mode": [
+    "Complement of: beef"
+   ]
+  },
+  "35aad6e8fdb21375": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "fbc692275d907a81": {
+   "matches": [],
+   "mode": [
+    "abstain_no_corroboration"
+   ]
+  },
+  "2757d36124f1c6ad": {
+   "matches": [
+    {
+     "tabId": 70,
+     "confidence": 1,
+     "reason": "Tagged: research"
+    },
+    {
+     "tabId": 71,
+     "confidence": 1,
+     "reason": "Tagged: research"
+    },
+    {
+     "tabId": 72,
      "confidence": 1,
      "reason": "Tagged: research"
     }
    ],
    "mode": [
     "Tagged: research"
-   ]
-  },
-  "56fc0f3eeb75efb3": {
-   "matches": [
-    {
-     "tabId": 26,
-     "confidence": 1,
-     "reason": "Due within a week"
-    },
-    {
-     "tabId": 116,
-     "confidence": 1,
-     "reason": "Due within a week"
-    }
-   ],
-   "mode": [
-    "Due within a week"
-   ]
-  },
-  "60b7ddabee9bb753": {
-   "matches": [
-    {
-     "tabId": 116,
-     "confidence": 0.9937424134641996,
-     "reason": "Entails \"interview\" (0.99)"
-    }
-   ],
-   "mode": [
-    "nli"
-   ]
-  },
-  "85dd8dd4d67a8ab0": {
-   "matches": [
-    {
-     "tabId": 40,
-     "confidence": 1,
-     "reason": "Superlative: eight oldest opened"
-    },
-    {
-     "tabId": 111,
-     "confidence": 1,
-     "reason": "Superlative: eight oldest opened"
-    },
-    {
-     "tabId": 39,
-     "confidence": 1,
-     "reason": "Superlative: eight oldest opened"
-    },
-    {
-     "tabId": 45,
-     "confidence": 1,
-     "reason": "Superlative: eight oldest opened"
-    },
-    {
-     "tabId": 44,
-     "confidence": 1,
-     "reason": "Superlative: eight oldest opened"
-    },
-    {
-     "tabId": 114,
-     "confidence": 1,
-     "reason": "Superlative: eight oldest opened"
-    },
-    {
-     "tabId": 113,
-     "confidence": 1,
-     "reason": "Superlative: eight oldest opened"
-    },
-    {
-     "tabId": 86,
-     "confidence": 1,
-     "reason": "Superlative: eight oldest opened"
-    }
-   ],
-   "mode": [
-    "Superlative: eight oldest opened"
-   ]
-  },
-  "ab53df6a18c026bf": {
-   "matches": [
-    {
-     "tabId": 87,
-     "confidence": 1,
-     "reason": "Superlative: three oldest opened"
-    },
-    {
-     "tabId": 53,
-     "confidence": 1,
-     "reason": "Superlative: three oldest opened"
-    },
-    {
-     "tabId": 72,
-     "confidence": 1,
-     "reason": "Superlative: three oldest opened"
-    }
-   ],
-   "mode": [
-    "Superlative: three oldest opened"
-   ]
-  },
-  "4323619a3ee99dba": {
-   "matches": [
-    {
-     "tabId": 73,
-     "confidence": 1,
-     "reason": "All but the newest (66 retained)"
-    },
-    {
-     "tabId": 65,
-     "confidence": 1,
-     "reason": "All but the newest (66 retained)"
-    }
-   ],
-   "mode": [
-    "All but the newest (66 retained)"
-   ]
-  },
-  "122ebb6fc90ba83a": {
-   "matches": [
-    {
-     "tabId": 34,
-     "confidence": 1,
-     "reason": "Most relevant: 2 x react performance"
-    },
-    {
-     "tabId": 46,
-     "confidence": 1,
-     "reason": "Most relevant: 2 x react performance"
-    }
-   ],
-   "mode": [
-    "Most relevant: 2 x react performance"
-   ]
-  },
-  "6e7cd31a81ccdc53": {
-   "matches": [],
-   "mode": [
-    "abstain_unnamed_source"
-   ]
-  },
-  "b66167f16c7bb31b": {
-   "matches": [],
-   "mode": [
-    "abstain_no_corroboration"
-   ]
-  },
-  "aa87ef4d623d622a": {
-   "matches": [
-    {
-     "tabId": 63,
-     "confidence": 1,
-     "reason": "Scrolled to the bottom"
-    }
-   ],
-   "mode": [
-    "Scrolled to the bottom"
    ]
   }
  }
