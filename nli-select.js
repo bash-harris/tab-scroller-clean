@@ -488,6 +488,170 @@
     return out;
   }
 
+  // ---- DEDUPE CLUSTERING (gauntlet GA-2) ------------------------------------
+  //
+  // Duplication is a RELATION between tabs, invisible to per-tab entailment:
+  // scoring "duplicate" against a title cannot tell the original from the
+  // copy, so the semantic path closes the wrong half (measured on real-v1:
+  // originals closed, copies kept -- the direction inverted). The census
+  // clusters a scoped universe once and acts on cluster membership instead.
+  //
+  // Tiers, strongest first:
+  //   0. duplicateOf links -- the pool's own measured copy markers.
+  //   1. exact URL (protocol/www/trailing-slash-insensitive).
+  //   2. canonical URL -- tracking params (utm_*, fbclid, ...), URL
+  //      fragments, and the m./mobile. host prefix stripped. Identity params
+  //      (youtube's v=) survive.
+  //   3. identical normalized titles -- the LOW-CONFIDENCE tier: fires only
+  //      when the command narrows the universe ("duplicate leetcode problem
+  //      tabs", "duplicate tabs of the 5 ai engineer projects video") AND
+  //      every topic token anchors the cluster members, so pool-wide title
+  //      collisions ("Google Gemini" chat frames, "leetcode.com" pages) never
+  //      cluster.
+  const TRACKING_PARAM_RE =
+    /^(?:utm_|fbclid|gclid|msclkid|igshid|mc_[ce]id|ref(?:_src|_url|_)?|si|t|feature|spm|cmpid|share_)/;
+  function canonicalUrlKey(u) {
+    let s = String(u || '').trim().toLowerCase();
+    if (!s) return null;
+    if (!/^[a-z][a-z0-9+.-]*:\/\//.test(s)) s = 'https://' + s;
+    try {
+      const U = new URL(s);
+      U.hash = '';
+      const drop = [];
+      U.searchParams.forEach((v, k) => { if (TRACKING_PARAM_RE.test(k)) drop.push(k); });
+      drop.forEach(k => U.searchParams.delete(k));
+      const host = U.host.replace(/^www\./, '').replace(/^(m|mobile)\./, '');
+      return host + U.pathname.replace(/\/+$/, '') + U.search;
+    } catch { return null; }
+  }
+  // Chrome numbers a second tab of the same page "(2) Title" -- the counter
+  // is browser plumbing, not content. Strip it (plus whitespace noise) so
+  // title-tier sees "(2) WhatsApp" and "WhatsApp" as the same story.
+  function normalizedTitleKey(t) {
+    return String(t || '').toLowerCase().replace(/\(\d+\)\s*/g, '').replace(/\s+/g, ' ').trim();
+  }
+  // Generic object nouns are frame vocabulary, never topic anchors: "video"
+  // in "the 5 ai engineer projects youtube video" must not block the
+  // title-tier anchor test.
+  const DEDUPE_FRAME_TOKS = new Set(['tab', 'tabs', 'page', 'pages', 'chat', 'chats',
+    'window', 'windows', 'one', 'ones', 'video', 'videos', 'link', 'links',
+    'copy', 'copies', 'duplicate', 'duplicates', 'duplicated', 'thing', 'things',
+    'stuff', 'site', 'sites', 'article', 'articles', 'story', 'stories',
+    'new', 'the', 'a', 'an', 'my', 'of', 'in', 'and', 'or',
+    'keep', 'keeping', 'kept', 'first', 'last', 'oldest', 'newest',
+    'original', 'originals', 'freshest', 'latest', 'opened', 'twice',
+    'doubled', 'repeated', 'near', 'same', 'coverage', 'up',
+    'second', 'third', 'copy2']);
+  // Cluster a candidate set into duplicate groups (arrays, size >= 2) using
+  // the tiers above. opts: { canonical, titleTier, topicToks }.
+  function dupClustersOf(set, opts) {
+    const { canonical = false, titleTier = false, topicToks = [] } = opts || {};
+    const parent = new Map();
+    const find = x => { while (parent.get(x) !== x) x = parent.get(x); return x; };
+    const union = (a, b) => { const ra = find(a), rb = find(b); if (ra !== rb) parent.set(ra, rb); };
+    for (const c of set) parent.set(c.tabId, c.tabId);
+    const groupsBy = keyOf => {
+      const m = new Map();
+      for (const c of set) {
+        const k = keyOf(c);
+        if (!k) continue;
+        if (!m.has(k)) m.set(k, []);
+        m.get(k).push(c);
+      }
+      return m.values();
+    };
+    for (const arr of groupsBy(c => {
+      const u = String(c.url || '').trim().toLowerCase()
+        .replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+      return u || null;
+    })) for (let i = 1; i < arr.length; i++) union(arr[0].tabId, arr[i].tabId);
+    if (canonical) {
+      for (const arr of groupsBy(c => canonicalUrlKey(c.url)))
+        for (let i = 1; i < arr.length; i++) union(arr[0].tabId, arr[i].tabId);
+    }
+    const inSet = new Set(set.map(c => c.tabId));
+    for (const c of set) {
+      if (c.duplicateOf != null && inSet.has(c.duplicateOf)) union(c.tabId, c.duplicateOf);
+    }
+    if (titleTier && topicToks.length) {
+      const anchored = c => topicToks.every(t => {
+        const hay = `${c.title || ''} ${c.url || ''}`;
+        const stemT = t.replace(/s$/, '');
+        return wordHit(t, hay) || (stemT.length >= 3 && wordHit(stemT + 's?', hay));
+      });
+      // Title-equal + topic-anchored is still only a REOPENING when the two
+      // tabs sit on the same page: identical canonical PATH (query-only
+      // drift allowed -- envId/timestamp params). Path-siblings (a listing
+      // vs its description page, same title, different content) stay
+      // separate: measured, (324,359) share a title on sibling paths and
+      // the gold treats them as distinct problems' views.
+      const pathKey = c => {
+        try { return new URL(String(c.url || '')).pathname.toLowerCase().replace(/\/+$/, ''); }
+        catch { return null; }
+      };
+      for (const arr of groupsBy(c => normalizedTitleKey(c.title))) {
+        if (arr.length < 2) continue;
+        const members = arr.filter(anchored);
+        if (members.length < 2) continue;
+        const byPath = new Map();
+        for (const m of members) {
+          const k = pathKey(m);
+          if (!k) continue;
+          if (!byPath.has(k)) byPath.set(k, []);
+          byPath.get(k).push(m);
+        }
+        for (const parr of byPath.values())
+          for (let i = 1; i < parr.length; i++) union(parr[0].tabId, parr[i].tabId);
+      }
+    }
+    const out = new Map();
+    for (const c of set) {
+      const r = find(c.tabId);
+      if (!out.has(r)) out.set(r, []);
+      out.get(r).push(c);
+    }
+    return [...out.values()].filter(g => g.length >= 2);
+  }
+  // Split a cluster into keepers and closes. Direction comes from the pool
+  // first: a member flagged duplicateOf onto a sibling IS the measured copy
+  // -- close it, keep the original, whatever the keep-rule says (the gold
+  // "close duplicate tabs and keep the oldest" closes a flagged copy that is
+  // older than its original; the link outranks the clock). Without links the
+  // keep-rule decides: first (lowest index, the default), oldest/newest by
+  // opened time, last (highest index). 'original' without links falls back
+  // to first.
+  function dupKeeperSplit(group, keep) {
+    const ids = new Set(group.map(c => c.tabId));
+    const flagged = group.filter(c => c.duplicateOf != null && ids.has(c.duplicateOf));
+    if (flagged.length && flagged.length < group.length) {
+      const flaggedIds = new Set(flagged.map(c => c.tabId));
+      return { keepers: group.filter(c => !flaggedIds.has(c.tabId)), close: flagged };
+    }
+    const byIdx = (a, b) => ((a.index ?? 0) - (b.index ?? 0)) || (a.tabId - b.tabId);
+    const rankTs = c => { const t = tsOf(c.openedAt); return Number.isFinite(t) ? t : null; };
+    let keeper;
+    if (keep === 'oldest' || keep === 'original') {
+      keeper = [...group].sort((a, b) => {
+        const ta = rankTs(a), tb = rankTs(b);
+        if (ta != null && tb != null && ta !== tb) return ta - tb;
+        if (ta != null !== (tb != null)) return ta != null ? -1 : 1;
+        return byIdx(a, b);
+      })[0];
+    } else if (keep === 'newest') {
+      keeper = [...group].sort((a, b) => {
+        const ta = rankTs(a), tb = rankTs(b);
+        if (ta != null && tb != null && ta !== tb) return tb - ta;
+        if (ta != null !== (tb != null)) return tb != null ? -1 : 1;
+        return byIdx(b, a);
+      })[0];
+    } else if (keep === 'last') {
+      keeper = [...group].sort(byIdx)[group.length - 1];
+    } else {
+      keeper = [...group].sort(byIdx)[0]; // 'first' default
+    }
+    return { keepers: [keeper], close: group.filter(c => c.tabId !== keeper.tabId) };
+  }
+
   // ---- SLOT INTERPRETER (gauntlet-v2 R2) ------------------------------------
   //
   // Consumes the parser's slot schema v2 (query.urlShape/rank/retain/dedupe/
@@ -593,7 +757,11 @@
       return { decision: 'final', mode: 'unanswerable', matches: [], needDetails: [] };
     }
     if (exclude.length || S.carveout === true) return null;
-    if (Array.isArray(q.domains) && q.domains.length) return null;
+    // Dedupe commands compose with domain filters inside the census
+    // (a guessed host must not orphan the cluster relation); other legs
+    // still yield to the domain fast path.
+    if (Array.isArray(q.domains) && q.domains.length &&
+        !(S.dedupe && typeof S.dedupe === 'object')) return null;
     if ((S.urlShape || {}).section === 'search') return null; // site-search vs results-page ambiguity
 
     const shape = S.urlShape || null;
@@ -633,7 +801,10 @@
         if (t.length >= 2 && !covered.has(t)) extras.push(t);
       }
     }
-    if (extras.length > 1) return null;
+    // Dedupe commands carry topic concepts that are the CENSUS own scope
+    // vocabulary ("gemini chats about merging alexa devices"); the census
+    // leg consumes them, so the multi-extra yield does not apply there.
+    if (extras.length > 1 && !dedupe) return null;
 
     const slotOut = (set, mode) => ({
       decision: 'final', mode, needDetails: [],
@@ -748,31 +919,145 @@
       return slotOut(keepers, `slot retain one per domain (${retain.keep})`);
     }
 
-    // DEDUPE LEG -- canonical near-duplicates within a limiter: all but the
-    // newest of each query-stripped URL group.
-    if (dedupe && (shape || rank) && !retain && !anchor && !extras.length) {
+    // DEDUPE LEG (GA-2) -- the cluster census. Duplication is a RELATION:
+    // entailment on "duplicate" cannot tell the original from the copy, so
+    // the semantic path inverts the direction (measured: originals closed,
+    // copies kept). Instead: cluster the scoped universe once (exact URL,
+    // canonical URL, identical normalized titles as the topic-anchored
+    // low-confidence tier), then close the non-keepers -- NEVER the keepers.
+    // Scope composition (job 4): topic tokens from the parse narrow the
+    // universe BEFORE clustering ("duplicate news tabs" clusters news, not
+    // the pool); a urlShape limiter composes only when it agrees with the
+    // topic evidence (a model site guess that contradicts the command own
+    // topic must not empty the census). The pool own duplicateOf links speak
+    // for direction; the keep-rule (first/oldest/newest/last/original,
+    // default first = lowest index) decides only where no link does.
+    if (dedupe && !anchor) {
+      // NEAR-DEMAND ("near-duplicate", "same story"): identical-title
+      // clustering across domains is a CONTENT judgment. A pool with no
+      // text signal cannot ground it -- abstain instead of guessing.
+      if (dedupe.near === true &&
+          !candidates.some(c => String(c.mainText || '').trim().length > 10)) {
+        return { decision: 'final', mode: 'near-duplicate abstain (no content signal)',
+          needDetails: [], matches: [] };
+      }
+      // Topic tokens scope the census FIRST ("duplicate news tabs" clusters
+      // news, never the pool; "amazon interview experience" reaches the
+      // reddit-hosted pair whose title/URL carries the tokens). The
+      // urlShape limiter then composes only when it AGREES with that
+      // evidence: a shape whose family contains none of the topic-scoped
+      // duplicate clusters (a model site guess the command's own URLs
+      // contradict) is a misread, not a scope -- dropped, and the census
+      // runs on the topic-scoped set.
+      const topicToks = (q.concepts || []).flatMap(cpt =>
+        String(cpt).toLowerCase().split(/[^a-z0-9]+/))
+        .filter(t => t.length >= 2 && !DEDUPE_FRAME_TOKS.has(t));
+      const tokHit = (t, hay) => {
+        const stemT = t.replace(/s$/, '');
+        return wordHit(t, hay) || (stemT.length >= 3 && wordHit(stemT + 's?', hay));
+      };
+      // Conjunct-first scoping: when some tab carries EVERY topic token
+      // (title+url+tags), the topic names a thing and only those tabs are
+      // the universe ("amazon interview experience" reaches the
+      // reddit-hosted pair; amazon.in cookware -- which shares only the
+      // 'amazon' brand token -- stays out). When NO tab carries the full
+      // conjunct, the tokens were a loose noun pile ("duplicate news
+      // tabs") and any-token membership scopes instead.
+      const hayOf = c => `${c.title || ''} ${c.url || ''} ${rawTagsOf(c).join(' ')}`;
       let set = candidates;
-      if (shape) {
-        set = candidates.filter(c => slotInFamily(c, site) && (!secActive || slotInSection(c, section)));
-        if (!set.length || set.length / candidates.length >= 0.30) return null;
+      // Domain filters compose here instead of yielding: a parse-guessed
+      // domain ("gemini.com" for gemini.google.com) must not orphan the
+      // census. The domain cut applies only when it keeps the topic-scoped
+      // duplicate clusters; a misguessed host is dropped like a wrong
+      // urlShape.
+      const dedupeDomains = Array.isArray(q.domains) ? q.domains : [];
+      if (topicToks.length) {
+        const conj = candidates.filter(c => topicToks.every(t => tokHit(t, hayOf(c))));
+        const any = candidates.filter(c => topicToks.some(t => tokHit(t, hayOf(c))));
+        const scoped = conj.length ? conj : any;
+        if (scoped.length) set = scoped;
       }
-      const canon = u => String(u || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '')
-        .split(/[?#]/)[0].replace(/\/$/, '');
-      const byUrl = new Map();
-      for (const c of set) {
-        const k = canon(c.url);
-        if (!k) continue;
-        if (!byUrl.has(k)) byUrl.set(k, []);
-        byUrl.get(k).push(c);
+      if (dedupeDomains.length && set.length) {
+        const domSet = set.filter(c => dedupeDomains.some(d =>
+          hostMatchesScope(hostOf(c.url || c.domain || ''), d)));
+        if (domSet.length) {
+          const baseClusters = dupClustersOf(set,
+            { canonical: true, titleTier: false, topicToks: [] });
+          const domClusters = dupClustersOf(domSet,
+            { canonical: true, titleTier: false, topicToks: [] });
+          if (domClusters.length >= baseClusters.length) set = domSet;
+        }
       }
-      const dups = [];
-      for (const arr of byUrl.values()) {
-        if (arr.length < 2) continue;
-        arr.sort((x, y) => (tsOf(y.openedAt) || 0) - (tsOf(x.openedAt) || 0) || (x.index ?? 0) - (y.index ?? 0));
-        dups.push(...arr.slice(1));
+      // 'in other windows' is a directive on WHERE the closes must live,
+      // not a pre-cluster scope: a duplicate CLUSTER spans windows by
+      // nature, so scoping the universe first would orphan every cluster
+      // whose original sits in the current window. The cluster census runs
+      // on the full scoped set; the window predicate then keeps only the
+      // closes outside the current window.
+      const closesWindowFilter = dedupe.otherWindows === true
+        ? (c => {
+            const cur = (meta && meta.currentWindowId != null) ? meta.currentWindowId : 1;
+            return c.windowId != null && c.windowId !== cur;
+          })
+        : null;
+      if (shape && set.length) {
+        const shaped = set.filter(c =>
+          slotInFamily(c, site) && (!secActive || slotInSection(c, section)));
+        if (shaped.length) {
+          const shapedClusters = dupClustersOf(shaped,
+            { canonical: true, titleTier: false, topicToks: [] });
+          const baseClusters = dupClustersOf(set,
+            { canonical: true, titleTier: false, topicToks: [] });
+          // Compose only when the shape keeps at least as many duplicate
+          // clusters as the topic-scoped set already showed -- otherwise
+          // the shape was a family guess the evidence contradicts.
+          if (shapedClusters.length >= baseClusters.length) set = shaped;
+        }
       }
-      if (!dups.length) return null;
-      return slotOut(dups, 'slot dedupe canonical duplicates');
+      if (!set.length) return null;
+      const keep = String(dedupe.keep || 'first');
+      const anchorToks = topicToks.filter(t => !DEDUPE_FRAME_TOKS.has(t));
+      // Tier gating: the EXACT-URL tier is the default (bare "close
+      // duplicate tabs" golds close exact pairs only). The CANONICAL tier
+      // (tracking/fragment/m. variants) fires when the command marks
+      // tolerance ("even if their tracking parameters differ") or when the
+      // pool's own duplicateOf links already speak for variant copies -- a
+      // link-carrying pool has measured which non-exact variants are the
+      // same page. The TITLE tier fires only topic-anchored (scoped).
+      const hasDupLinks = set.some(c => c.duplicateOf != null);
+      const clusters = dupClustersOf(set, {
+        canonical: dedupe.canonical === true || hasDupLinks,
+        titleTier: !dedupe.near && topicToks.length > 0,
+        topicToks: anchorToks
+      });
+      if (!clusters.length) return null;
+      // Link-resolved clusters are the pool own measured copies. When ANY
+      // cluster in scope carries a resolvable duplicateOf link, silent
+      // same-URL pairs (unflagged) are ambiguous resurfaces, not measured
+      // copies -- the census closes only what the links vouch for.
+      const linkResolved = g => g.some(m => m.duplicateOf != null &&
+        g.some(o => o.tabId === m.duplicateOf));
+      const linked = clusters.some(linkResolved);
+      const actionable = linked ? clusters.filter(linkResolved) : clusters;
+      const isGroup = dedupe.group === true || /group/i.test(String(q.intent || ''));
+      const out = [];
+      for (const g of actionable) {
+        if (isGroup) out.push(...g); // group_tabs: the WHOLE cluster groups
+        else out.push(...dupKeeperSplit(g, keep).close);
+      }
+      const windowFiltered = closesWindowFilter ? out.filter(closesWindowFilter) : out;
+      // Scale-aware cap: the 30% pool-share guard exists to stop a dup
+      // demand swallowing a LARGE pool (a misparse would close half the
+      // browser). On a small universe the ratio is meaningless -- two tabs
+      // in a two-tab pool are 100% and that is exactly what the command
+      // asked for. Cap only when there is a real pool behind the census.
+      if (!windowFiltered.length ||
+          (candidates.length >= 10 &&
+            windowFiltered.length / candidates.length >= 0.30)) return null;
+      const mode = isGroup
+        ? `slot dedupe cluster group (${actionable.length})`
+        : `slot dedupe ${keep}-kept (${actionable.length} cluster${actionable.length === 1 ? '' : 's'})`;
+      return slotOut(windowFiltered, mode);
     }
 
     // GROUPSCOPE LEG -- filter by tab group (name or Chrome color enum).
@@ -1508,6 +1793,25 @@
           try {
             const _cue = _LQ.validateSlots(_LQ.slotsFromCommand(cmdStr));
             if (_cue && Object.keys(_cue).length) Object.assign(_slots, _cue);
+          } catch { /* cue extraction is best-effort; legacy still answers */ }
+        }
+      } else if (_slots.dedupe === undefined) {
+        // GA-2: the dedupe census is STRUCTURAL -- a parse that predates the
+        // cue layer (bench parse caches) must not lose it. Fill only the
+        // absent slot; a delivered dedupe slot is never overwritten.
+        const _LQ = (typeof self !== 'undefined' && self.LlmQuery) ||
+          (typeof require !== 'undefined' ? require('./llm-query.js') : null);
+        if (_LQ && typeof _LQ.slotsFromCommand === 'function' && typeof _LQ.validateSlots === 'function') {
+          try {
+            const _cue = _LQ.validateSlots(_LQ.slotsFromCommand(cmdStr));
+            if (_cue && _cue.dedupe) {
+              _slots.dedupe = _cue.dedupe;
+              // Stale carveout veto: a cached parse flagged by the OLD cue
+              // layer ('keeping the first' etc) carries carveout:true, but
+              // the current cue layer clears it for dup demands. The fresh
+              // cue reading wins -- the census is armed, not vetoed.
+              if (!_cue.carveout) delete _slots.carveout;
+            }
           } catch { /* cue extraction is best-effort; legacy still answers */ }
         }
       }

@@ -23,7 +23,8 @@ const SUITES = [
   ['progress',     'NLI progress estimation threshold + UI progress clamping'],
   ['uxhonesty',    'R6  UX+honesty: group color sanitize, folder fallback, provider health, risk-calibrated preview, cloud-content gate'],
   ['perffresh',    'R7  perf+freshness: hash-join batch lookup, index budget, SPA stale cards, round-2 veto'],
-  ['abstain',      'GA-1 abstain over-fire: signal census + requires cues + zero-signal refusal']
+  ['abstain',      'GA-1 abstain over-fire: signal census + requires cues + zero-signal refusal'],
+  ['dedupe',       'GA-2 duplicates: cluster tiers + retention direction + paraphrases']
 ];
 
 let failed = [];

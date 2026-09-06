@@ -385,6 +385,39 @@ Examples:
   // carveout is cue-only: the model is never asked for it, validate() never
   // produces it. It marks a carve-out construction the slot schema cannot
   // express, forcing the slot interpreter to yield to the legacy pipeline.
+  // GA-2 dedupe: retention direction enum + paraphrase cue tables.
+  // Duplicates are a relation between tabs, so the keep DIRECTION is the
+  // command's load-bearing detail: "close duplicate tabs keeping the first"
+  // and "keep the originals" must close opposite halves. Cues live here
+  // (parser layer), the census consumes the structured slot.
+  const DEDUPE_KEEP = new Set(['first', 'last', 'oldest', 'newest', 'original']);
+  // Ordered: first match wins. Direction cues before default.
+  const DEDUPE_KEEP_CUES = [
+    [/\bkeeping?\s+(?:the\s+)?(?:first|original)\b|\bkeeping?\s+(?:the\s+)?one\s+i\s+opened\s+first\b/i, 'first'],
+    [/\bkeeping?\s+(?:the\s+)?oldest\b/i, 'oldest'],
+    [/\bkeeping?\s+(?:the\s+)?newest\b|\bkeep(?:ing)?\s+(?:only\s+)?(?:the\s+)?freshest\b/i, 'newest'],
+    [/\bkeeping?\s+(?:the\s+)?last\b/i, 'last'],
+    [/\bkeep\s+the\s+originals?\b|\bkeep(?:ing)?\s+(?:the\s+)?originals?\b/i, 'original'],
+    [/\bkeep\s+(?:only\s+)?the\s+oldest\b/i, 'oldest'],
+    [/\bkeep\s+(?:only\s+)?the\s+newest\b/i, 'newest'],
+    [/\bfreshest\s+copy\b/i, 'newest']
+  ];
+  // Duplicate-paraphrase cues (job 3): the noun phrase varies, the
+  // structural demand does not. Cues fill slots.dedupe when the model lap
+  // missed it; the census consumes the slot, never the regex.
+  const DUP_PARAPHRASE_RES = [
+    /\bduplicates?d?\b/, /\bcop(?:y|ies|ied)\b/, /\bdoubled\s+up\b/,
+    /\bsame\s+page\s+opened\s+twice\b/, /\brepeated\b/,
+    /\btwo\s+of\s+the\s+same\b/, /\bsame\s+tab\s+twice\b/,
+    /\b(?:page|tab|site|chat)\s+i\s+opened\s+twice\b/,
+    /\bopened\s+(?:the\s+)?same\s+(?:page|tab|site)\s+twice\b/
+  ];
+  // Near-duplicate cues: cross-domain same-story demand. The identical-title
+  // tier is a low-confidence judgment; the census abstains when the pool
+  // carries no text to ground it.
+  const NEARDUP_RES = [
+    /\bnear[- ]?duplicates?\b/, /\bsame\s+story\b/, /\bcover(?:s|ing)?\s+the\s+same\b/
+  ];
   const SLOT_KEYS = ['urlShape', 'rank', 'retain', 'dedupe', 'scope', 'anchor',
     'answerable', 'carveout', 'relationship', 'position', 'groupScope'];
 
@@ -414,8 +447,14 @@ Examples:
       if (RETAIN_KEEP.has(r.retain.keep)) k.keep = r.retain.keep;
       if (k.per || k.keep) out.retain = k;
     }
-    if (r.dedupe && typeof r.dedupe === 'object' && r.dedupe.canonical === true) {
-      out.dedupe = { canonical: true };
+    if (r.dedupe && typeof r.dedupe === 'object') {
+      const d = {};
+      if (r.dedupe.canonical === true) d.canonical = true;
+      if (DEDUPE_KEEP.has(r.dedupe.keep)) d.keep = r.dedupe.keep;
+      if (r.dedupe.near === true) d.near = true;
+      if (r.dedupe.group === true) d.group = true;
+      if (r.dedupe.otherWindows === true) d.otherWindows = true;
+      if (Object.keys(d).length) out.dedupe = d;
     }
     if (r.scope && typeof r.scope === 'object') {
       const k = {};
@@ -522,8 +561,15 @@ Examples:
     const titleScoped = /\bin\s+(?:the\s+|their\s+|its\s+)?titles?\b/i.test(s) ||
       /\b(?:titles?|urls?)\s+(?:contains?|starts?|includes?)\b/i.test(s);
     const out = [];
+    // GA-2 immunity: a duplicate demand makes the command structural -- the
+    // census answers from URL/title clusters, so a keep-direction clause
+    // ("keep the oldest") must not surface as a timestamps claim that the
+    // abstain census would refuse on a timestamp-less pool.
+    const dupCtx = DUP_PARAPHRASE_RES.some(re => re.test(s)) ||
+      NEARDUP_RES.some(re => re.test(s));
     for (const [re, req] of REQUIRES_CUES) {
       if (titleScoped && req.dim === 'mainText') continue;
+      if (dupCtx && req.dim === 'timestamps') continue;
       if (re.test(s) && !out.some(r => r.dim === req.dim)) out.push({ ...req });
     }
     return out;
@@ -598,8 +644,24 @@ Examples:
     // they are pinned") have no slot representation at all. When unsure,
     // carveout=true is the safe direction: yield lets the legacy pipeline
     // resolve the semantics.
-    if (/\b(but|except|excluding|unless|apart|other|not|never|without|keep|keeping)\b/i.test(s)) {
-      slots.carveout = true;
+    {
+      // GA-2: "close duplicate tabs keeping the first" / "keep the oldest" --
+      // a survivor-rule clause inside a dup demand is the retention
+      // direction, not a carve-out; stripping it before the frame test
+      // keeps the census armed. Outside a dup demand, keep-clauses stay
+      // carve-out material as before.
+      let carveoutStr = s;
+      const keepCueM = DEDUPE_KEEP_CUES.map(([re]) => s.match(re)).find(Boolean);
+      if (keepCueM && (DUP_PARAPHRASE_RES.some(re => re.test(s)) ||
+                       NEARDUP_RES.some(re => re.test(s)))) {
+        carveoutStr = carveoutStr.replace(keepCueM[0], ' ');
+      }
+      // 'in other windows' is a window SCOPE on a dup demand, not a
+      // carve-out construction.
+      carveoutStr = carveoutStr.replace(/\b(in|from)\s+(?:the\s+)?other\s+windows?\b/gi, ' ');
+      if (/\b(but|except|excluding|unless|apart|other|not|never|without|keep|keeping)\b/i.test(carveoutStr)) {
+        slots.carveout = true;
+      }
     }
 
     // urlShape.site
@@ -669,9 +731,35 @@ Examples:
       slots.retain = { per, keep: keepM ? keepM[1] : 'newest' };
     }
 
-    // dedupe: duplicate target + an explicit tolerance marker.
-    if (/\bduplicates?\b/.test(s) && /\b(even if|ignoring|regardless of|despite)\b/.test(s)) {
-      slots.dedupe = { canonical: true };
+    // dedupe (GA-2): duplicate demand + retention direction. Emitted for the
+    // exact-dup shape, every dup paraphrase, and near-dup frames; keep comes
+    // from the keep cues (default first). A tolerance marker upgrades to
+    // canonical matching (tracking params ignored).
+    {
+      // Community/fan "copies" are AUTHORITY judgments, not duplication:
+      // "close community copies of documentation" must not arm the dup
+      // census. Strip the qualifier before the paraphrase test.
+      const copiesClean = s
+        .replace(/\b(?:community|fan|unofficial|pirate|mirror)\s+cop(?:y|ies)\b/gi, ' ');
+
+      const isDup = DUP_PARAPHRASE_RES.some(re => re.test(copiesClean));
+      const isNear = NEARDUP_RES.some(re => re.test(s));
+      if (isDup || isNear || slots.dedupe) {
+        // canonical matching is a TOLERANCE claim ('even if their tracking
+        // parameters differ'), not the default: bare duplicate commands
+        // close exact-URL pairs only (gold-measured: a query-variant pair
+        // is NOT in the bare close set).
+        const d = { ...(slots.dedupe || {}) };
+        if (/\b(even if|ignoring|regardless of|despite)\b/.test(s)) {
+          d.canonical = true;
+        }
+        const keepCue = DEDUPE_KEEP_CUES.find(([re]) => re.test(s));
+        d.keep = keepCue ? keepCue[1] : 'first';
+        if (isNear) d.near = true;
+        if (/\b(?:in|from)\s+(?:the\s+)?other\s+windows?\b/i.test(s)) d.otherWindows = true;
+        if (/^\s*group\b/.test(s)) d.group = true; // group_tabs floor parity
+        slots.dedupe = d;
+      }
     }
 
     // scope: exact-host naming (3+ label dotted host, or a host pinned with
@@ -918,7 +1006,7 @@ Examples:
       },
       dedupe: {
         type: ['object', 'null'],
-        properties: { canonical: { type: 'boolean' } }
+        properties: { canonical: { type: 'boolean' }, keep: { type: 'string', enum: [...DEDUPE_KEEP] } }
       },
       scope: {
         type: ['object', 'null'],
@@ -1679,7 +1767,7 @@ Examples:
       console.warn('[LlmQuery] parse failed, using deterministic parser:', e.message);
     }
 
-    if (!parsed) return deterministic();
+    if (!parsed) return reconcile(cmd, deterministic()); // GA-2: fallback parses carry cue slots too
 
     parsed = reconcile(cmd, parsed);
 
