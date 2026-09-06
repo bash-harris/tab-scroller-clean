@@ -6092,9 +6092,67 @@ async function indexTabById(tabId) {
   }
 }
 
+// ---- SPA staleness (R7) --------------------------------------------------
+// pushState navigations (YouTube watch->next, GitHub PR tab, Jira board) never
+// fire status:'complete', so the only re-index trigger below missed every SPA
+// route change and the stored card kept describing the page the tab had LEFT.
+// Now a title or url change with no 'complete' fires too: the old card is
+// DELETED immediately (stale-but-absent beats stale-and-wrong -- a wrong
+// embedding can actively select the tab; a missing card just ranks it as
+// uncarded), and a debounced re-index is scheduled.
+//
+// Debounce: trailing window with per-tabId dedupe. SPA transitions often emit
+// several changeInfo updates in quick succession (title, then url, then title
+// again); each resets the timer, so one settled re-index per burst. The timer
+// lives in memory, so an MV3 restart during the window simply drops the
+// re-index -- acceptable, because the next status:complete or title change
+// re-fires the path.
+const SPA_REINDEX_DEBOUNCE_MS = 4000;
+const _spaDebounce = new Map(); // tabId -> setTimeout handle
+
+function scheduleSpaReindex(tabId) {
+  if (_spaDebounce.has(tabId)) clearTimeout(_spaDebounce.get(tabId));
+  _spaDebounce.set(tabId, setTimeout(async () => {
+    _spaDebounce.delete(tabId);
+    try { await indexTabById(tabId); } catch (e) { /* listener already warns */ }
+  }, SPA_REINDEX_DEBOUNCE_MS));
+}
+
+async function deleteCardForTab(tabId) {
+  try {
+    // The stale card is the one this tab is currently joined to: the card whose
+    // tabId field points here, i.e. the OLD page's card (urlHash-keyed, so a
+    // card can only join a tab while their hashes match -- after a navigation
+    // the old card is metadata-wrong for this tab even if still accurate for
+    // its own URL). getTabCard returns the most recent such row.
+    const card = await self.TabDB.getTabCard(tabId);
+    if (card && card.urlHash) await self.TabDB.deleteTabCard(card.urlHash);
+  } catch (e) { /* no card for this tab, or store unavailable -- nothing to delete */ }
+}
+
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === 'complete') {
+    // A completed load is authoritative: cancel any pending SPA debounce so a
+    // stale re-index does not race the real one (indexTabById dedupes anyway).
+    if (_spaDebounce.has(tabId)) {
+      clearTimeout(_spaDebounce.get(tabId));
+      _spaDebounce.delete(tabId);
+    }
     indexTabById(tabId);
+  } else if (changeInfo.title || changeInfo.url) {
+    // SPA route change: no status transition, but the page identity moved.
+    // Schedule SYNCHRONOUSLY so a tab close that races this event can always
+    // cancel the pending re-index; the stale-card delete is fire-and-forget.
+    scheduleSpaReindex(tabId);
+    deleteCardForTab(tabId);
+  }
+});
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  // Cancel a pending re-index for a dead tab; its card is now garbage either way.
+  if (_spaDebounce.has(tabId)) {
+    clearTimeout(_spaDebounce.get(tabId));
+    _spaDebounce.delete(tabId);
   }
 });
 
@@ -6167,11 +6225,30 @@ setInterval(async () => {
     const tabs = await chrome.tabs.query({});
     let allCards = [];
     try { allCards = await self.TabDB.getAllTabCards(); } catch (e) {}
-    const toIndex = tabs.slice(0, 20).filter(tab =>
+    // Freshness-aware (R7 shallow-upgrade hole): a card existing is not enough.
+    // Shallow cards (index-budget artifacts: no text, no vecVersion) must be
+    // rebuilt, and the slice(0,20) cap must spend its slots on them FIRST --
+    // sort not-fresh tabs ahead of fresh ones (stable sort keeps the rest in
+    // query order), then slice, so shallow cards are never starved by fresh
+    // tabs when the window holds more than 20 eligible tabs.
+    const cardByHash = new Map();
+    for (const c of allCards) if (c && c.urlHash) cardByHash.set(c.urlHash, c);
+    const notFresh = async (tab) => {
+      try {
+        const hash = await self.sha256(self.normalizeUrl(tab.url));
+        const card = hash ? cardByHash.get(hash) : null;
+        return !card || card.extractionLevel === 'shallow';
+      } catch (e) { return true; }
+    };
+    const eligible = tabs.filter(tab =>
       tab.url &&
       !tab.url.startsWith('chrome://') &&
       !tab.url.startsWith('edge://') &&
       !tab.url.startsWith('about:'));
+    const ranked = [];
+    for (const tab of eligible) ranked.push({ tab, stale: await notFresh(tab) });
+    ranked.sort((a, b) => Number(b.stale) - Number(a.stale));
+    const toIndex = ranked.map(e => e.tab).slice(0, 20);
     await indexTabsBatched(toIndex, allCards);
   } catch {
     // skip cycle
@@ -6237,9 +6314,9 @@ async function sweepMissingCards() {
     let allCards = [];
     try { allCards = await self.TabDB.getAllTabCards(); } catch (e) {}
 
-    const cardHashes = new Set();
+    const cardByHash = new Map();
     for (const c of allCards) {
-      if (c && c.urlHash) cardHashes.add(c.urlHash);
+      if (c && c.urlHash) cardByHash.set(c.urlHash, c);
     }
     const eligible = tabs.filter(t =>
       t.url &&
@@ -6247,14 +6324,21 @@ async function sweepMissingCards() {
       !t.url.startsWith('edge://') &&
       !t.url.startsWith('about:') &&
       !t.url.startsWith('chrome-extension://'));
-    
+
     const missing = [];
     for (const t of eligible) {
       let hash = null;
       try {
         hash = await self.sha256(self.normalizeUrl(t.url));
       } catch (e) { /* unhashable */ }
-      if (!hash || !cardHashes.has(hash)) missing.push(t);
+      // Freshness, not just existence (R7 shallow-upgrade hole): the dynamic
+      // index budget stores SHALLOW cards (title+URL+domain, no text, no
+      // vecVersion-3 enrichment). An existence-only check would leave them
+      // behind forever -- a shallow card exists, so the sweep never rebuilt it.
+      // Now a card is "missing" when absent OR shallow; a full rebuild
+      // (prepareTabCard rejects the shallow card as not-fresh) upgrades it.
+      const card = hash ? cardByHash.get(hash) : null;
+      if (!card || card.extractionLevel === 'shallow') missing.push(t);
     }
 
     const alreadyIndexedCount = eligible.length - missing.length;
@@ -6267,7 +6351,7 @@ async function sweepMissingCards() {
         pct: 100,
         currentTitle: ''
       };
-      console.log(`[Indexer] Sweep complete: all ${eligible.length} tabs already indexed in database`);
+      console.log(`[Indexer] Sweep complete: all ${eligible.length} tabs already indexed (fresh) in database`);
       broadcastIndexProgress();
       return;
     }

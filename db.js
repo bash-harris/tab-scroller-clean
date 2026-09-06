@@ -227,6 +227,31 @@
       });
     },
 
+    // Batch lookup over the urlHash primary key: ONE transaction, store.get per
+    // requested hash. This replaces the per-command getAllTabCards() full-scan +
+    // deserialization that the retrieval join used to pay (the join only ever
+    // needs cards for the ~15-25 hashes it is about to look up, not the whole
+    // store). Misses are simply ABSENT from the returned Map -- a null entry
+    // would flow into prepareTabCard's savedCards.find(c => c.urlHash ...) and
+    // throw TypeError, silently killing every deep dynamic card build.
+    // "Uncarded" is `!map.get(hash)`, same as before.
+    async getCardsByHashes(hashes) {
+      const wanted = Array.from(new Set((hashes || []).filter(Boolean)));
+      if (wanted.length === 0) return new Map();
+      const tx = this._db.transaction('tabCards', 'readonly');
+      const store = tx.objectStore('tabCards');
+      const map = new Map();
+      for (const h of wanted) {
+        const req = store.get(h);
+        req.onsuccess = () => { if (req.result) map.set(h, req.result); };
+      }
+      return new Promise((resolve, reject) => {
+        tx.oncomplete = () => resolve(map);
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+      });
+    },
+
     // Secondary lookup via the tabId index, for callers that only hold a live tab
     // id. tabId is not unique in this store (two tabs can show the same page, and
     // stale ids linger until eviction), so this returns the most recently seen row.

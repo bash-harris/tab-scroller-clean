@@ -300,8 +300,60 @@ async function buildTabCard(tab, cachedCards) {
   return finalizeTabCard(prepared, embedding);
 }
 
+// ============================================================================
+// SHALLOW CARD (R7: dynamic-index budget)
+// ============================================================================
+// A budgeted indexing loop hits its wall-clock deadline and still has tabs left.
+// Skipping them entirely leaves the command blind to those tabs (they would rank
+// as uncarded with vec=0 forever). Storing a full card would take another
+// injection + extraction + embed, which is exactly what the budget exists to
+// stop. A shallow card is the honest middle ground: title + URL + domain, no
+// page text, no structured data, zero-length embedding, and extractionLevel
+// 'shallow' so every consumer can tell the difference. The lexical prefilter and
+// the reranker both score it (vec contributes 0, title/url still contribute),
+// and the periodic background sweep upgrades it later the normal way: it is a
+// real card in the store keyed by the real urlHash, so a cache-miss rebuild on
+// the same URL replaces it with a full one.
+async function buildShallowCard(tab) {
+  let urlHash = '';
+  try {
+    urlHash = await sha256(normalizeUrl(tab.url));
+  } catch (e) { /* unhashable url -- empty hash, card still usable lexically */ }
+  let domain = '';
+  try {
+    domain = new URL(tab.url).hostname.replace(/^www\./, '').toLowerCase();
+  } catch (e) { /* unparseable url -- domain stays empty */ }
+  const card = {
+    tabId: tab.id,
+    url: tab.url || '',
+    urlHash,
+    domain,
+    title: tab.title || '',
+    extractedAt: Date.now(),
+    contentHash: '',
+    mainText: '',
+    structured: { type: 'other', headline: '', keywords: [], people: [], datePublished: '' },
+    enrichment: {
+      category: (typeof classifyDomain === 'function' && classifyDomain(tab.url)) || 'other',
+      subTopics: [],
+      entities: { people: [], orgs: [], works: [] },
+      contentType: 'other',
+      summary: tab.title || '',
+      enrichedAt: 0
+    },
+    embedding: new Float32Array(0),
+    extractionLevel: 'shallow'
+  };
+  // Persist: the shallow card is the store's current truth for this URL until
+  // the background sweep replaces it (it is not vecVersion-3, so isFresh
+  // rejects it and the next full prepareTabCard run rebuilds it).
+  try { await self.TabDB.storeTabCard(card); } catch (e) { /* store down -- card still scores for this command */ }
+  return card;
+}
+
 self.sha256 = sha256;
 self.normalizeUrl = normalizeUrl;
 self.prepareTabCard = prepareTabCard;
 self.finalizeTabCard = finalizeTabCard;
 self.buildTabCard = buildTabCard;
+self.buildShallowCard = buildShallowCard;
