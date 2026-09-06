@@ -20,7 +20,8 @@ const SUITES = [
   ['agent',        'A6  bounded agent: planner validate + executor set-exact + fallback chain'],
   ['chain-e2e',    'V3  chained plans: background confirm executes steps + ONE composite undo'],
   ['resilience',   'R5  MV3 resilience: plan persist+hydrate, URL-hash revalidation, undo hydrate, confirm:false, sender decoupling'],
-  ['progress',     'NLI progress estimation threshold + UI progress clamping']
+  ['progress',     'NLI progress estimation threshold + UI progress clamping'],
+  ['uxhonesty',    'R6  UX+honesty: group color sanitize, folder fallback, provider health, risk-calibrated preview, cloud-content gate']
 ];
 
 let failed = [];

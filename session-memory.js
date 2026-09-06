@@ -6,7 +6,12 @@
 
 const SessionMemoryEngine = (() => {
   // --- Constants ---
-  const MAX_SESSIONS = 50;
+  // Defect 5: MAX_SESSIONS is no longer a hard-coded import-time constant.
+  // The options.js 'sessionRetention' setting is read at EVICTION time
+  // (whenever addToIndex prunes), clamped to 5..200, default 50.
+  const DEFAULT_MAX_SESSIONS = 50;
+  const MIN_MAX_SESSIONS = 5;
+  const MAX_MAX_SESSIONS = 200;
   const MAX_ACTIONS_PER_SESSION = 500;
   const MAX_SNIPPET_LENGTH = 300;
   const STORAGE_KEY_ACTIVE = 'session_active';
@@ -66,8 +71,18 @@ const SessionMemoryEngine = (() => {
       tabCount: session.tabCount || session.tabs.length,
       stats: session.stats
     });
-    // Enforce retention limit
-    while (index.length > MAX_SESSIONS) {
+    // Enforce retention limit. Defect 5: read the user's sessionRetention
+    // setting at eviction time (not import time) so a changed setting applies
+    // immediately; clamp to 5..200; fall back to the default on any read error.
+    let maxSessions = DEFAULT_MAX_SESSIONS;
+    try {
+      const items = await chrome.storage.sync.get({ sessionRetention: DEFAULT_MAX_SESSIONS });
+      const parsed = parseInt(items.sessionRetention, 10);
+      if (Number.isFinite(parsed)) {
+        maxSessions = Math.min(MAX_MAX_SESSIONS, Math.max(MIN_MAX_SESSIONS, parsed));
+      }
+    } catch (e) { /* storage unavailable -> default */ }
+    while (index.length > maxSessions) {
       const removed = index.pop();
       await storageRemove([SESSION_PREFIX + removed.id]);
     }

@@ -33,6 +33,7 @@ const saveOptions = () => {
     sessionSnippets: document.getElementById('sessionSnippets')?.checked ?? true,
     sessionRetention: parseInt(document.getElementById('sessionRetention')?.value, 10) || 50,
     allowCloudContent: document.getElementById('allowCloudContent')?.checked ?? false,
+    previewAlways: document.getElementById('previewAlways')?.checked ?? false,
   };
   
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
@@ -120,6 +121,7 @@ const restoreOptions = () => {
     autoStartSession: true,
     sessionSnippets: true,
     sessionRetention: 50,
+    previewAlways: false,
   }, (items) => {
     const setChecked = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
     const setValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
@@ -154,6 +156,7 @@ const restoreOptions = () => {
     setChecked('autoStartSession', items.autoStartSession !== false);
     setChecked('sessionSnippets', items.sessionSnippets !== false);
     setValue('sessionRetention', items.sessionRetention || 50);
+    setChecked('previewAlways', items.previewAlways === true);
 
     chrome.storage.local.get({ geminiApiKey: '' }, (localItems) => {
       setValue('geminiApiKey', localItems.geminiApiKey || '');

@@ -2640,6 +2640,7 @@
       panel.classList.add("open");
       button.classList.add("active");
       input.focus();
+      updateProviderHealthWarning(); // defect 3: surface provider-failure streak on open
     }
 
     function closePanel() {
@@ -2740,10 +2741,12 @@
       }
     });
 
-    return { container: button, panel, input, openPanel, closePanel, progressLabel, progressPct, progressFill };
+    return { container: button, panel, input, openPanel, closePanel, progressLabel, progressPct, progressFill, updateProviderHealthWarning };
   }
 
   // ===== COMMAND EXECUTION =====
+  // (updateProviderHealthWarning is defined below executeAICommand; see the
+  // defect-3 comment there.)
   // Smoothly animates the fill toward a target so distinct progress messages
   // read as one continuous motion rather than discrete jumps.
   let progressRAF = null;
@@ -2807,6 +2810,32 @@
     }, 420);
   }
 
+  // Defect 3: provider failures were being masked as "No matching tabs found"
+  // (parseJSONDefensively turns a provider error into {matches:[]}). When the
+  // provider has failed >= 2 times in a row, show a small warning line in the
+  // AI popup so an empty/suspicious result carries that context. The warning
+  // element is created lazily and removed once the provider recovers.
+  function updateProviderHealthWarning() {
+    if (!commandInputComponents) return;
+    const { panel } = commandInputComponents;
+    if (!panel) return;
+    let warn = panel.querySelector(".ts-provider-warning");
+    safeSendMessage({ type: "GET_PROVIDER_HEALTH" }, (health) => {
+      if (!warn) {
+        warn = document.createElement("div");
+        warn.className = "ts-provider-warning";
+        warn.textContent = "⚠ Provider errors detected — results may be unreliable";
+        const body = panel.querySelector(".ts-ai-popup-body");
+        if (body) body.parentNode.insertBefore(warn, body); else panel.appendChild(warn);
+      }
+      if (health && health.consecutiveFailures >= 2) {
+        warn.style.display = "";
+      } else {
+        warn.style.display = "none";
+      }
+    });
+  }
+
   async function executeAICommand(command) {
     if (!commandInputComponents) return;
     const { input } = commandInputComponents;
@@ -2839,6 +2868,10 @@
       });
       
       console.log('[AI Command] Response:', response);
+
+      // Defect 3: refresh the provider-health warning after every command so a
+      // streak of provider failures is visible next to the result.
+      updateProviderHealthWarning();
 
       if (response.awaitingConfirmation) {
         // Confirmation will be handled by CONFIRM_TOOL_CALL message

@@ -137,6 +137,18 @@ function ensureTabLastActive(force) {
 
 const GROUP_COLORS = ['grey', 'blue', 'red', 'yellow', 'green', 'pink', 'purple', 'cyan', 'orange'];
 
+// Defect 1: chrome.tabGroups.update throws on any color outside the enum
+// ('teal', 'navy', ...) and that throw used to fail the WHOLE grouping command.
+// Single sanitizer for every color routed to tabGroups.update: a valid enum
+// value passes through (case-insensitive, normalized to lowercase), anything
+// else (undefined / non-string / invalid value) becomes undefined so the key
+// is omitted and Chrome applies its default. Never throws.
+function sanitizeGroupColor(color) {
+  if (typeof color !== 'string') return undefined;
+  const c = color.toLowerCase().trim();
+  return GROUP_COLORS.includes(c) ? c : undefined;
+}
+
 const thumbnailCache = new Map(); // tabId -> dataUrl
 const aiSummaryCache = new Map(); // tabId -> summary
 const emojiCache = new Map(); // tabId -> emoji
@@ -457,6 +469,38 @@ const fallbackState = {
     today: 0
   }
 };
+
+// =====================================================
+// Defect 3: provider-health tracking.
+// parseJSONDefensively (command-agent.js) turns a provider error into
+// {matches:[]}, which the user reads as a legitimate "No matching tabs found".
+// command-agent.js is out of scope, so the honest signal lives where the
+// provider calls themselves happen: every AI provider wrapper in background.js
+// (Ollama, backend gateway, Gemini fallback chain, Gemini function-calling)
+// records success/failure here. content.js surfaces a warning in the AI popup
+// once consecutiveFailures >= 2, so a suspicious empty result at least carries
+// the context that the provider was failing. Success resets the streak.
+// =====================================================
+const providerHealth = {
+  consecutiveFailures: 0,
+  lastFailureAt: 0,
+  lastError: ''
+};
+
+function recordProviderFailure(err) {
+  providerHealth.consecutiveFailures++;
+  providerHealth.lastFailureAt = Date.now();
+  providerHealth.lastError = String((err && err.message) || err || 'unknown').slice(0, 200);
+  console.warn(`[ProviderHealth] consecutiveFailures=${providerHealth.consecutiveFailures} lastError=${providerHealth.lastError}`);
+}
+
+function recordProviderSuccess() {
+  if (providerHealth.consecutiveFailures !== 0) {
+    console.log('[ProviderHealth] provider recovered — failure streak reset');
+  }
+  providerHealth.consecutiveFailures = 0;
+  providerHealth.lastError = '';
+}
 
 function isRateLimitError(error) {
   const errorStr = String(error.message || error).toLowerCase();
@@ -1539,8 +1583,52 @@ async function extractWebsiteText(tabId, maxChars = 1600) {
   }
 }
 
+// Defect 5: allowCloudContent gate — cloud Gemini payloads. When the setting
+// is false, buildPureWebsitePrompt (the page-TEXT payload builder used by
+// insight summarization, smart grouping, declutter and smart-suspend) sends
+// only title+URL lines, never extracted page text. Synchronous so call sites
+// need no await; a storage failure fails OPEN to the privacy-preserving mode.
+let _allowCloudContentCache = { value: undefined, ts: 0 };
+function isCloudContentAllowed() {
+  // Cached for 5s; the value is also refreshed asynchronously on every
+  // storage.sync change below, so gate decisions stay fresh without
+  // making every prompt builder async.
+  if (_allowCloudContentCache.value !== undefined && (Date.now() - _allowCloudContentCache.ts) < 5000) {
+    return _allowCloudContentCache.value;
+  }
+  try {
+    chrome.storage.sync.get({ allowCloudContent: false }, (items) => {
+      _allowCloudContentCache = { value: items.allowCloudContent === true, ts: Date.now() };
+    });
+  } catch (e) { /* storage unavailable -> stays false */ }
+  // First call in a while uses the last known value (default false = safe).
+  return _allowCloudContentCache.value === true;
+}
+
+// Keep the cloud-content gate fresh: an options-page flip applies immediately.
+try {
+  if (chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'sync' && changes.allowCloudContent) {
+        _allowCloudContentCache = { value: changes.allowCloudContent.newValue === true, ts: Date.now() };
+      }
+    });
+  }
+} catch (e) { /* storage unavailable */ }
+
 async function buildPureWebsitePrompt(tabs, maxCharsPerTab = 1600) {
   const blocks = [];
+
+  // Defect 5: allowCloudContent === false -> no page text leaves the device.
+  // Payload degrades to title+URL per entry (command text is never gated).
+  if (!isCloudContentAllowed()) {
+    for (let i = 0; i < tabs.length; i++) {
+      const t = tabs[i] || {};
+      const label = `${t.title || 'Untitled'} — ${safeHost(t.url) || (t.url || '')}`;
+      blocks.push(`entry ${i + 1} ${label}`);
+    }
+    return blocks.join('\n\n');
+  }
 
   for (let i = 0; i < tabs.length; i++) {
     const raw = await extractWebsiteText(tabs[i].id, maxCharsPerTab);
@@ -1785,6 +1873,7 @@ async function callOllama({
     if (!data.response) throw new Error('Ollama returned empty response');
 
     console.log(`[Ollama] OK in ${Date.now() - t0}ms (in:${fullPrompt.length} chars out:${(data.response || '').length} chars):`, data.response?.substring(0, 150));
+    recordProviderSuccess(); // defect 3: provider healthy again
     return {
       model,
       text: data.response,
@@ -1793,6 +1882,7 @@ async function callOllama({
     };
   } catch (error) {
     console.error(`[Ollama] FAIL in ${Date.now() - (typeof t0 === 'number' ? t0 : 0)}ms:`, error.message);
+    recordProviderFailure(error); // defect 3: track consecutive provider failures
     if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
       console.error('[Ollama] Server not reachable. Is Ollama running? Try: ollama serve');
     }
@@ -1895,6 +1985,7 @@ async function callBackend({
     if (!data.response) throw new Error('AI Backend returned empty response');
 
     console.log(`[Backend] OK in ${Date.now() - t0}ms (in:${fullPrompt.length} chars out:${(data.response || '').length} chars):`, data.response?.substring(0, 150));
+    recordProviderSuccess(); // defect 3: provider healthy again
     return {
       model: data.model || model,
       text: data.response,
@@ -1903,6 +1994,7 @@ async function callBackend({
     };
   } catch (error) {
     console.error(`[Backend] FAIL:`, error.message);
+    recordProviderFailure(error); // defect 3: track consecutive provider failures
     throw error;
   } finally {
     clearTimeout(timeoutId);
@@ -2027,6 +2119,7 @@ async function callGeminiWithFallback({
       if (text) {
         // SUCCESS!
         recordAiCall(model);
+        recordProviderSuccess(); // defect 3: provider healthy again
 
         // If this wasn't our first choice, record fallback success
         if (model !== preferredModel && attemptCount > 1) {
@@ -2071,6 +2164,7 @@ async function callGeminiWithFallback({
 
   // All models failed
   console.error(`[AI] All ${attemptCount} models failed. Last error:`, lastError);
+  recordProviderFailure(lastError); // defect 3: track consecutive provider failures
 
   // Notify user
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -2513,7 +2607,11 @@ async function handleCloseTabs(args, windowId, rawCommand = '', preResolvedTabs 
 }
 
 async function handleGroupTabs(args, windowId, preResolvedTabs = null) {
-  const { groupName, color = 'blue' } = args;
+  const { groupName } = args;
+  // Defect 1: route the color through sanitizeGroupColor — an out-of-enum
+  // value ('teal', 'navy') becomes undefined (Chrome default) instead of
+  // throwing inside chrome.tabGroups.update and failing the whole command.
+  const color = sanitizeGroupColor(args.color);
   // Explicit here too: this handler is reachable directly, not only via
   // executeToolCall, and grouping is always window-bound.
   const tabs = preResolvedTabs || await resolveTabsForAction({ ...args, windowScoped: true }, windowId, false);
@@ -2580,8 +2678,26 @@ async function handleGroupTabs(args, windowId, preResolvedTabs = null) {
   };
 }
 
-async function handleBookmarkTabs(args, windowId, preResolvedTabs = null) {
-  const { folderName, closeAfterBookmark = false } = args;
+// Defect 2: args.folderName could arrive undefined / blank / non-string and the
+// folder was literally created as "undefined". Fallback chain: explicit valid
+// arg -> deriveGroupName over the command context (when available) ->
+// 'Saved Tabs'. A falsy or non-string title never reaches bookmarks.create.
+function resolveBookmarkFolderName(rawFolderName, command) {
+  if (typeof rawFolderName === 'string' && rawFolderName.trim()) {
+    return rawFolderName.trim();
+  }
+  if (command && typeof deriveGroupName === 'function') {
+    try {
+      const derived = deriveGroupName(String(command), [], null);
+      if (typeof derived === 'string' && derived.trim()) return derived;
+    } catch (e) { /* derivation is best-effort */ }
+  }
+  return 'Saved Tabs';
+}
+
+async function handleBookmarkTabs(args, windowId, preResolvedTabs = null, rawCommand = '') {
+  const { closeAfterBookmark = false } = args;
+  const folderName = resolveBookmarkFolderName(args.folderName, rawCommand);
   const tabs = preResolvedTabs || await resolveTabsForAction(args, windowId, false);
 
   if (tabs.length === 0) {
@@ -2987,7 +3103,9 @@ async function executeToolCall(functionCall, windowId, rawCommand = '', preResol
         result = await handleGroupTabs(args, windowId, resolvedTabs);
         break;
       case "bookmark_tabs":
-        result = await handleBookmarkTabs(args, windowId, resolvedTabs);
+        // Pass rawCommand so a missing args.folderName can still derive a
+        // meaningful title from the user's own words (defect 2 fallback chain).
+        result = await handleBookmarkTabs(args, windowId, resolvedTabs, rawCommand);
         break;
       case "pin_tabs":
         result = await handlePinTabs(args, windowId, resolvedTabs);
@@ -3117,30 +3235,39 @@ async function callGeminiWithFunctionCalling(userCommand) {
 
   const model = settings.aiModel || 'gemini-2.5-flash';
 
-  const response = await enqueueAiTask(async () => {
-    console.log(`[ToolCalling] Sending command to ${model}:`, userCommand);
+  let response = null;
+  try {
+    response = await enqueueAiTask(async () => {
+      console.log(`[ToolCalling] Sending command to ${model}:`, userCommand);
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-      {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
-        },
-        body: JSON.stringify(body)
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
+          body: JSON.stringify(body)
+        }
+      );
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => 'no body');
+        throw new Error(`HTTP_${res.status}: ${errText}`);
       }
-    );
 
-    if (!res.ok) {
-      const errText = await res.text().catch(() => 'no body');
-      throw new Error(`HTTP_${res.status}: ${errText}`);
-    }
-
-    const data = await res.json();
-    console.log(`[ToolCalling] Response:`, JSON.stringify(data).substring(0, 300));
-    return data;
-  }, true); // Priority = true for interactive commands
+      const data = await res.json();
+      console.log(`[ToolCalling] Response:`, JSON.stringify(data).substring(0, 300));
+      return data;
+    }, true); // Priority = true for interactive commands
+  } catch (error) {
+    // Defect 3: raw Gemini tool-calling site — track provider failures here too,
+    // not just in the fallback chain, so a dead provider never looks like a
+    // legitimate empty result.
+    recordProviderFailure(error);
+    throw error;
+  }
 
   const functionCall = response?.candidates?.[0]?.content?.parts?.[0]?.functionCall;
 
@@ -3148,12 +3275,14 @@ async function callGeminiWithFunctionCalling(userCommand) {
     // If no function call, try to get text response
     const textResponse = response?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (textResponse) {
+      recordProviderSuccess(); // defect 3: provider answered (parse issues are not transport failures)
       return { type: 'text', text: textResponse };
     }
     throw new Error("Could not understand command. Try being more specific, like: 'close all YouTube tabs'");
   }
 
   recordAiCall(model);
+  recordProviderSuccess(); // defect 3: provider healthy again
 
   return {
     type: 'function',
@@ -3266,8 +3395,12 @@ async function parseAiCommand(userCommand, windowId) {
     }
 
     // STEP 3: Parallel extraction from filtered tabs only (only when LLM is needed)
-    console.log('[AI Command] Starting parallel extraction');
-    const extractedData = await parallelExtraction(filteredTabs, 10);
+    // Defect 5: allowCloudContent gate — skip page-text extraction for the
+    // cloud/LLM prompt when the setting is off (title/URL list is still built
+    // below); compressToTriplets receives empty extracted text.
+    const extractedData = isCloudContentAllowed()
+      ? await parallelExtraction(filteredTabs, 10)
+      : [];
 
     // STEP 4: Build compressed prompt with triplets
     const compressedData = filteredTabs.map((tab, idx) => {
@@ -3606,7 +3739,12 @@ async function executeChainedPlanSteps(steps, windowId, command, allowedIds) {
         // groupName only exists for group_tabs; deriving it for every step
         // put junk args on close/bookmark calls.
         ...(routed.tool === 'group_tabs'
-          ? { groupName: ap.groupName || deriveGroupName(command || '', stepCards, null) }
+          ? {
+              groupName: ap.groupName || deriveGroupName(command || '', stepCards, null),
+              // Defect 1: chained group steps route their color through the
+              // shared sanitizer too (invalid -> undefined -> Chrome default).
+              ...(sanitizeGroupColor(ap.color) ? { color: sanitizeGroupColor(ap.color) } : {}),
+            }
           : {}),
       },
     };
@@ -3757,8 +3895,31 @@ async function deliverCommandPlan(plan, { command, windowId, senderTabId, sendRe
 
   // Destructive semantic actions must always be previewed
   // (if only low-confidence matches exist, preview those too)
-  const candidateIds = plan.tabIds.length > 0 ? plan.tabIds : plan.uncertain;
-  const needPreview = plan.destructive || (candidateIds.length >= 3) || (plan.confidence < 0.75);
+  // Defect 4: risk-calibrated preview. The old gate previewed EVERY real
+  // command because any acting-on command touches >= 3 tabs. Now:
+  //   (a) close_tabs stays destructive -> ALWAYS previewed (the >=3-tab rule
+  //       is subsumed: preview at any count);
+  //   (b) confidence < 0.75 previews everything;
+  //   (c) chained plans (incl. any close step) never reach this gate — they
+  //       always preview in the chained branch above;
+  //   (d) options 'previewAlways' (default false) restores the old
+  //       preview-everything behavior when enabled;
+  //   (e) only intents the transaction log can actually undo may auto-execute:
+  //       group/pin/unpin/mute/unmute/bookmark each record a transaction and
+  //       have an undo() case. reload_tabs/sort_tabs have NO undo record, so
+  //       they keep previewing — safety over speed.
+  // Reversible, undoable actions at confidence >= 0.75 auto-execute and rely
+  // on the 15s UNDO_AVAILABLE toast.
+  const previewGateSettings = await new Promise((resolve) => {
+    try {
+      chrome.storage.sync.get({ previewAlways: false }, (items) => resolve(items || {}));
+    } catch (e) { resolve({}); }
+  });
+  const isDestructive = plan.destructive === true || isDestructiveIntent(plan.intent);
+  const needPreview = isDestructive
+    || previewGateSettings.previewAlways === true
+    || plan.confidence < 0.75
+    || !isUndoableIntent(plan.intent);
 
   if (needPreview && senderTabId) {
     const planId = generateTxId();
@@ -3903,6 +4064,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         });
       });
       return true;
+    }
+
+    // Defect 3: let UI surfaces ask whether the AI provider has been failing.
+    // {consecutiveFailures, lastFailureAt, lastError} — content.js shows a
+    // warning line in the AI popup once consecutiveFailures >= 2.
+    case "GET_PROVIDER_HEALTH": {
+      sendResponse({
+        consecutiveFailures: providerHealth.consecutiveFailures,
+        lastFailureAt: providerHealth.lastFailureAt,
+        lastError: providerHealth.lastError
+      });
+      return false;
     }
 
     case "GET_INDEX_STATUS": {
@@ -4137,12 +4310,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
                 } catch (e) { missing++; }
               }
               if (validIds.length >= 2) {
-                // Whitelist the preview-supplied colour against the known palette;
-                // fall back to a rotating entry so an out-of-enum value from the
-                // preview can never make chrome.tabGroups.update throw.
-                const color = GROUP_COLORS.includes(b.color)
-                  ? b.color
-                  : GROUP_COLORS[createdCount % GROUP_COLORS.length];
+                // Defect 1: whitelist the preview-supplied colour through the
+                // shared sanitizer; fall back to a rotating palette entry so an
+                // out-of-enum value from the preview can never make
+                // chrome.tabGroups.update throw.
+                const color = sanitizeGroupColor(b.color) ||
+                  GROUP_COLORS[createdCount % GROUP_COLORS.length];
                 const functionCall = {
                   name: 'group_tabs',
                   args: {
@@ -4894,18 +5067,31 @@ Candidates: ${JSON.stringify(compact)}`;
 
     case "AI_EXTRACT": {
       (async () => {
+        // Defect 5: allowCloudContent gate — this payload carries RAW page
+        // text. When the setting is false, page bodies are never extracted or
+        // uploaded; the request degrades to titles+URLs only.
+        const cloudContentOk = isCloudContentAllowed();
         let concatenatedText = "";
-        for (const tId of msg.tabIds || []) {
-          try {
-            const results = await chrome.scripting.executeScript({
-              target: { tabId: tId },
-              func: () => document.body.innerText.substring(0, 3000)
-            });
-            if (results && results[0] && results[0].result) {
-              concatenatedText += `\n\n--- Content from Tab ${tId} ---\n` + results[0].result;
+        if (cloudContentOk) {
+          for (const tId of msg.tabIds || []) {
+            try {
+              const results = await chrome.scripting.executeScript({
+                target: { tabId: tId },
+                func: () => document.body.innerText.substring(0, 3000)
+              });
+              if (results && results[0] && results[0].result) {
+                concatenatedText += `\n\n--- Content from Tab ${tId} ---\n` + results[0].result;
+              }
+            } catch (e) {
+              // Gracefully skip tabs
             }
-          } catch (e) {
-            // Gracefully skip tabs
+          }
+        } else {
+          for (const tId of msg.tabIds || []) {
+            try {
+              const t = await chrome.tabs.get(tId);
+              concatenatedText += `\n\n--- Tab ${tId} ---\nTitle: ${t?.title || ''}\nURL: ${t?.url || ''}`;
+            } catch (e) { /* skip */ }
           }
         }
 
@@ -4957,43 +5143,48 @@ Candidates: ${JSON.stringify(compact)}`;
               host: safeHost(tab.url),
             };
 
-            try {
-              const results = await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                func: () => {
-                  const meta = (name) => {
-                    const el = document.querySelector(`meta[name="${name}"], meta[property="${name}"]`);
-                    return el ? el.content : '';
-                  };
-                  const h1 = document.querySelector('h1');
-                  const paragraphs = document.querySelectorAll('p');
-                  let snippet = '';
-                  for (const p of paragraphs) {
-                    const text = (p.textContent || '').trim();
-                    if (text.length > 30) { snippet = text.substring(0, 200); break; }
-                  }
-                  const fullText = document.body ? document.body.innerText.replace(/\s+/g, ' ').trim().substring(0, 4000) : '';
-                  return {
-                    description: meta('description') || meta('og:description') || '',
-                    keywords: meta('keywords') || '',
-                    h1: h1 ? (h1.textContent || '').trim().substring(0, 120) : '',
-                    snippet: snippet,
-                    fullContent: fullText,
-                    ogType: meta('og:type') || '',
-                  };
-                },
-              });
-              if (results && results[0] && results[0].result) {
-                const r = results[0].result;
-                tabData.description = r.description || '';
-                tabData.keywords = r.keywords || '';
-                tabData.h1 = r.h1 || '';
-                tabData.snippet = r.snippet || '';
-                tabData.content = r.fullContent || '';
-                tabData.pageType = r.ogType || '';
+            // Defect 5: allowCloudContent gate — skip page-text extraction
+            // entirely (no content fields ever reach the Gemini payload);
+            // title/URL metadata still goes out.
+            if (isCloudContentAllowed()) {
+              try {
+                const results = await chrome.scripting.executeScript({
+                  target: { tabId: tab.id },
+                  func: () => {
+                    const meta = (name) => {
+                      const el = document.querySelector(`meta[name="${name}"], meta[property="${name}"]`);
+                      return el ? el.content : '';
+                    };
+                    const h1 = document.querySelector('h1');
+                    const paragraphs = document.querySelectorAll('p');
+                    let snippet = '';
+                    for (const p of paragraphs) {
+                      const text = (p.textContent || '').trim();
+                      if (text.length > 30) { snippet = text.substring(0, 200); break; }
+                    }
+                    const fullText = document.body ? document.body.innerText.replace(/\s+/g, ' ').trim().substring(0, 4000) : '';
+                    return {
+                      description: meta('description') || meta('og:description') || '',
+                      keywords: meta('keywords') || '',
+                      h1: h1 ? (h1.textContent || '').trim().substring(0, 120) : '',
+                      snippet: snippet,
+                      fullContent: fullText,
+                      ogType: meta('og:type') || '',
+                    };
+                  },
+                });
+                if (results && results[0] && results[0].result) {
+                  const r = results[0].result;
+                  tabData.description = r.description || '';
+                  tabData.keywords = r.keywords || '';
+                  tabData.h1 = r.h1 || '';
+                  tabData.snippet = r.snippet || '';
+                  tabData.content = r.fullContent || '';
+                  tabData.pageType = r.ogType || '';
+                }
+              } catch (scriptErr) {
+                // skip script errors
               }
-            } catch (scriptErr) {
-              // skip script errors
             }
 
             enrichedTabs.push(tabData);
@@ -5040,10 +5231,15 @@ Candidates: ${JSON.stringify(compact)}`;
 
           const compactOpenTabs = enrichedTabs.map(t => {
             const obj = { id: t.id, title: t.title, url: t.url };
-            if (t.description) obj.desc = t.description.substring(0, 150);
-            if (t.h1 && t.h1 !== t.title) obj.h1 = t.h1;
-            if (t.keywords) obj.keywords = t.keywords.substring(0, 100);
-            if (t.content) obj.content = t.content;
+            // Defect 5: allowCloudContent gate — content fields only. Title and
+            // URL (metadata) always go; extracted page text (desc/h1/keywords/
+            // content) is stripped when the setting is off.
+            if (isCloudContentAllowed()) {
+              if (t.description) obj.desc = t.description.substring(0, 150);
+              if (t.h1 && t.h1 !== t.title) obj.h1 = t.h1;
+              if (t.keywords) obj.keywords = t.keywords.substring(0, 100);
+              if (t.content) obj.content = t.content;
+            }
             if (t.pageType) obj.type = t.pageType;
             return obj;
           });
@@ -5548,11 +5744,16 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
   } else if (info.status === 'complete') {
     if (tab.active) captureThumbnail(tabId, tab.windowId);
 
-    // Session Memory: Extract snippet for session
+    // Session Memory: Extract snippet for session. Defect 5: gate on the
+    // sessionSnippets setting — when false, skip snippet capture entirely
+    // (no page text is extracted or stored).
     if (SessionMemoryEngine.isEnabled() && tab.url && !tab.url.startsWith('chrome://') && !tab.url.startsWith('edge://')) {
-      extractWebsiteText(tabId, 400).then(text => {
-        if (text) SessionMemoryEngine.updateTabSnippet(tabId, text);
-      }).catch(() => { });
+      chrome.storage.sync.get({ sessionSnippets: true }, (snippetSettings) => {
+        if (snippetSettings.sessionSnippets === false) return;
+        extractWebsiteText(tabId, 400).then(text => {
+          if (text) SessionMemoryEngine.updateTabSnippet(tabId, text);
+        }).catch(() => { });
+      });
     }
   }
 });
@@ -6138,3 +6339,10 @@ self.transactionLog = transactionLog;
 self.pendingPlans = pendingPlans;
 self.tabLastActive = tabLastActive;
 self.ensureTabLastActive = ensureTabLastActive;
+self.sanitizeGroupColor = sanitizeGroupColor;
+self.resolveBookmarkFolderName = resolveBookmarkFolderName;
+self.providerHealth = providerHealth;
+self.recordProviderFailure = recordProviderFailure;
+self.recordProviderSuccess = recordProviderSuccess;
+self.buildPureWebsitePrompt = buildPureWebsitePrompt;
+self.isCloudContentAllowed = isCloudContentAllowed;
