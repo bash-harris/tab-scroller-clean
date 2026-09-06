@@ -670,7 +670,7 @@
   //   - the site leg never fires on an empty or >= 30% of the pool set.
   // Missing slots -> the interpreter is never reached -> byte-identical legacy.
   const SLOT_KEYS = ['urlShape', 'rank', 'retain', 'dedupe', 'scope', 'anchor',
-    'answerable', 'carveout', 'relationship', 'position', 'groupScope'];
+    'answerable', 'carveout', 'relationship', 'position', 'groupScope', 'meta'];
   const SLOT_SITE_FAMILIES = {
     youtube: ['youtube.com', 'youtu.be'],
     github: ['github.com'],
@@ -745,6 +745,87 @@
     return ranked.slice(0, rank.n).map(r => r.c);
   }
 
+  // ---- META-ATTRIBUTE LEG (gauntlet GA-3) -----------------------------------
+  //
+  // Metadata predicates over the candidate's own fields (bookmarked state,
+  // bookmark folder, user tag, priority, deadline, price/currency, stock,
+  // shipping, rating, language, visit counter). Entailment scores tab TEXT
+  // and cannot compare any of these; the R3 shape-keyed gates own the exact
+  // phrasings, this leg owns the PARAPHRASES the parse hands over as
+  // slots.meta. Composition: meta composes with (a) an explicit window
+  // scope, (b) a topic noun via lexical topic scoping (same conjunct-first
+  // discipline the dedupe census uses -- "in-stock laptops" narrows to tabs
+  // whose own title/tags/url carry the laptop vocabulary), and (c) an
+  // explicit age clause already carried by the parse's time slot (the
+  // 'close temporary tabs older than two days' composition). Guards keep
+  // the leg honest:
+  //   - carve-out / exclude clauses yield (the complement is the legacy
+  //     pipeline's business);
+  //   - a field with ZERO pool signal never reads as "no matches": the leg
+  //     abstains via the census (or yields) instead of electing an empty
+  //     set from absent data;
+  //   - topic scoping that empties the set yields rather than asserting
+  //     nothing.
+  const META_SLOT_FIELDS = ['bookmarked', 'bookmarkFolder', 'userTag', 'priority',
+    'deadlineDays', 'visitCount', 'price', 'rating', 'inStock', 'currency',
+    'lang', 'shipsToIndia'];
+  // Field -> census dimension. A field maps onto the same availability
+  // census GA-1 uses; 'lang' has no census dim (it is checked directly).
+  const META_FIELD_DIM = {
+    bookmarked: 'bookmarks', bookmarkFolder: 'bookmarks', userTag: 'userTag',
+    priority: 'userTag', deadlineDays: 'userTag', visitCount: 'visitCount',
+    price: 'price', rating: 'price', inStock: 'price', currency: 'price',
+    shipsToIndia: 'price'
+  };
+  function metaFieldOf(c, field) {
+    switch (field) {
+      case 'bookmarked': return typeof c.bookmarked === 'boolean' ? c.bookmarked : null;
+      case 'bookmarkFolder': return c.bookmarkFolder != null ? String(c.bookmarkFolder) : null;
+      case 'userTag': return c.userTag != null ? String(c.userTag) : null;
+      case 'priority': return c.priority != null ? String(c.priority) : null;
+      case 'deadlineDays': return Number.isFinite(c.deadlineDays) ? c.deadlineDays : null;
+      case 'visitCount': return Number.isFinite(c.visitCount) ? c.visitCount : null;
+      case 'price': return Number.isFinite(Number(c.price)) ? Number(c.price) : null;
+      case 'rating': return Number.isFinite(Number(c.rating)) ? Number(c.rating) : null;
+      case 'inStock': return typeof c.inStock === 'boolean' ? c.inStock : null;
+      case 'currency': return c.currency != null ? String(c.currency).toUpperCase() : null;
+      case 'lang': return c.lang != null ? String(c.lang).toLowerCase() : null;
+      case 'shipsToIndia': return typeof c.shipsToIndia === 'boolean' ? c.shipsToIndia : null;
+      default: return null;
+    }
+  }
+  function metaEntryMatches(c, entry) {
+    const v = metaFieldOf(c, entry.field);
+    const want = entry.value;
+    switch (entry.op) {
+      case 'is': return v === want || (typeof want === 'boolean' ? v === want : String(v) === String(want));
+      // Boolean negation matches only the EXPLICIT opposite value: an
+      // inStock:false entry elects a measured false, never an unmeasured
+      // tab (absence of data must not read as the negative fact).
+      case 'isNot': return typeof want === 'boolean'
+        ? v === !want
+        : (v != null && String(v) !== String(want));
+      case 'gt': return v != null && Number(v) > Number(want);
+      case 'lt': return v != null && Number(v) < Number(want);
+      case 'gte': return v != null && Number(v) >= Number(want);
+      case 'lte': return v != null && Number(v) <= Number(want);
+      case 'has': {
+        if (v == null) return false;
+        const f = String(v).toLowerCase(), w = String(want).toLowerCase();
+        return f === w || wordHit(w, f) || wordHit(f, w);
+      }
+      default: return false;
+    }
+  }
+  function metaFieldSignal(candidates, field) {
+    // Presence census for one field: any candidate carrying the field at all
+    // (boolean false included -- "inStock:false" IS stock data) counts.
+    return candidates.some(c => {
+      const v = metaFieldOf(c, field);
+      return typeof v === 'boolean' ? true : v != null;
+    });
+  }
+
   /**
    * Execute slot-bearing commands deterministically. Returns a final result
    * object, or null to yield to the legacy pipeline. Reads ONLY the slots and
@@ -804,12 +885,80 @@
     // Dedupe commands carry topic concepts that are the CENSUS own scope
     // vocabulary ("gemini chats about merging alexa devices"); the census
     // leg consumes them, so the multi-extra yield does not apply there.
-    if (extras.length > 1 && !dedupe) return null;
+    // GA-3: same for meta commands -- the meta leg consumes the residual
+    // concept tokens as its topic scoping, so the multi-extra yield must
+    // not fire when a meta slot owns the command.
+    if (extras.length > 1 && !dedupe && !(Array.isArray(S.meta) && S.meta.length)) return null;
 
     const slotOut = (set, mode) => ({
       decision: 'final', mode, needDetails: [],
       matches: set.map(c => ({ tabId: c.tabId, reason: mode, confidence: 1.0 }))
     });
+
+    // META-ATTRIBUTE LEG (GA-3): slots.meta predicates over the candidates'
+    // own metadata fields. Consumes the structured slot ONLY -- zero regex
+    // over the raw command. Composes with concepts (topic scoping) and a
+    // window scope; yields to the R3 gates when another slot owns the
+    // command (urlShape/rank/retain/anchor/relationship). A field with zero
+    // pool signal never reads as "no matches": the leg abstains.
+    let metaSlot = Array.isArray(S.meta) && S.meta.length &&
+      S.meta.every(m => m && typeof m === 'object') ? S.meta : null;
+    // A parse-level time window means the command carries a conjunct the
+    // meta slot cannot express ("not used today", "older than two days");
+    // yielding lets the composed R3 gates answer instead of dropping the
+    // recency half.
+    if (metaSlot && q && q.time && q.time.value) metaSlot = null;
+    if (metaSlot && !anchor && !retain && !dedupe && !relationship &&
+        !(S.urlShape && (S.urlShape.site || S.urlShape.section)) && !rank) {
+      // Zero-signal guard: every field the command names must exist somewhere
+      // in the pool. Absence of data is unanswerable, not an empty set.
+      const census = signalCensus(candidates);
+      const dead = metaSlot
+        .filter(m => META_FIELD_DIM[m.field] && !census[META_FIELD_DIM[m.field]])
+        .map(m => m.field);
+      if (dead.length) {
+        console.log(`[NLI] unanswerable_no_signal: meta dim [${dead.map(d => META_FIELD_DIM[d]).join(',')}] has zero pool signal; meta leg refused`);
+        return {
+          decision: 'final',
+          mode: 'unanswerable_no_signal',
+          needDetails: [], matches: [],
+          unanswerableDims: [...new Set(dead.map(d => META_FIELD_DIM[d]))]
+        };
+      }
+      // Topic scoping (conjunct-first, dedupe-census discipline): when the
+      // parse carries a topic, the meta set narrows to tabs whose own
+      // title/tags/url/category carry the topic vocabulary; a full-conjunct
+      // hit wins over an any-token hit. "in-stock laptops" elects stock
+      // laptops, not the whole stock shelf.
+      let set = candidates;
+      const metaTopicToks = (q.concepts || []).flatMap(cpt =>
+        String(cpt).toLowerCase().split(/[^a-z0-9]+/))
+        .filter(t => t.length >= 2 && !DEDUPE_FRAME_TOKS.has(t) && !SLOT_STOP.has(t));
+      if (metaTopicToks.length) {
+        const metaHay = c => `${c.title || ''} ${c.url || ''} ${rawTagsOf(c).join(' ')} ${String(c.enrichment?.category || '')}`;
+        const metaHit = (t, hay) => wordHit(t, hay) ||
+          (stem(t).length >= 3 && wordHit(stem(t) + 's?', hay));
+        const conj = candidates.filter(c => metaTopicToks.every(t => metaHit(t, metaHay(c))));
+        const any = candidates.filter(c => metaTopicToks.some(t => metaHit(t, metaHay(c))));
+        const scoped = conj.length ? conj : any;
+        if (scoped.length) set = scoped;
+      }
+      // Window scope composes when named.
+      if (scope && scope.window !== undefined && scope.window !== 'all') {
+        const w = scope.window === 'current'
+          ? (meta.currentWindowId != null ? meta.currentWindowId : 1)
+          : Number(scope.window);
+        set = set.filter(c => c.windowId === w);
+      }
+      for (const entry of metaSlot) set = set.filter(c => metaEntryMatches(c, entry));
+      if (!set.length) return null;
+      // Scale-aware cap (dedupe-leg discipline): on a real pool a misparse
+      // must not swallow 30%+ of the browser; on a tiny pool the share is
+      // meaningless and the predicate IS the command's answer.
+      if (candidates.length >= 10 && set.length / candidates.length >= 0.30) return null;
+      return slotOut(set,
+        `slot meta ${metaSlot.map(m => `${m.field}${m.op === 'has' ? '~' : m.op}${m.value}`).join(' AND ')}`);
+    }
 
     // SITE/SECTION LEG -- family membership (+ optional path section), with an
     // optional rank cut composed on top and at most one URL-path refinement
@@ -1786,6 +1935,22 @@
     {
       const _slots = {};
       for (const _k of SLOT_KEYS) if (q[_k] !== undefined) _slots[_k] = q[_k];
+      // GA-3: the meta slot is cue-recomputed when the delivered parse
+      // carries none -- the cue layer is the parser's own rescue and must
+      // reach the interpreter wherever the parse lacks the slot. Companion
+      // cue slots (scope.window) fill the same way so window composition
+      // survives a model lap that missed both.
+      if (_slots.meta === undefined || (_slots.meta && _slots.scope === undefined)) {
+        const _LQ = (typeof self !== 'undefined' && self.LlmQuery) ||
+          (typeof require !== 'undefined' ? require('./llm-query.js') : null);
+        if (_LQ && typeof _LQ.slotsFromCommand === 'function' && typeof _LQ.validateSlots === 'function') {
+          try {
+            const _cue = _LQ.validateSlots(_LQ.slotsFromCommand(cmdStr));
+            if (_cue && _cue.meta) _slots.meta = _cue.meta;
+            if (_cue && _cue.scope && _slots.scope === undefined) _slots.scope = _cue.scope;
+          } catch { /* cue extraction is best-effort; legacy still answers */ }
+        }
+      }
       if (!Object.keys(_slots).length && !opts.query) {
         const _LQ = (typeof self !== 'undefined' && self.LlmQuery) ||
           (typeof require !== 'undefined' ? require('./llm-query.js') : null);
@@ -1795,10 +1960,11 @@
             if (_cue && Object.keys(_cue).length) Object.assign(_slots, _cue);
           } catch { /* cue extraction is best-effort; legacy still answers */ }
         }
-      } else if (_slots.dedupe === undefined) {
+      } else if (_slots.dedupe === undefined || _slots.meta === undefined) {
         // GA-2: the dedupe census is STRUCTURAL -- a parse that predates the
-        // cue layer (bench parse caches) must not lose it. Fill only the
-        // absent slot; a delivered dedupe slot is never overwritten.
+        // cue layer (bench parse caches) must not lose it. GA-3: same for the
+        // meta-attribute slot. Fill only the ABSENT slots; a delivered
+        // dedupe/meta slot is never overwritten.
         const _LQ = (typeof self !== 'undefined' && self.LlmQuery) ||
           (typeof require !== 'undefined' ? require('./llm-query.js') : null);
         if (_LQ && typeof _LQ.slotsFromCommand === 'function' && typeof _LQ.validateSlots === 'function') {
@@ -1811,6 +1977,9 @@
               // the current cue layer clears it for dup demands. The fresh
               // cue reading wins -- the census is armed, not vetoed.
               if (!_cue.carveout) delete _slots.carveout;
+            }
+            if (_cue && _cue.meta && _slots.meta === undefined) {
+              _slots.meta = _cue.meta;
             }
           } catch { /* cue extraction is best-effort; legacy still answers */ }
         }

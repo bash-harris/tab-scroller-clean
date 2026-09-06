@@ -12864,5 +12864,2578 @@
   "_coverage": 0.5,
   "_needsReparse": false,
   "isSelectAll": false
+ },
+ "hosted:glm-5.3-flash|group all youtube tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "videos",
+    "streaming",
+    "video clips"
+   ]
+  },
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "youtube"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close my github tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "github.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "github"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs from chatgpt.com": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "chatgpt.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs from gemini.google.com": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "gemini.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "scope": {
+   "hostExact": true
+  },
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close all docs.google.com tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "docs.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "google-docs"
+  },
+  "scope": {
+   "hostExact": true
+  },
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs from codeforces.com": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "codeforces.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close maang.in tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "maang.in"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close geeksforgeeks tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "geeksforgeeks"
+  ],
+  "combine": "union",
+  "expansions": {
+   "geeksforgeeks": [
+    "coding practice",
+    "programming tutorials",
+    "dsa"
+   ]
+  },
+  "domains": [
+   "geeksforgeeks.org"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close amazon.in shopping tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "shopping"
+  ],
+  "combine": "union",
+  "expansions": {
+   "shopping": [
+    "e-commerce",
+    "deals",
+    "online store"
+   ]
+  },
+  "domains": [
+   "amazon.in"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "amazon"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close reddit tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "reddit"
+  ],
+  "combine": "union",
+  "expansions": {
+   "reddit": [
+    "subreddit",
+    "forum",
+    "discussion threads"
+   ]
+  },
+  "domains": [
+   "reddit.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "reddit"
+  },
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs from arxiv.org": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "arxiv.org"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "arxiv"
+  },
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs from huggingface.co": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "huggingface.co"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close linkedin tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "linkedin"
+  ],
+  "combine": "union",
+  "expansions": {
+   "linkedin": [
+    "professional networking",
+    "jobs",
+    "recruiting"
+   ]
+  },
+  "domains": [
+   "linkedin.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close instagram tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "instagram"
+  ],
+  "combine": "union",
+  "expansions": {
+   "instagram": [
+    "social media",
+    "photo sharing",
+    "insta"
+   ]
+  },
+  "domains": [
+   "instagram.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tiktok tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "tiktok"
+  ],
+  "combine": "union",
+  "expansions": {
+   "tiktok": [
+    "short videos",
+    "social video",
+    "video clips"
+   ]
+  },
+  "domains": [
+   "tiktok.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close neetcode tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "neetcode"
+  ],
+  "combine": "union",
+  "expansions": {
+   "neetcode": [
+    "leetcode",
+    "coding interview",
+    "data structures"
+   ]
+  },
+  "domains": [
+   "neetcode.io"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close whatsapp tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "whatsapp"
+  ],
+  "combine": "union",
+  "expansions": {
+   "whatsapp": [
+    "messaging",
+    "chat",
+    "wa web"
+   ]
+  },
+  "domains": [
+   "whatsapp.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs from openai.com": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "openai.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close localhost tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs whose url contains utm source": {
+  "intent": "close_tabs",
+  "concepts": [
+   "utm_source"
+  ],
+  "combine": "union",
+  "expansions": {
+   "utm_source": [
+    "utm_medium",
+    "utm_campaign",
+    "tracking parameter"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close chrome web store tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "chrome web store"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chrome web store": [
+    "chrome extensions",
+    "browser extensions",
+    "add-ons"
+   ]
+  },
+  "domains": [
+   "chromewebstore.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close leetcode discuss tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "leetcode.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "leetcode",
+   "section": "discuss"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group leetcode contest tabs": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "leetcode.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "leetcode",
+   "section": "contest"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close youtube shorts tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "youtube",
+   "section": "shorts"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group youtube watch pages": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "youtube",
+   "section": "watch"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close youtube channel tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "youtube",
+   "section": "channel"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close github pull request tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "github.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "github",
+   "section": "pull"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close github blob tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "github.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "github",
+   "section": "blob"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group github tree browse tabs": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "github.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "github",
+   "section": "tree"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close codeforces problem tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "codeforces problems"
+  ],
+  "combine": "union",
+  "expansions": {
+   "codeforces problems": [
+    "competitive programming",
+    "algorithm problems",
+    "coding contests"
+   ]
+  },
+  "domains": [
+   "codeforces.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close arxiv pdf tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "arxiv pdf"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.5,
+  "isSelectAll": false,
+  "source": "fallback",
+  "urlShape": {
+   "site": "arxiv"
+  },
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close google drive folder tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "google drive folder"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.5,
+  "isSelectAll": false,
+  "source": "fallback",
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close colab notebook tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "colab notebook"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.5,
+  "isSelectAll": false,
+  "source": "fallback",
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs whose title contains stone game": {
+  "intent": "close_tabs",
+  "concepts": [
+   "stone game"
+  ],
+  "combine": "union",
+  "expansions": {
+   "stone game": [
+    "nim",
+    "pebble game",
+    "game theory",
+    "minimax"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs whose title contains jump game": {
+  "intent": "close_tabs",
+  "concepts": [
+   "whose title contains jump game"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.5,
+  "isSelectAll": false,
+  "source": "fallback",
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group tabs whose title contains binary": {
+  "intent": "group_tabs",
+  "concepts": [
+   "whose title contains binary"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.5,
+  "isSelectAll": false,
+  "source": "fallback",
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs whose title contains access denied": {
+  "intent": "close_tabs",
+  "concepts": [
+   "whose title contains access denied"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.5,
+  "isSelectAll": false,
+  "source": "fallback",
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs whose title contains page not found": {
+  "intent": "close_tabs",
+  "concepts": [
+   "page not found"
+  ],
+  "combine": "union",
+  "expansions": {
+   "page not found": [
+    "404",
+    "error page",
+    "not found",
+    "missing page"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "carveout": true,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group tabs whose title contains amazon and interview": {
+  "intent": "group_tabs",
+  "concepts": [
+   "amazon",
+   "interview"
+  ],
+  "combine": "intersection",
+  "expansions": {
+   "amazon": [
+    "aws",
+    "amazon jobs"
+   ],
+   "interview": [
+    "job interview",
+    "hiring process",
+    "recruiter"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.85,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon"
+  },
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs whose title contains slowed": {
+  "intent": "close_tabs",
+  "concepts": [
+   "slowed"
+  ],
+  "combine": "union",
+  "expansions": {
+   "slowed": [
+    "slowed and reverb",
+    "reverb",
+    "slowed songs"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs whose title starts with leetcode": {
+  "intent": "close_tabs",
+  "concepts": [
+   "leetcode"
+  ],
+  "combine": "union",
+  "expansions": {
+   "leetcode": [
+    "coding problems",
+    "programming challenges",
+    "algorithm practice"
+   ]
+  },
+  "domains": [
+   "leetcode.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "leetcode"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs whose title contains interview experience": {
+  "intent": "close_tabs",
+  "concepts": [
+   "interview experience"
+  ],
+  "combine": "union",
+  "expansions": {
+   "interview experience": [
+    "job interview",
+    "hiring process",
+    "candidate interview"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs opened in the last hour": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "within",
+   "value": "last_hour"
+  },
+  "state": [],
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": [
+   {
+    "dim": "timestamps",
+    "claim": "filter"
+   }
+  ]
+ },
+ "hosted:glm-5.3-flash|group tabs opened this week": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": {
+   "basis": "opened",
+   "op": "within",
+   "value": "this_week"
+  },
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": [
+   {
+    "dim": "timestamps",
+    "claim": "filter"
+   }
+  ]
+ },
+ "hosted:glm-5.3-flash|close the oldest tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "rank": {
+   "by": "opened",
+   "order": "asc"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": [
+   {
+    "dim": "timestamps",
+    "claim": "rank"
+   }
+  ]
+ },
+ "hosted:glm-5.3-flash|group all pinned tabs": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "pinned"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close my pinned tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "pinned"
+  ],
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|mute tabs that are playing audio": {
+  "intent": "mute_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "audible"
+  ],
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close discarded tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "discarded"
+  ],
+  "combine": "union",
+  "expansions": {
+   "discarded": [
+    "inactive",
+    "unloaded",
+    "suspended"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.6,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|unmute all muted tabs": {
+  "intent": "unmute_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "muted"
+  ],
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close all tabs in the dev group": {
+  "intent": "close_tabs",
+  "concepts": [
+   "dev"
+  ],
+  "combine": "union",
+  "expansions": {
+   "dev": [
+    "development",
+    "developer",
+    "programming"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.85,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group my dev tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "dev"
+  ],
+  "combine": "union",
+  "expansions": {
+   "dev": [
+    "programming",
+    "developer",
+    "coding",
+    "software"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|unpin the dev group tabs": {
+  "intent": "unpin_tabs",
+  "concepts": [
+   "dev"
+  ],
+  "combine": "union",
+  "expansions": {
+   "dev": [
+    "developer",
+    "programming",
+    "code",
+    "software development"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|mute all tabs in the dev group": {
+  "intent": "mute_tabs",
+  "concepts": [
+   "dev"
+  ],
+  "combine": "union",
+  "expansions": {
+   "dev": [
+    "developer",
+    "programming",
+    "coding"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.85,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|show me the tabs in my dev group": {
+  "intent": "open_tabs",
+  "concepts": [
+   "dev"
+  ],
+  "combine": "union",
+  "expansions": {
+   "dev": [
+    "development",
+    "programming",
+    "code",
+    "engineering"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.85,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|sort tabs in the dev group by title": {
+  "intent": "sort_tabs",
+  "concepts": [
+   "dev"
+  ],
+  "combine": "union",
+  "expansions": {
+   "dev": [
+    "development",
+    "programming",
+    "code"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.85,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group tabs in window 2": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": true,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "scope": {
+   "window": "2"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close all tabs to the right of the current tab in this window": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "rank": {
+   "by": "position",
+   "from": "end"
+  },
+  "scope": {
+   "window": "current"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group tabs from the same website as the current tab": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.6,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs from the same site as my current tab except this one": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [
+   "current tab"
+  ],
+  "time": null,
+  "state": [],
+  "confidence": 0.85,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "carveout": true,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group tabs opened from the current tab": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.7,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "relationship": {
+   "openerOf": "current tab",
+   "chain": false
+  },
+  "requires": [
+   {
+    "dim": "opener",
+    "claim": "filter"
+   }
+  ]
+ },
+ "hosted:glm-5.3-flash|group tabs related to my current tab": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "anchor": {
+   "phrase": "current tab"
+  },
+  "confidence": 0.85,
+  "source": "llm",
+  "_coverage": 0,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close duplicate tabs": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "duplicate"
+  ],
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "dedupe": {
+   "keep": "first"
+  },
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group my duplicate leetcode problem tabs": {
+  "intent": "group_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [
+   "leetcode.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "duplicate"
+  ],
+  "urlShape": {
+   "site": "leetcode"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "dedupe": {
+   "keep": "first",
+   "group": true
+  },
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close the duplicate amazon interview experience tabs keeping the first": {
+  "intent": "close_tabs",
+  "concepts": [
+   "amazon interview experience"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon interview experience": [
+    "interview questions",
+    "hiring process",
+    "onsite experience"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "duplicate"
+  ],
+  "retain": {
+   "keep": "first"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.6666666666666666,
+  "_needsReparse": false,
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon"
+  },
+  "dedupe": {
+   "keep": "first"
+  },
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close the duplicate whatsapp tab": {
+  "intent": "close_tabs",
+  "concepts": [
+   "whatsapp"
+  ],
+  "combine": "union",
+  "expansions": {
+   "whatsapp": [
+    "messaging",
+    "chat"
+   ]
+  },
+  "domains": [
+   "whatsapp.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "duplicate"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "dedupe": {
+   "keep": "first"
+  },
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close duplicate gemini chats about merging alexa devices": {
+  "intent": "close_tabs",
+  "concepts": [
+   "merging alexa devices"
+  ],
+  "combine": "union",
+  "expansions": {
+   "merging alexa devices": [
+    "alexa",
+    "echo",
+    "smart home",
+    "device pairing"
+   ]
+  },
+  "domains": [
+   "gemini.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "duplicate"
+  ],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.8333333333333334,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "dedupe": {
+   "keep": "first"
+  },
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close duplicate hermes agent chatgpt tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "hermes agent chatgpt"
+  ],
+  "combine": "union",
+  "expansions": {
+   "hermes agent chatgpt": [
+    "openai",
+    "gpt chatbot",
+    "ai agent"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "duplicate"
+  ],
+  "confidence": 0.85,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "dedupe": {
+   "keep": "first"
+  },
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close duplicate tabs of the 5 ai engineer projects youtube video keeping the first": {
+  "intent": "close_tabs",
+  "concepts": [
+   "5 ai engineer projects"
+  ],
+  "combine": "union",
+  "expansions": {
+   "5 ai engineer projects": [
+    "ai projects",
+    "machine learning projects",
+    "ai engineering"
+   ]
+  },
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "duplicate"
+  ],
+  "urlShape": {
+   "site": "youtube",
+   "section": "watch"
+  },
+  "retain": {
+   "keep": "first"
+  },
+  "confidence": 0.85,
+  "source": "llm",
+  "_coverage": 0.5714285714285714,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "dedupe": {
+   "keep": "first"
+  },
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close near duplicate articles that cover the same story": {
+  "intent": "close_tabs",
+  "concepts": [],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [
+   "duplicate"
+  ],
+  "confidence": 0.85,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "dedupe": {
+   "keep": "first",
+   "near": true
+  },
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close pages containing code blocks": {
+  "intent": "close_tabs",
+  "concepts": [
+   "code blocks"
+  ],
+  "combine": "union",
+  "expansions": {
+   "code blocks": [
+    "code snippets",
+    "programming",
+    "source code",
+    "syntax highlighting"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.85,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": [
+   {
+    "dim": "mainText",
+    "claim": "filter"
+   }
+  ]
+ },
+ "hosted:glm-5.3-flash|close pages mentioning refresh tokens": {
+  "intent": "close_tabs",
+  "concepts": [
+   "refresh tokens"
+  ],
+  "combine": "union",
+  "expansions": {
+   "refresh tokens": [
+    "oauth",
+    "authentication",
+    "access token",
+    "jwt"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": [
+   {
+    "dim": "mainText",
+    "claim": "filter"
+   }
+  ]
+ },
+ "hosted:glm-5.3-flash|close pages containing an email address": {
+  "intent": "close_tabs",
+  "concepts": [
+   "email address"
+  ],
+  "combine": "union",
+  "expansions": {
+   "email address": [
+    "email",
+    "contact",
+    "mail",
+    "@"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.8,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": [
+   {
+    "dim": "mainText",
+    "claim": "filter"
+   }
+  ]
+ },
+ "hosted:glm-5.3-flash|close all pdf tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "pdf"
+  ],
+  "combine": "union",
+  "expansions": {
+   "pdf": [
+    "document",
+    "portable document format",
+    "printable files"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.95,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group local file tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "local file"
+  ],
+  "combine": "union",
+  "expansions": {
+   "local file": [
+    "file://",
+    "local documents",
+    "offline files"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.85,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close google sheets tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "google sheets"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google sheets": [
+    "spreadsheets",
+    "excel",
+    "worksheets"
+   ]
+  },
+  "domains": [
+   "sheets.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group google docs documents": {
+  "intent": "group_tabs",
+  "concepts": [
+   "google docs"
+  ],
+  "combine": "union",
+  "expansions": {
+   "google docs": [
+    "google documents",
+    "docs",
+    "word processor"
+   ]
+  },
+  "domains": [
+   "docs.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "urlShape": {
+   "site": "google-docs"
+  },
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close login pages": {
+  "intent": "close_tabs",
+  "concepts": [
+   "login"
+  ],
+  "combine": "union",
+  "expansions": {
+   "login": [
+    "sign in",
+    "signin",
+    "authentication",
+    "account access"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close streaming site tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "streaming"
+  ],
+  "combine": "union",
+  "expansions": {
+   "streaming": [
+    "netflix",
+    "hulu",
+    "video streaming",
+    "youtube"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group article pages": {
+  "intent": "group_tabs",
+  "concepts": [
+   "article"
+  ],
+  "combine": "union",
+  "expansions": {
+   "article": [
+    "news",
+    "blog post",
+    "editorial",
+    "write-up"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group documentation pages": {
+  "intent": "group_tabs",
+  "concepts": [
+   "documentation"
+  ],
+  "combine": "union",
+  "expansions": {
+   "documentation": [
+    "docs",
+    "guides",
+    "reference",
+    "manual"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": [
+   {
+    "dim": "mainText",
+    "claim": "filter"
+   }
+  ]
+ },
+ "hosted:glm-5.3-flash|group tabs about machine learning": {
+  "intent": "group_tabs",
+  "concepts": [
+   "machine learning"
+  ],
+  "combine": "union",
+  "expansions": {
+   "machine learning": [
+    "artificial intelligence",
+    "neural networks",
+    "deep learning",
+    "ai"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs about llms": {
+  "intent": "close_tabs",
+  "concepts": [
+   "llms"
+  ],
+  "combine": "union",
+  "expansions": {
+   "llms": [
+    "large language models",
+    "chatgpt",
+    "generative ai",
+    "gpt"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group my amazon interview prep tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "amazon interview prep"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon interview prep": [
+    "behavioral questions",
+    "leadership principles",
+    "coding interview",
+    "system design"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon"
+  },
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close fitness tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "fitness"
+  ],
+  "combine": "union",
+  "expansions": {
+   "fitness": [
+    "exercise",
+    "workout",
+    "gym",
+    "health"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close anime tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "anime"
+  ],
+  "combine": "union",
+  "expansions": {
+   "anime": [
+    "manga",
+    "otaku",
+    "cosplay",
+    "waifu"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group my slowed reverb music tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "slowed reverb music"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.5,
+  "isSelectAll": false,
+  "source": "fallback",
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close competitive programming tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "competitive programming"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.5,
+  "isSelectAll": false,
+  "source": "fallback",
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group tabs about rag": {
+  "intent": "group_tabs",
+  "concepts": [
+   "rag"
+  ],
+  "combine": "union",
+  "expansions": {
+   "rag": [
+    "retrieval augmented generation",
+    "llm",
+    "vector search",
+    "embedding"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.8,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close trading tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "trading"
+  ],
+  "combine": "union",
+  "expansions": {
+   "trading": [
+    "stocks",
+    "investing",
+    "stock market",
+    "finance"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close backend course tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "backend course"
+  ],
+  "combine": "union",
+  "expansions": {
+   "backend course": [
+    "backend development",
+    "server-side programming",
+    "api development"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close vibe coding tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "vibe coding"
+  ],
+  "combine": "union",
+  "expansions": {
+   "vibe coding": [
+    "ai coding",
+    "prompt-driven programming",
+    "ai pair programming"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close gsoc tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "gsoc"
+  ],
+  "combine": "union",
+  "expansions": {
+   "gsoc": [
+    "google summer of code",
+    "open source",
+    "mentorship"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close shopping tabs": {
+  "intent": "close_tabs",
+  "concepts": [
+   "shopping"
+  ],
+  "combine": "union",
+  "expansions": {
+   "shopping": [
+    "e-commerce",
+    "retail",
+    "deals",
+    "online store"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group tabs about claude": {
+  "intent": "group_tabs",
+  "concepts": [
+   "claude"
+  ],
+  "combine": "union",
+  "expansions": {
+   "claude": [
+    "anthropic",
+    "ai assistant",
+    "chatbot",
+    "llm"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs about gemini": {
+  "intent": "close_tabs",
+  "concepts": [
+   "gemini"
+  ],
+  "combine": "union",
+  "expansions": {
+   "gemini": [
+    "google gemini",
+    "bard",
+    "gemini crypto exchange"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs about chatgpt": {
+  "intent": "close_tabs",
+  "concepts": [
+   "chatgpt"
+  ],
+  "combine": "union",
+  "expansions": {
+   "chatgpt": [
+    "openai",
+    "ai chatbot",
+    "gpt"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs about karpathy": {
+  "intent": "close_tabs",
+  "concepts": [
+   "karpathy"
+  ],
+  "combine": "union",
+  "expansions": {
+   "karpathy": [
+    "andrej karpathy",
+    "neural networks",
+    "deep learning",
+    "openai"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs about docker": {
+  "intent": "close_tabs",
+  "concepts": [
+   "docker"
+  ],
+  "combine": "union",
+  "expansions": {},
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.5,
+  "isSelectAll": false,
+  "source": "fallback",
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs about python": {
+  "intent": "close_tabs",
+  "concepts": [
+   "python"
+  ],
+  "combine": "union",
+  "expansions": {
+   "python": [
+    "programming",
+    "code",
+    "scripting",
+    "django"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|group amazon leadership principles tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "amazon leadership principles"
+  ],
+  "combine": "union",
+  "expansions": {
+   "amazon leadership principles": [
+    "leadership principles",
+    "amazon interview",
+    "customer obsession",
+    "day 1 culture"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon"
+  },
+  "requires": []
+ },
+ "hosted:glm-5.3-flash|close tabs about ollama": {
+  "intent": "close_tabs",
+  "concepts": [
+   "ollama"
+  ],
+  "combine": "union",
+  "expansions": {
+   "ollama": [
+    "local llm",
+    "llama models",
+    "large language model"
+   ]
+  },
+  "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "requires": []
  }
 }

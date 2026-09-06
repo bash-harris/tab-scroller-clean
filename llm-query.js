@@ -46,6 +46,7 @@
 Plus OPTIONAL slot fields, added ONLY when the command itself signals them
 (absent = no signal, never guessed):
 "urlShape":{"site":"...","section":"..."},"rank":{"by":"...","order":"...","n":N,"from":"..."},"retain":{"per":"...","keep":"..."},"dedupe":{"canonical":true},"scope":{"hostExact":true,"window":"..."},"anchor":{"phrase":"..."},"answerable":true
+"meta":[{"field":"...","op":"...","value":...}]
 
 Slots:
 - urlShape when the command names a site-structural concept. site one of:
@@ -71,6 +72,26 @@ Slots:
   1, 2, 3, all -- only when a window is named.
 - anchor: for "similar to X" / "related to X" / "like the X article", the
   distinctive words identifying the anchor tab, max 8 words.
+- meta: metadata-attribute filters on tab FIELDS (not topics). Each entry:
+  {"field":..., "op":..., "value":...}. field one of: bookmarked,
+  bookmarkFolder, userTag, priority, deadlineDays, visitCount, price,
+  rating, inStock, currency, lang, shipsToIndia. op one of: is, isNot,
+  gt, lt, gte, lte, has. Read ONLY what the command literally says:
+  "already bookmarked|saved|starred" -> bookmarked is:true; "not
+  bookmarked|unsaved" -> bookmarked isNot:true; "bookmarked under|saved
+  under|in folder <X>" -> bookmarkFolder has:"X"; "tagged|marked|labelled
+  <X>" -> userTag is:"X"; "high priority|urgent|important" -> priority
+  is:"high"; "due this week|due in N days" -> deadlineDays lte:7 (or N);
+  "priced in <currency>" -> currency is:"INR" (or USD/EUR/GBP);
+  "above|over|more than <N> rupees|dollars" -> price gt:N;
+  "under|below|cheaper than <N>" -> price lt:N; "in stock" -> inStock
+  is:true; "out of stock" -> inStock is:false; "ship(s) to india" ->
+  shipsToIndia is:true; "do not ship to india" -> shipsToIndia
+  isNot:true; "rating above|over <N>" -> rating gte:N; "rated under
+  <N>" -> rating lt:N; "in german|french|..." -> lang is:"de" (or
+  fr/es/it/ja/zh/ru/pt/nl/ko/hi); "visited only once|twice" -> visitCount
+  is:1 (or 2). Numbers are JSON numbers. Omit meta entirely when the
+  command names no metadata attribute.
 - answerable: false ONLY when the command cannot be answered from a pool
   of live tabs at all -- it references prior conversation ("those tabs",
   "the last filter") with no context, or the destructive scope is
@@ -188,7 +209,9 @@ Examples:
   selectAll false unless every tab is meant.
 "pull up the recipe blogs" -> {"intent":"open_tabs","concepts":["recipe"],"combine":"union","expansions":{"recipe":["cooking","food"]},"domains":[],"selectAll":false,"exclude":[],"time":null,"state":[],"confidence":0.9}
 "show me the spreadsheet tabs" -> {"intent":"open_tabs","concepts":["spreadsheet"],"combine":"union","expansions":{"spreadsheet":["sheets","excel"]},"domains":[],"selectAll":false,"exclude":[],"time":null,"state":[],"confidence":0.9}
-"open my crypto watchlist" -> {"intent":"open_tabs","concepts":["crypto"],"combine":"union","expansions":{"crypto":["bitcoin","ethereum","blockchain"]},"domains":[],"selectAll":false,"exclude":[],"time":null,"state":[],"confidence":0.9}`;
+"open my crypto watchlist" -> {"intent":"open_tabs","concepts":["crypto"],"combine":"union","expansions":{"crypto":["bitcoin","ethereum","blockchain"]},"domains":[],"selectAll":false,"exclude":[],"time":null,"state":[],"confidence":0.9}
+"group pages priced in inr" -> {"intent":"group_tabs","concepts":[],"combine":"union","expansions":{},"domains":[],"selectAll":false,"exclude":[],"time":null,"state":[],"meta":[{"field":"currency","op":"is","value":"INR"}],"confidence":0.9}
+"close laptop tabs above 80000 rupees" -> {"intent":"close_tabs","concepts":["laptop"],"combine":"union","expansions":{"laptop":["notebook","computer"]},"domains":[],"selectAll":false,"exclude":[],"time":null,"state":[],"meta":[{"field":"price","op":"gt","value":80000},{"field":"currency","op":"is","value":"INR"}],"confidence":0.9}`;
 
   const INTENTS = new Set([
     'close_tabs', 'group_tabs', 'bookmark_tabs', 'pin_tabs', 'unpin_tabs',
@@ -382,6 +405,18 @@ Examples:
   // Chrome tab-group color enum (groupScope.color).
   const GROUP_COLOR_ENUM = new Set(['grey', 'blue', 'red', 'yellow', 'green', 'pink',
     'purple', 'cyan', 'orange']);
+  // Meta-attribute slot (GA-3): closed enums for field/op. 'lang' is a closed
+  // ISO code set mirroring nli-select's language table; everything numeric
+  // validates as a finite number.
+  const META_FIELDS = new Set(['bookmarked', 'bookmarkFolder', 'userTag', 'priority',
+    'deadlineDays', 'visitCount', 'price', 'rating', 'inStock', 'currency', 'lang',
+    'shipsToIndia']);
+  const META_OPS = new Set(['is', 'isNot', 'gt', 'lt', 'gte', 'lte', 'has']);
+  const META_NUM_FIELDS = new Set(['deadlineDays', 'visitCount', 'price', 'rating']);
+  const META_BOOL_FIELDS = new Set(['bookmarked', 'inStock', 'shipsToIndia']);
+  const META_CURRENCIES = new Set(['INR', 'USD', 'EUR', 'GBP']);
+  const META_LANGS = new Set(['de', 'fr', 'es', 'it', 'ja', 'zh', 'ru', 'pt', 'nl', 'ko', 'hi']);
+  const META_PRIORITIES = new Set(['high', 'medium', 'low']);
   // carveout is cue-only: the model is never asked for it, validate() never
   // produces it. It marks a carve-out construction the slot schema cannot
   // express, forcing the slot interpreter to yield to the legacy pipeline.
@@ -419,7 +454,7 @@ Examples:
     /\bnear[- ]?duplicates?\b/, /\bsame\s+story\b/, /\bcover(?:s|ing)?\s+the\s+same\b/
   ];
   const SLOT_KEYS = ['urlShape', 'rank', 'retain', 'dedupe', 'scope', 'anchor',
-    'answerable', 'carveout', 'relationship', 'position', 'groupScope'];
+    'answerable', 'carveout', 'relationship', 'position', 'groupScope', 'meta'];
 
   // The model's slot output is untrusted: validate each field against its
   // closed enum and keep only what survives. A single bad field dies alone.
@@ -491,6 +526,46 @@ Examples:
       if (name && name.length <= 40) out.groupScope = { name };
       else if (color && GROUP_COLOR_ENUM.has(color)) out.groupScope = { color };
     }
+    // Meta-attribute slot (GA-3): array of {field, op, value} predicates over
+    // tab metadata fields. An entry that fails its field/op/value contract
+    // dies alone; the array survives with the valid entries. Boolean fields
+    // accept only booleans, numeric fields only finite numbers, enum-valued
+    // fields (priority/currency/lang) only their enum values, and free-text
+    // fields (bookmarkFolder/userTag) any non-empty string.
+    if (Array.isArray(r.meta)) {
+      const entries = [];
+      for (const raw of r.meta.slice(0, 4)) {
+        if (!raw || typeof raw !== 'object') continue;
+        let m = raw;
+        if (!META_FIELDS.has(m.field) || !META_OPS.has(m.op)) continue;
+        const v = m.value;
+        if (META_BOOL_FIELDS.has(m.field)) {
+          if (typeof v !== 'boolean') continue;
+        } else if (META_NUM_FIELDS.has(m.field)) {
+          const n = Number(v);
+          if (!Number.isFinite(n)) continue;
+          m = { field: m.field, op: m.op, value: n };
+        } else if (m.field === 'currency') {
+          const c = String(v || '').trim().toUpperCase();
+          if (!META_CURRENCIES.has(c)) continue;
+          m = { field: m.field, op: m.op === 'isNot' ? 'isNot' : 'is', value: c };
+        } else if (m.field === 'lang') {
+          const c = String(v || '').trim().toLowerCase();
+          if (!META_LANGS.has(c)) continue;
+          m = { field: m.field, op: m.op === 'isNot' ? 'isNot' : 'is', value: c };
+        } else if (m.field === 'priority') {
+          const p = String(v || '').trim().toLowerCase();
+          if (!META_PRIORITIES.has(p)) continue;
+          m = { field: m.field, op: m.op === 'isNot' ? 'isNot' : 'is', value: p };
+        } else {
+          const s = String(v == null ? '' : v).trim().replace(/\s+/g, ' ');
+          if (!s || s.length > 40) continue;
+          m = { field: m.field, op: m.op, value: s };
+        }
+        entries.push(m);
+      }
+      if (entries.length) out.meta = entries;
+    }
     return out;
   }
 
@@ -537,6 +612,18 @@ Examples:
     [/\btagged?\b/i, { dim: 'userTag', claim: 'filter' }],
     [/\bbookmarked?\b/i, { dim: 'bookmarks', claim: 'filter' }],
     [/\bbookmark\s+folder\b/i, { dim: 'bookmarks', claim: 'filter' }],
+    // GA-3 metadata dims the R3 gates answer structurally: the meta-attribute
+    // slot (validated in slotsFromCommand) carries the demand when the command
+    // literally names the attribute; bare cues below arm the census for
+    // paraphrases the slot cues missed.
+    [/\b(?:high|low|medium|urgent|critical)\s+priority\b/i, { dim: 'userTag', claim: 'filter' }],
+    [/\burgent\b/i, { dim: 'userTag', claim: 'filter' }],
+    [/\bdue\s+(?:this|within\s+the\s+next|in\s+the\s+next|in|within)\b/i, { dim: 'userTag', claim: 'filter' }],
+    [/\bdeadline\b/i, { dim: 'userTag', claim: 'filter' }],
+    [/\bin[-\s]?stock\b|\bout\s+of\s+stock\b/i, { dim: 'price', claim: 'filter' }],
+    [/\bship(?:s|ping)?\s+to\b/i, { dim: 'price', claim: 'filter' }],
+    [/\brating\b|\brated\b|\bstars?\b/i, { dim: 'price', claim: 'filter' }],
+    [/\bstarred\b/i, { dim: 'bookmarks', claim: 'filter' }],
     // Page-TYPE and similarity claims are content judgments: typing a page as
     // documentation, or ranking tabs by similarity to a reference tab's
     // content, is not derivable when the pool carries no extracted text.
@@ -567,16 +654,43 @@ Examples:
     // abstain census would refuse on a timestamp-less pool.
     const dupCtx = DUP_PARAPHRASE_RES.some(re => re.test(s)) ||
       NEARDUP_RES.some(re => re.test(s));
+    // GA-3 immunity: a meta-attribute demand is answered by the metaFilter
+    // interpreter leg (or its R3 gate) from the slot's own dimension -- a
+    // dim whose cue maps the claim elsewhere must never surface as an
+    // abstain veto when the slot itself names it.
+    let metaDimSet = null;
+    try {
+      const ms = validateSlots(slotsFromCommand(s)).meta;
+      if (Array.isArray(ms) && ms.length) {
+        metaDimSet = new Set(ms.map(m => META_DIM_OF[m.field]).filter(Boolean));
+        if (!metaDimSet.size) metaDimSet = null;
+      }
+    } catch { /* cue extraction is best-effort; the census stays armed */ }
     for (const [re, req] of REQUIRES_CUES) {
       if (titleScoped && req.dim === 'mainText') continue;
       if (dupCtx && req.dim === 'timestamps') continue;
+      if (metaDimSet && metaDimSet.has(req.dim)) continue;
       if (re.test(s) && !out.some(r => r.dim === req.dim)) out.push({ ...req });
+    }
+    // A meta slot names its OWN dims as pool-signal requirements, so the
+    // census can veto a metadata command on a pool that genuinely lacks the
+    // field (and the interpreter leg can never fire on it).
+    if (metaDimSet) for (const d of metaDimSet) {
+      if (!out.some(r => r.dim === d)) out.push({ dim: d, claim: 'filter' });
     }
     return out;
   }
 
   // Closed-enum validation for model/cue-emitted requires[]: an unknown dim
   // dies alone; claim defaults to 'filter'.
+  // Meta field -> requires[] dim, so a meta slot claim arms the census on
+  // the dimension it itself needs (and suppresses mis-mapped bare cues).
+  const META_DIM_OF = {
+    bookmarked: 'bookmarks', bookmarkFolder: 'bookmarks', userTag: 'userTag',
+    priority: 'userTag', deadlineDays: 'userTag', visitCount: 'visitCount',
+    price: 'price', rating: 'price', inStock: 'price', currency: 'price',
+    lang: 'lang', shipsToIndia: 'price'
+  };
   function validateRequires(raw) {
     if (!Array.isArray(raw)) return [];
     const out = [];
@@ -659,6 +773,10 @@ Examples:
       // 'in other windows' is a window SCOPE on a dup demand, not a
       // carve-out construction.
       carveoutStr = carveoutStr.replace(/\b(in|from)\s+(?:the\s+)?other\s+windows?\b/gi, ' ');
+      // GA-3: a visited-count clause is a metadata filter, not a carve-out
+      // construction ("not used today" negates the recency half of a
+      // conjunct the visit-once gate owns end-to-end).
+      carveoutStr = carveoutStr.replace(/\bvisited\s+(?:only\s+)?(?:once|twice|\d+\s+times?)\b[^.;]*$/gi, ' ');
       if (/\b(but|except|excluding|unless|apart|other|not|never|without|keep|keeping)\b/i.test(carveoutStr)) {
         slots.carveout = true;
       }
@@ -760,6 +878,109 @@ Examples:
         if (/^\s*group\b/.test(s)) d.group = true; // group_tabs floor parity
         slots.dedupe = d;
       }
+    }
+
+    // Meta-attribute cues (GA-3): broad paraphrase-tolerant shapes over the
+    // raw command text. The cue fills slots.meta when the model lap missed
+    // it; the interpreter leg consumes the slot, never the regex. Ordered:
+    // most specific (folder/tagged-with-a-name) before bare flags; a negated
+    // currency word must not arm the currency predicate (R3 gate parity).
+    if (!slots.meta) {
+      const meta = [];
+      const mPush = (field, op, value) => {
+        if (meta.some(m => m.field === field)) return;
+        meta.push({ field, op, value });
+      };
+      // --- bookmarked flag (positive/negative), folder, starred ---
+      if (/\bnot\s+(?:been\s+)?bookmarked\b|\bunsaved\b|\bnot\s+saved\b/i.test(s)) {
+        mPush('bookmarked', 'isNot', true);
+      } else {
+        // Positive flag only in FILTER position: a past participle already
+        // applied to something ("tabs already bookmarked") or "that are
+        // bookmarked". The bare action verb ("bookmark these tabs") is the
+        // intent, never the state filter. Strip the leading verb phrase
+        // before the test.
+        const afterVerb = s.replace(/^\s*(?:please\s+)?(?:go\s+ahead\s+and\s+)?(?:bookmark|save|star)\b/i, ' ');
+        if (/\b(?:already\s+)?bookmarked\b|\b(?:already\s+)?saved\b|\b(?:already\s+)?starred\b/i.test(afterVerb)) {
+          mPush('bookmarked', 'is', true);
+        }
+      }
+      if (/\b(?:bookmarked|saved|filed|stored)\s+(?:under|in|inside)\s+(?:the\s+|my\s+|our\s+)?([a-z0-9][a-z0-9' -]{1,30}?)(?:\s+(?:folders?|bookmarks?|groups?))?\s*(?=\s+(?:tabs?|pages?|ones?)\b|$)/i.test(s)) {
+        const name = RegExp.$1.trim().replace(/\s+/g, ' ');
+        if (name && !/^(the|my|a|an|other)$/i.test(name)) mPush('bookmarkFolder', 'has', name);
+      }
+      // --- user tag: tagged/marked/labelled + temp/urgent families ---
+      if (/\b(?:tagged|marked|labelled|labeled)(?:\s+as)?\s+([a-z0-9][a-z0-9-]{1,30})\b/i.test(s)) {
+        const tag = RegExp.$1.toLowerCase();
+        if (!/^(a|an|the)$/i.test(tag)) mPush('userTag', 'is', tag);
+      } else if (/\btemporary\b/i.test(s)) {
+        mPush('userTag', 'is', 'temp');
+      }
+      // --- priority ---
+      if (/\b(?:high|urgent|critical|important)\s+priority\b|\b(?:priority|priorities)\s+(?:is\s+)?high\b/i.test(s)) {
+        mPush('priority', 'is', 'high');
+      } else if (/\blow\s+priority\b/i.test(s)) {
+        mPush('priority', 'is', 'low');
+      } else if (/\burgent\b/i.test(s)) {
+        mPush('priority', 'is', 'high');
+      }
+      // --- deadline ---
+      if (/\bdue\s+(?:this\s+week|within\s+the\s+next\s+(?:7\s*)?days?|in\s+the\s+next\s+(?:7\s*)?days?)\b/i.test(s)) {
+        mPush('deadlineDays', 'lte', 7);
+      } else if (/\bdue\s+(?:in|within)\s+(\d+|one|two|three|four|five|six|seven)\s*days?\b/i.test(s)) {
+        const n = slotNum(RegExp.$1);
+        if (n) mPush('deadlineDays', 'lte', n);
+      }
+      // --- currency (only a positive "priced in X" frame) ---
+      const CUR_WORDS = { rupees: 'INR', rupee: 'INR', inr: 'INR', dollars: 'USD', dollar: 'USD', usd: 'USD', euros: 'EUR', euro: 'EUR', eur: 'EUR', pounds: 'GBP', pound: 'GBP', gbp: 'GBP' };
+      const curM = s.match(/\bpriced?\s+in\s+([a-z]{3,7})\b/i);
+      if (curM) {
+        const cur = CUR_WORDS[curM[1].toLowerCase()] ||
+          (/^[a-z]{3}$/i.test(curM[1]) ? curM[1].toUpperCase() : null);
+        if (cur) mPush('currency', 'is', cur);
+      }
+      // --- price threshold: comparison + currency-qualified amount ---
+      const pmm = /\b(above|over|more\s+than|higher\s+than|greater\s+than|under|below|less\s+than|cheaper\s+than)\s+([\d,]+(?:\.\d+)?)\s*(rupees?|rupee|inr|usd|dollars?|dollar|euros?|euro|eur|gbp|pounds?|pound)\b/i.exec(s);
+      if (pmm) {
+        const n = Number(pmm[2].replace(/,/g, ''));
+        const cur = CUR_WORDS[pmm[3].toLowerCase()] || null;
+        if (Number.isFinite(n) && n > 0 && cur) {
+          const dir = /^(?:above|over|more|higher|greater)/i.test(pmm[1]);
+          mPush('price', dir ? 'gt' : 'lt', n);
+          mPush('currency', 'is', cur);
+        }
+      }
+      // --- stock / shipping ---
+      if (/\bin[-\s]?stock\b/i.test(s) && !/\bout\s+of\s+stock\b/i.test(s)) {
+        mPush('inStock', 'is', true);
+      } else if (/\bout\s+of\s+stock\b/i.test(s)) {
+        mPush('inStock', 'is', false);
+      }
+      if (/\bship(?:s|ping)?\s+to\s+india\b/i.test(s)) {
+        mPush('shipsToIndia', /\b(?:do(?:es)?\s+not|dont|don't|not|never)\b/i.test(s) ? 'isNot' : 'is', true);
+      }      // --- rating ---
+      const rmm = /\brating\s+(?:above|over|higher\s+than|greater\s+than|more\s+than|of|at)\s+([\d.]+)\b|\brated\s+(?:above|over)\s+([\d.]+)\b|\b([\d.]+)\s+stars?\s+(?:and\s+)?(?:above|up)\b|\brated\s+under\s+([\d.]+)\b/i.exec(s);
+      if (rmm) {
+        const n = Number(rmm[1] || rmm[2] || rmm[3] || rmm[4]);
+        if (Number.isFinite(n)) {
+          const under = /\brated\s+under\b/i.test(rmm[0]);
+          mPush('rating', under ? 'lt' : 'gte', n);
+        }
+      }
+      // --- language ---
+      const LANG_WORDS = { german: 'de', deutsch: 'de', french: 'fr', spanish: 'es', italian: 'it', japanese: 'ja', chinese: 'zh', russian: 'ru', portuguese: 'pt', dutch: 'nl', korean: 'ko', hindi: 'hi' };
+      const lm = s.match(/\bin\s+(german|deutsch|french|spanish|italian|japanese|chinese|russian|portuguese|dutch|korean|hindi)\b/i) ||
+        s.match(/\b(german|german-language|deutsch|french|spanish|italian|japanese|chinese|russian|portuguese|dutch|korean|hindi)\s+(?:tabs?|pages?|sites?|articles?|news\b)/i);
+      if (lm) mPush('lang', 'is', LANG_WORDS[lm[1].toLowerCase()]);
+      // --- visit count ---
+      // A recency negation clause ("not used today") is a second conjunct
+      // the visitCount predicate cannot express; suppressing the slot lets
+      // the visit-once composition gate answer the whole command.
+      if (!/\bnot\s+(?:been\s+)?used\b|\bhavent\s+used\b|haven'?t\s+used\b/i.test(s)) {
+        if (/\bvisited\s+(?:only\s+)?once\b/i.test(s)) mPush('visitCount', 'is', 1);
+        else if (/\bvisited\s+(?:only\s+)?twice\b/i.test(s)) mPush('visitCount', 'is', 2);
+      }
+      if (meta.length) slots.meta = meta;
     }
 
     // scope: exact-host naming (3+ label dotted host, or a host pinned with
@@ -910,7 +1131,7 @@ Examples:
       const cueSlots = slotsFromCommand(seg);
       const stepSlots = {};
       for (const k of ['urlShape', 'rank', 'retain', 'dedupe', 'scope', 'anchor',
-        'relationship', 'position', 'groupScope']) {
+        'relationship', 'position', 'groupScope', 'meta']) {
         if (cueSlots[k] !== undefined) stepSlots[k] = cueSlots[k];
       }
       steps.push({ intent, include, exclude: [], slots: stepSlots, carry: carry && firstSelectionNamed });
@@ -935,7 +1156,7 @@ Examples:
       const slots = {};
       const vs = validateSlots(st.slots || {});
       for (const k of ['urlShape', 'rank', 'retain', 'dedupe', 'scope', 'anchor',
-        'relationship', 'position', 'groupScope']) {
+        'relationship', 'position', 'groupScope', 'meta']) {
         if (vs[k] !== undefined) slots[k] = vs[k];
       }
       out.push({ intent: st.intent, include, exclude: [], slots, carry: st.carry === true });

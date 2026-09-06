@@ -24,7 +24,8 @@ const SUITES = [
   ['uxhonesty',    'R6  UX+honesty: group color sanitize, folder fallback, provider health, risk-calibrated preview, cloud-content gate'],
   ['perffresh',    'R7  perf+freshness: hash-join batch lookup, index budget, SPA stale cards, round-2 veto'],
   ['abstain',      'GA-1 abstain over-fire: signal census + requires cues + zero-signal refusal'],
-  ['dedupe',       'GA-2 duplicates: cluster tiers + retention direction + paraphrases']
+  ['dedupe',       'GA-2 duplicates: cluster tiers + retention direction + paraphrases'],
+  ['meta',         'GA-3 metadata attributes: meta slot cues + validation + interpreter leg + abstain interaction']
 ];
 
 let failed = [];
