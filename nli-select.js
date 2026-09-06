@@ -1383,6 +1383,77 @@
       : [];
     const domains = Array.isArray(q.domains) ? q.domains : (det.domains || []);
 
+    // CHAIN INTERPRETER (tool-call schema v3, R4.5 activation): a parse
+    // carrying 2-3 steps[] resolves the chain at the selection layer by
+    // reusing the slot interpreter per step -- slot legs ONLY, no new
+    // raw-command matching. Per-step facts come from the parse's step
+    // objects (include[] topic/domain -> sub-query concepts/domains,
+    // step slots -> the interpreter legs, carry -> the executor contract
+    // "step N+1 restricted to step N's selection"). Any step the slot
+    // interpreter cannot answer (a topic-only step, a slot leg that
+    // yields) yields the WHOLE chain to the legacy single-intent path:
+    // an unresolvable step is honest yield, never a guess. Resolved
+    // chains return the composite shape executeSteps consumers expect:
+    //   { decision:'final', mode, matches: UNION of all steps,
+    //     results: [{ intent, matches: per-step selection }] }
+    // so the bench runner's union scoring exercises the composite branch.
+    if (Array.isArray(q.steps) && q.steps.length > 1 && !exclude.length) {
+      const _meta = (opts && opts.meta) || {};
+      const stepRes = [];
+      let prevIds = null;
+      let resolved = true;
+      for (const st of q.steps) {
+        if (!st || typeof st !== 'object') { resolved = false; break; }
+        const inc = Array.isArray(st.include) ? st.include : [];
+        const sSlots = (st.slots && typeof st.slots === 'object') ? st.slots : {};
+        const sConcepts = inc.filter(f => f && f.field === 'topic').map(f => String(f.value));
+        const sDomains = inc.filter(f => f && f.field === 'domain').map(f => String(f.value));
+        const subQ = { intent: st.intent, concepts: sConcepts, combine: 'union',
+          expansions: {}, domains: sDomains, selectAll: false };
+        const hasOwnFacts = Object.keys(sSlots).length > 0;
+        let stepMatches = null;
+        if (st.carry === true && prevIds && prevIds.size) {
+          if (!hasOwnFacts) {
+            // "then close them": the step IS the previous selection.
+            stepMatches = [...prevIds].map(id => ({ tabId: id, confidence: 1.0, reason: `chain carry (${st.intent})` }));
+          } else {
+            // Carry with its own slot facts: resolve the slots, then
+            // intersect with the carried set (allowIds contract).
+            const _r = slotInterpret(candidates, subQ, [], sSlots, _meta);
+            if (!_r) { resolved = false; break; }
+            stepMatches = _r.matches.filter(m => prevIds.has(m.tabId));
+          }
+        } else if (hasOwnFacts && !sDomains.length) {
+          const _r = slotInterpret(candidates, subQ, [], sSlots, _meta);
+          if (!_r) { resolved = false; break; }
+          stepMatches = _r.matches;
+        } else {
+          // No carry source, or domain/topic-shaped selection facts: the
+          // slot legs cannot answer this step deterministically -> yield.
+          resolved = false;
+          break;
+        }
+        stepRes.push({ intent: st.intent, matches: stepMatches });
+        prevIds = new Set(stepMatches.map(m => m.tabId));
+        if (!stepMatches.length) { resolved = false; break; }
+      }
+      if (resolved && stepRes.length) {
+        const union = new Map();
+        for (const r of stepRes) for (const m of r.matches) {
+          const ex = union.get(m.tabId);
+          if (!ex || m.confidence > ex.confidence) union.set(m.tabId, m);
+        }
+        return {
+          decision: 'final',
+          mode: `slot chain: ${stepRes.map(r => r.intent).join(' + ')}`,
+          needDetails: [],
+          matches: [...union.values()],
+          results: stepRes
+        };
+      }
+      // Unresolved chain: fall through to the legacy single-intent path.
+    }
+
     // SLOT INTERPRETER (early exit): when the parse carries slot schema v2 and
     // every composition guard holds, the slots fully own the command and a
     // deterministic pool predicate answers it -- entailment cannot even see a

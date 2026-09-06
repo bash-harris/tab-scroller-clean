@@ -181,15 +181,30 @@
  },
  "close all youtube.com tabs": {
   "intent": "close_tabs",
-  "concepts": [],
+  "concepts": [
+   "youtube"
+  ],
   "combine": "union",
-  "expansions": {},
+  "expansions": {
+   "youtube": [
+    "youtube.com"
+   ]
+  },
   "domains": [
    "youtube.com"
   ],
-  "confidence": 1,
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
   "source": "llm",
-  "isSelectAll": false
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube"
+  }
  },
  "group the youtube tabs": {
   "intent": "group_tabs",
@@ -199,29 +214,54 @@
   "combine": "union",
   "expansions": {
    "youtube": [
-    "youtube.com",
-    "music video",
-    "live stream"
+    "videos",
+    "channel",
+    "playlist"
+   ]
+  },
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube"
+  }
+ },
+ "bookmark every tab on youtube.com": {
+  "intent": "bookmark_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "youtube.com"
    ]
   },
   "domains": [
    "youtube.com"
   ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "isSelectAll": false
- },
- "bookmark every tab on youtube.com": {
-  "intent": "bookmark_tabs",
-  "concepts": [],
-  "combine": "union",
-  "expansions": {},
-  "domains": [
-   "youtube.com"
-  ],
-  "confidence": 1,
-  "source": "llm",
-  "isSelectAll": false
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube"
+  }
  },
  "pin the youtube tabs": {
   "intent": "pin_tabs",
@@ -231,42 +271,79 @@
   "combine": "union",
   "expansions": {
    "youtube": [
-    "video sharing",
-    "music videos"
+    "youtube.com"
+   ]
+  },
+  "domains": [
+   "youtube.com",
+   "youtu.be"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube"
+  }
+ },
+ "mute tabs from youtube.com": {
+  "intent": "mute_tabs",
+  "concepts": [
+   "youtube"
+  ],
+  "combine": "union",
+  "expansions": {
+   "youtube": [
+    "youtube.com"
    ]
   },
   "domains": [
    "youtube.com"
   ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "isSelectAll": false
- },
- "mute tabs from youtube.com": {
-  "intent": "mute_tabs",
-  "concepts": [
-   "youtube.com"
-  ],
-  "combine": "union",
-  "expansions": {},
-  "domains": [
-   "youtube.com"
-  ],
-  "confidence": 1,
-  "source": "llm",
-  "isSelectAll": false
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube"
+  }
  },
  "reload all youtube.com pages": {
   "intent": "reload_tabs",
-  "concepts": [],
+  "concepts": [
+   "youtube"
+  ],
   "combine": "union",
-  "expansions": {},
+  "expansions": {
+   "youtube": [
+    "youtube.com"
+   ]
+  },
   "domains": [
    "youtube.com"
   ],
-  "confidence": 1,
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
   "source": "llm",
-  "isSelectAll": false
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube"
+  }
  },
  "sort my youtube tabs": {
   "intent": "sort_tabs",
@@ -276,16 +353,25 @@
   "combine": "union",
   "expansions": {
    "youtube": [
-    "video sharing site",
-    "music videos"
+    "youtube.com"
    ]
   },
   "domains": [
-   "youtube.com"
+   "youtube.com",
+   "youtu.be"
   ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "isSelectAll": false
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube"
+  }
  },
  "close the crypto tabs": {
   "intent": "close_tabs",
@@ -766,11 +852,21 @@
    ]
   },
   "domains": [
-   "youtube.com"
+   "youtube.com",
+   "youtu.be"
   ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "isSelectAll": false
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube"
+  }
  },
  "don t pin the cricket tabs unpin them": {
   "intent": "unpin_tabs",
@@ -993,11 +1089,21 @@
    ]
   },
   "domains": [
-   "youtube.com"
+   "youtube.com",
+   "youtu.be"
   ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "isSelectAll": false
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube"
+  }
  },
  "unmute my finance tab": {
   "intent": "unmute_tabs",
@@ -1095,14 +1201,43 @@
   "combine": "union",
   "expansions": {
    "cricket": [
-    "test match",
-    "ipl",
-    "batting"
+    "cricket",
+    "sports",
+    "batsman",
+    "bowler"
    ]
   },
   "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "steps": [
+   {
+    "intent": "close_tabs",
+    "include": [
+     {
+      "field": "topic",
+      "op": "about",
+      "value": "cricket"
+     }
+    ],
+    "exclude": [],
+    "slots": {},
+    "carry": false
+   },
+   {
+    "intent": "group_tabs",
+    "include": [],
+    "exclude": [],
+    "slots": {},
+    "carry": true
+   }
+  ],
   "confidence": 0.9,
   "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
   "isSelectAll": false
  },
  "bookmark the cricket tabs and pin them": {
@@ -1113,14 +1248,43 @@
   "combine": "union",
   "expansions": {
    "cricket": [
-    "test match",
-    "ipl",
-    "odi"
+    "cricket",
+    "sports",
+    "batsman",
+    "bowler"
    ]
   },
   "domains": [],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "steps": [
+   {
+    "intent": "bookmark_tabs",
+    "include": [
+     {
+      "field": "topic",
+      "op": "about",
+      "value": "cricket"
+     }
+    ],
+    "exclude": [],
+    "slots": {},
+    "carry": false
+   },
+   {
+    "intent": "pin_tabs",
+    "include": [],
+    "exclude": [],
+    "slots": {},
+    "carry": true
+   }
+  ],
   "confidence": 0.9,
   "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
   "isSelectAll": false
  },
  "mute the football tabs or unmute them": {
@@ -1152,11 +1316,21 @@
    ]
   },
   "domains": [
-   "youtube.com"
+   "youtube.com",
+   "youtu.be"
   ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "isSelectAll": false
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube"
+  }
  },
  "pin or unpin my docs tabs": {
   "intent": "pin_tabs",
@@ -1260,24 +1434,35 @@
  "bookmark pages that are both video and cricket": {
   "intent": "bookmark_tabs",
   "concepts": [
-   "cricket",
-   "video"
+   "video",
+   "cricket"
   ],
   "combine": "intersection",
   "expansions": {
-   "cricket": [
-    "test match",
-    "ipl"
-   ],
    "video": [
-    "sports highlights",
-    "match"
+    "youtube",
+    "vimeo",
+    "netflix",
+    "twitch"
+   ],
+   "cricket": [
+    "cricketbuzz",
+    "cricketnews"
    ]
   },
   "domains": [],
-  "confidence": 0.85,
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
   "source": "llm",
-  "isSelectAll": false
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "urlShape": {
+   "section": "watch"
+  }
  },
  "pin the work planning documents": {
   "intent": "pin_tabs",
@@ -1925,14 +2110,25 @@
   "combine": "union",
   "expansions": {
    "google docs": [
-    "docs.google.com",
-    "document"
+    "docs",
+    "google document"
    ]
   },
-  "domains": [],
+  "domains": [
+   "docs.google.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "isSelectAll": false
+  "_coverage": 1,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "google-docs"
+  }
  },
  "find the football standings": {
   "intent": "search_and_switch",
@@ -1954,9 +2150,17 @@
  },
  "close all tabs from github.com": {
   "intent": "close_tabs",
-  "concepts": [],
+  "concepts": [
+   "github"
+  ],
   "combine": "union",
-  "expansions": {},
+  "expansions": {
+   "github": [
+    "github.com",
+    "gitlab.com",
+    "bitbucket.org"
+   ]
+  },
   "domains": [
    "github.com"
   ],
@@ -1964,9 +2168,14 @@
   "exclude": [],
   "time": null,
   "state": [],
-  "confidence": 0.5,
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
   "isSelectAll": false,
-  "source": "fallback"
+  "urlShape": {
+   "site": "github"
+  }
  },
  "group tabs from github.com or stackoverflow.com": {
   "intent": "group_tabs",
@@ -2003,17 +2212,9 @@
  },
  "close tabs from docs.github.com only": {
   "intent": "close_tabs",
-  "concepts": [
-   "docs.github.com"
-  ],
+  "concepts": [],
   "combine": "union",
-  "expansions": {
-   "docs.github.com": [
-    "github",
-    "documentation",
-    "source code"
-   ]
-  },
+  "expansions": {},
   "domains": [
    "docs.github.com"
   ],
@@ -2025,7 +2226,13 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "github"
+  },
+  "scope": {
+   "hostExact": true
+  }
  },
  "close tabs whose url contains dashboard": {
   "intent": "close_tabs",
@@ -2289,9 +2496,7 @@
   "combine": "union",
   "expansions": {
    "youtube": [
-    "videos",
-    "channel",
-    "playlist"
+    "youtube.com"
    ]
   },
   "domains": [
@@ -2306,7 +2511,10 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube"
+  }
  },
  "close all chrome newtab pages": {
   "intent": "close_tabs",
@@ -2388,7 +2596,10 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "arxiv"
+  }
  },
  "close wikipedia tabs": {
   "intent": "close_tabs",
@@ -2414,7 +2625,10 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "wikipedia"
+  }
  },
  "close my spotify tab": {
   "intent": "close_tabs",
@@ -2506,8 +2720,8 @@
   "combine": "union",
   "expansions": {
    "reddit": [
-    "subreddits",
-    "r/"
+    "subreddit",
+    "r"
    ]
   },
   "domains": [
@@ -2521,7 +2735,10 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "reddit"
+  }
  },
  "close chrome web store tabs": {
   "intent": "close_tabs",
@@ -2656,45 +2873,58 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "leetcode"
+  }
  },
  "close github issue tabs but keep pull requests": {
   "intent": "close_tabs",
   "concepts": [
-   "pull requests"
+   "github",
+   "issue"
   ],
   "combine": "union",
   "expansions": {
-   "pull requests": [
-    "pull requests",
-    "pull requests",
-    "pull requests"
+   "github": [
+    "github.com"
+   ],
+   "issue": [
+    "pull request",
+    "pull request tabs"
    ]
   },
-  "domains": [],
+  "domains": [
+   "github.com"
+  ],
   "selectAll": false,
   "exclude": [
-   "github"
+   "pull request"
   ],
   "time": null,
   "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 0.6,
+  "_coverage": 0.8,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "github",
+   "section": "pull"
+  },
+  "carveout": true
  },
  "group github tabs belonging to the auth service repository": {
   "intent": "group_tabs",
   "concepts": [
-   "auth-service"
+   "auth service repository"
   ],
   "combine": "union",
   "expansions": {
-   "auth-service": [
-    "github",
-    "repository",
-    "authentication"
+   "auth service repository": [
+    "authentication service",
+    "authorization service",
+    "security service"
    ]
   },
   "domains": [
@@ -2708,7 +2938,10 @@
   "source": "llm",
   "_coverage": 0.8,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "github"
+  }
  },
  "group youtube video tabs but not channel pages": {
   "intent": "group_tabs",
@@ -2718,8 +2951,7 @@
   "combine": "union",
   "expansions": {
    "youtube": [
-    "youtube.com",
-    "youtube"
+    "youtube.com"
    ]
   },
   "domains": [
@@ -2736,19 +2968,24 @@
   "source": "llm",
   "_coverage": 0.6666666666666666,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube",
+   "section": "watch"
+  },
+  "carveout": true
  },
  "close amazon product pages but not search pages": {
   "intent": "close_tabs",
   "concepts": [
-   "amazon product pages"
+   "product"
   ],
   "combine": "union",
   "expansions": {
-   "amazon product pages": [
-    "amazon shopping",
-    "amazon products",
-    "amazon listings"
+   "product": [
+    "product page",
+    "product listing",
+    "product detail"
    ]
   },
   "domains": [
@@ -2759,7 +2996,7 @@
   ],
   "selectAll": false,
   "exclude": [
-   "search pages"
+   "search"
   ],
   "time": null,
   "state": [],
@@ -2767,7 +3004,22 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon",
+   "section": "product"
+  },
+  "carveout": true
  },
  "group google docs documents but not sheets or slides": {
   "intent": "group_tabs",
@@ -2778,8 +3030,7 @@
   "expansions": {
    "google docs": [
     "docs",
-    "google document",
-    "google docs"
+    "google document"
    ]
   },
   "domains": [
@@ -2796,7 +3047,11 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "google-docs"
+  },
+  "carveout": true
  },
  "group jira issues from project xc": {
   "intent": "group_tabs",
@@ -2822,7 +3077,10 @@
   "source": "llm",
   "_coverage": 0.6666666666666666,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "section": "issue"
+  }
  },
  "group confluence pages from the dev space": {
   "intent": "group_tabs",
@@ -5649,19 +5907,23 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "github"
+  }
  },
  "group tabs about c that contain code but are not videos": {
   "intent": "group_tabs",
   "concepts": [
-   "c++"
+   "c"
   ],
   "combine": "union",
   "expansions": {
-   "c++": [
-    "programming",
-    "programming language",
-    "c programming"
+   "c": [
+    "c programming",
+    "c language",
+    "c++",
+    "c#"
    ]
   },
   "domains": [],
@@ -5675,7 +5937,11 @@
   "source": "llm",
   "_coverage": 0.5,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "section": "watch"
+  },
+  "carveout": true
  },
  "bookmark unpinned tabs opened in the last 24 hours except already bookmarked pages": {
   "intent": "bookmark_tabs",
@@ -5715,21 +5981,15 @@
   "intent": "close_tabs",
   "concepts": [
    "github",
-   "stack overflow",
-   "c++"
+   "stack overflow"
   ],
-  "combine": "union",
+  "combine": "intersection",
   "expansions": {
    "github": [
     "github.com"
    ],
    "stack overflow": [
     "stackoverflow.com"
-   ],
-   "c++": [
-    "c++",
-    "programming",
-    "programming languages"
    ]
   },
   "domains": [
@@ -5748,7 +6008,10 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "github"
+  }
  },
  "close tabs from google.com but not google docs sheets or maps": {
   "intent": "close_tabs",
@@ -5759,8 +6022,8 @@
   "expansions": {
    "google.com": [
     "google",
-    "search",
-    "web"
+    "google search",
+    "google drive"
    ]
   },
   "domains": [
@@ -5768,7 +6031,8 @@
   ],
   "selectAll": false,
   "exclude": [
-   "google docs sheets",
+   "google docs",
+   "sheets",
    "maps"
   ],
   "time": null,
@@ -5777,14 +6041,17 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "google-docs"
+  },
+  "carveout": true
  },
  "close the amazon cart tab and all new tab pages": {
   "intent": "close_tabs",
   "concepts": [
    "amazon",
-   "cart",
-   "new"
+   "cart"
   ],
   "combine": "union",
   "expansions": {
@@ -5793,11 +6060,8 @@
    ],
    "cart": [
     "shopping cart",
-    "checkout"
-   ],
-   "new": [
-    "new tab",
-    "tab"
+    "checkout",
+    "shopping cart page"
    ]
   },
   "domains": [
@@ -5814,7 +6078,21 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon",
+   "section": "cart"
+  }
  },
  "group my shopping tabs from amazon": {
   "intent": "group_tabs",
@@ -5843,7 +6121,20 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon"
+  }
  },
  "close all tabs except pinned ones": {
   "intent": "close_tabs",
@@ -5983,7 +6274,14 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "leetcode"
+  },
+  "scope": {
+   "window": "3"
+  },
+  "carveout": true
  },
  "group tabs similar to the oauth refresh token article": {
   "intent": "group_tabs",
@@ -6164,13 +6462,26 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "rank": {
+   "by": "opened",
+   "order": "asc",
+   "n": 8
+  }
  },
  "close the three oldest shopping tabs": {
   "intent": "close_tabs",
-  "concepts": [],
+  "concepts": [
+   "shopping"
+  ],
   "combine": "union",
-  "expansions": {},
+  "expansions": {
+   "shopping": [
+    "shopping",
+    "e-commerce",
+    "online shopping"
+   ]
+  },
   "domains": [],
   "selectAll": false,
   "exclude": [],
@@ -6182,9 +6493,14 @@
   "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 0,
+  "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "rank": {
+   "by": "opened",
+   "order": "asc",
+   "n": 3
+  }
  },
  "close all but the newest tab from example news.com": {
   "intent": "close_tabs",
@@ -6306,15 +6622,26 @@
    "github"
   ],
   "combine": "union",
-  "expansions": {},
-  "domains": [],
+  "expansions": {
+   "github": [
+    "github.com"
+   ]
+  },
+  "domains": [
+   "github.com"
+  ],
   "selectAll": false,
   "exclude": [],
   "time": null,
   "state": [],
-  "confidence": 0.5,
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 1,
+  "_needsReparse": false,
   "isSelectAll": false,
-  "source": "fallback"
+  "urlShape": {
+   "site": "github"
+  }
  },
  "close tabs from chatgpt.com": {
   "intent": "close_tabs",
@@ -6468,19 +6795,33 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon"
+  }
  },
  "close tabs from arxiv.org": {
   "intent": "close_tabs",
   "concepts": [
-   "arxiv.org"
+   "arxiv"
   ],
   "combine": "union",
   "expansions": {
-   "arxiv.org": [
-    "arxiv",
-    "academic papers",
-    "research papers"
+   "arxiv": [
+    "preprint",
+    "physics",
+    "math",
+    "cs"
    ]
   },
   "domains": [
@@ -6494,7 +6835,10 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "arxiv"
+  }
  },
  "close tabs from huggingface.co": {
   "intent": "close_tabs",
@@ -6699,16 +7043,41 @@
  "close leetcode discuss tabs": {
   "intent": "close_tabs",
   "concepts": [
-   "leetcode",
-   "discuss"
+   "leetcode"
   ],
   "combine": "union",
   "expansions": {
    "leetcode": [
     "leetcode.com"
-   ],
-   "discuss": [
-    "leetcode.com/discuss"
+   ]
+  },
+  "domains": [
+   "leetcode.com"
+  ],
+  "selectAll": false,
+  "exclude": [],
+  "time": null,
+  "state": [],
+  "confidence": 0.9,
+  "source": "llm",
+  "_coverage": 0.5,
+  "_needsReparse": false,
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "leetcode"
+  }
+ },
+ "group leetcode contest tabs": {
+  "intent": "group_tabs",
+  "concepts": [
+   "leetcode contest"
+  ],
+  "combine": "union",
+  "expansions": {
+   "leetcode contest": [
+    "contest",
+    "coding competition",
+    "algorithm challenge"
    ]
   },
   "domains": [
@@ -6722,43 +7091,21 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
- },
- "group leetcode contest tabs": {
-  "intent": "group_tabs",
-  "concepts": [
-   "leetcode"
-  ],
-  "combine": "union",
-  "expansions": {
-   "leetcode": [
-    "contest",
-    "coding",
-    "algorithm"
-   ]
-  },
-  "domains": [],
-  "selectAll": false,
-  "exclude": [],
-  "time": null,
-  "state": [],
-  "confidence": 0.9,
-  "source": "llm",
-  "_coverage": 1,
-  "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "leetcode",
+   "section": "contest"
+  }
  },
  "close youtube shorts tabs": {
   "intent": "close_tabs",
   "concepts": [
-   "youtube shorts"
+   "youtube"
   ],
   "combine": "union",
   "expansions": {
-   "youtube shorts": [
-    "shorts",
-    "youtube videos",
-    "short-form content"
+   "youtube": [
+    "youtube.com"
    ]
   },
   "domains": [
@@ -6773,7 +7120,11 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube",
+   "section": "shorts"
+  }
  },
  "group youtube watch pages": {
   "intent": "group_tabs",
@@ -6783,8 +7134,7 @@
   "combine": "union",
   "expansions": {
    "youtube": [
-    "youtube.com",
-    "youtube"
+    "youtube.com"
    ]
   },
   "domains": [
@@ -6799,7 +7149,10 @@
   "source": "llm",
   "_coverage": 0.5,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube"
+  }
  },
  "close youtube channel tabs": {
   "intent": "close_tabs",
@@ -6809,8 +7162,7 @@
   "combine": "union",
   "expansions": {
    "youtube": [
-    "youtube.com",
-    "youtube channel"
+    "youtube.com"
    ]
   },
   "domains": [
@@ -6818,24 +7170,35 @@
    "youtu.be"
   ],
   "selectAll": false,
-  "exclude": [],
+  "exclude": [
+   "channel"
+  ],
   "time": null,
   "state": [],
   "confidence": 0.9,
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube",
+   "section": "channel"
+  }
  },
  "close github pull request tabs": {
   "intent": "close_tabs",
   "concepts": [
-   "github"
+   "github",
+   "pull request"
   ],
   "combine": "union",
   "expansions": {
    "github": [
     "github.com"
+   ],
+   "pull request": [
+    "pull",
+    "issue"
    ]
   },
   "domains": [
@@ -6847,9 +7210,13 @@
   "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 0.3333333333333333,
+  "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "github",
+   "section": "pull"
+  }
  },
  "close github blob tabs": {
   "intent": "close_tabs",
@@ -6873,19 +7240,33 @@
   "source": "llm",
   "_coverage": 0.5,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "github",
+   "section": "blob"
+  }
  },
  "group github tree browse tabs": {
   "intent": "group_tabs",
   "concepts": [
-   "github"
+   "github",
+   "tree",
+   "browse"
   ],
   "combine": "union",
   "expansions": {
    "github": [
+    "github.com"
+   ],
+   "tree": [
     "git",
-    "source code",
-    "repository"
+    "repository",
+    "branch"
+   ],
+   "browse": [
+    "view",
+    "explore",
+    "look"
    ]
   },
   "domains": [
@@ -6897,9 +7278,13 @@
   "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 0.5,
+  "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "github",
+   "section": "tree"
+  }
  },
  "close codeforces problem tabs": {
   "intent": "close_tabs",
@@ -6936,7 +7321,8 @@
    "arxiv": [
     "preprint",
     "academic",
-    "research"
+    "physics",
+    "math"
    ]
   },
   "domains": [],
@@ -6948,7 +7334,10 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "arxiv"
+  }
  },
  "close google drive folder tabs": {
   "intent": "close_tabs",
@@ -7134,12 +7523,14 @@
    "amazon": [
     "amazon.com",
     "amazon.co.uk",
-    "amazon.de"
+    "amazon.de",
+    "amazon.fr"
    ],
    "interview": [
-    "interviews",
-    "interview questions",
-    "interview preparation"
+    "interview",
+    "interviewing",
+    "interviewee",
+    "interviewer"
    ]
   },
   "domains": [],
@@ -7151,7 +7542,20 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon"
+  }
  },
  "close tabs whose title contains slowed": {
   "intent": "close_tabs",
@@ -7200,7 +7604,10 @@
   "source": "llm",
   "_coverage": 0.5,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "leetcode"
+  }
  },
  "close tabs whose title contains interview experience": {
   "intent": "close_tabs",
@@ -7575,8 +7982,7 @@
   "expansions": {
    "leetcode": [
     "leetcode.com",
-    "leetcode problems",
-    "algorithm problems"
+    "leetcode"
    ]
   },
   "domains": [
@@ -7590,24 +7996,22 @@
   ],
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 1,
+  "_coverage": 0.6666666666666666,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "leetcode"
+  }
  },
  "close the duplicate amazon interview experience tabs keeping the first": {
   "intent": "close_tabs",
   "concepts": [
-   "amazon",
-   "interview"
+   "amazon"
   ],
   "combine": "union",
   "expansions": {
    "amazon": [
     "amazon.com"
-   ],
-   "interview": [
-    "interviews",
-    "interview experience"
    ]
   },
   "domains": [
@@ -7617,17 +8021,35 @@
    "amazon.de"
   ],
   "selectAll": false,
-  "exclude": [
-   "first"
-  ],
+  "exclude": [],
   "time": null,
   "state": [
    "duplicate"
   ],
-  "confidence": 0.9,
+  "confidence": 0.7,
   "source": "llm",
-  "_coverage": 0.8333333333333334,
-  "_needsReparse": false,
+  "_coverage": 0.3333333333333333,
+  "_needsReparse": true,
+  "urlShape": {
+   "site": "amazon"
+  },
+  "retain": {
+   "per": "domain",
+   "keep": "first"
+  },
+  "answerable": true,
+  "carveout": true,
+  "_sc": true,
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
   "isSelectAll": false
  },
  "close the duplicate whatsapp tab": {
@@ -7717,15 +8139,14 @@
  "close duplicate tabs of the 5 ai engineer projects youtube video keeping the first": {
   "intent": "close_tabs",
   "concepts": [
-   "ai engineer projects youtube video"
+   "ai engineer projects"
   ],
   "combine": "union",
   "expansions": {
-   "ai engineer projects youtube video": [
+   "ai engineer projects": [
     "ai projects",
-    "ai engineering",
-    "ai development",
-    "ai research"
+    "machine learning projects",
+    "deep learning projects"
    ]
   },
   "domains": [
@@ -7735,12 +8156,24 @@
   "selectAll": false,
   "exclude": [],
   "time": null,
-  "state": [],
+  "state": [
+   "duplicate"
+  ],
+  "urlShape": {
+   "site": "youtube",
+   "section": "watch"
+  },
+  "rank": {
+   "by": "position",
+   "order": "asc",
+   "n": 5
+  },
   "confidence": 0.9,
   "source": "llm",
   "_coverage": 0.5714285714285714,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "carveout": true
  },
  "close near duplicate articles that cover the same story": {
   "intent": "close_tabs",
@@ -7873,8 +8306,7 @@
   "expansions": {
    "google docs": [
     "docs",
-    "google document",
-    "google spreadsheet"
+    "google document"
    ]
   },
   "domains": [
@@ -7888,7 +8320,10 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "google-docs"
+  }
  },
  "close streaming site tabs": {
   "intent": "close_tabs",
@@ -7989,14 +8424,13 @@
  "group my amazon interview prep tabs": {
   "intent": "group_tabs",
   "concepts": [
-   "amazon interview prep"
+   "amazon"
   ],
   "combine": "union",
   "expansions": {
-   "amazon interview prep": [
-    "amazon interview",
-    "amazon interview prep",
-    "amazon interview questions"
+   "amazon": [
+    "amazon.com",
+    "amazon.in"
    ]
   },
   "domains": [
@@ -8011,9 +8445,22 @@
   "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 1,
+  "_coverage": 0.3333333333333333,
   "_needsReparse": false,
-  "isSelectAll": false
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon"
+  }
  },
  "close fitness tabs": {
   "intent": "close_tabs",
@@ -8425,7 +8872,20 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon"
+  }
  },
  "close tabs about ollama": {
   "intent": "close_tabs",
@@ -8560,9 +9020,8 @@
   "combine": "union",
   "expansions": {
    "youtube": [
-    "google",
     "search",
-    "videos"
+    "results"
    ]
   },
   "domains": [
@@ -8575,9 +9034,13 @@
   "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 0.5,
+  "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube",
+   "section": "search"
+  }
  },
  "close reddit search tabs": {
   "intent": "close_tabs",
@@ -8587,12 +9050,12 @@
   "combine": "union",
   "expansions": {
    "reddit": [
-    "subreddit",
-    "r",
-    "redd.it"
+    "reddit.com"
    ]
   },
-  "domains": [],
+  "domains": [
+   "reddit.com"
+  ],
   "selectAll": false,
   "exclude": [],
   "time": null,
@@ -8601,7 +9064,11 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "reddit",
+   "section": "search"
+  }
  },
  "close search tabs about anime": {
   "intent": "close_tabs",
@@ -8875,7 +9342,7 @@
    "amazon prep ticket": [
     "amazon ticket",
     "amazon event",
-    "amazon meeting"
+    "amazon event ticket"
    ]
   },
   "domains": [
@@ -8892,7 +9359,20 @@
   "source": "llm",
   "_coverage": 0.75,
   "_needsReparse": false,
-  "isSelectAll": false
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon"
+  }
  },
  "group everything related to fixing the memory leak": {
   "intent": "group_tabs",
@@ -9020,7 +9500,7 @@
   "selectAll": false,
   "exclude": [],
   "time": {
-   "basis": "opened",
+   "basis": "accessed",
    "op": "older_than",
    "value": "5_days"
   },
@@ -9029,13 +9509,17 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "rank": {
+   "by": "position",
+   "order": "desc",
+   "from": "end",
+   "n": 5
+  }
  },
  "close the first three tabs": {
   "intent": "close_tabs",
-  "concepts": [
-   "first three tabs"
-  ],
+  "concepts": [],
   "combine": "union",
   "expansions": {},
   "domains": [],
@@ -9043,9 +9527,15 @@
   "exclude": [],
   "time": null,
   "state": [],
+  "rank": {
+   "by": "position",
+   "order": "asc",
+   "n": 3,
+   "from": "start"
+  },
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 1,
+  "_coverage": 0,
   "_needsReparse": false,
   "isSelectAll": false
  },
@@ -9058,11 +9548,12 @@
   "expansions": {
    "github": [
     "git",
-    "source code",
-    "version control"
+    "github.com"
    ]
   },
-  "domains": [],
+  "domains": [
+   "github.com"
+  ],
   "selectAll": false,
   "exclude": [],
   "time": null,
@@ -9071,7 +9562,16 @@
   "source": "llm",
   "_coverage": 0.5,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "github"
+  },
+  "rank": {
+   "by": "position",
+   "order": "asc",
+   "from": "start",
+   "n": 10
+  }
  },
  "close the first five leetcode problem tabs": {
   "intent": "close_tabs",
@@ -9081,9 +9581,7 @@
   "combine": "union",
   "expansions": {
    "leetcode": [
-    "leetcode.com",
-    "leetcode problems",
-    "coding problems"
+    "leetcode.com"
    ]
   },
   "domains": [
@@ -9095,9 +9593,18 @@
   "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 0.6666666666666666,
+  "_coverage": 0.3333333333333333,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "leetcode"
+  },
+  "rank": {
+   "by": "position",
+   "order": "asc",
+   "from": "start",
+   "n": 5
+  }
  },
  "group the last three gemini tabs": {
   "intent": "group_tabs",
@@ -9107,9 +9614,7 @@
   "combine": "union",
   "expansions": {
    "gemini": [
-    "gemini.com",
-    "gemini wallet",
-    "gemini exchange"
+    "gemini.com"
    ]
   },
   "domains": [
@@ -9119,7 +9624,7 @@
   "exclude": [],
   "time": {
    "basis": "accessed",
-   "op": "within",
+   "op": "older_than",
    "value": "3_days"
   },
   "state": [],
@@ -9127,19 +9632,23 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "rank": {
+   "by": "position",
+   "order": "desc",
+   "from": "end",
+   "n": 3
+  }
  },
  "bookmark the last two amazon shopping tabs": {
   "intent": "bookmark_tabs",
   "concepts": [
-   "amazon shopping"
+   "amazon"
   ],
   "combine": "union",
   "expansions": {
-   "amazon shopping": [
-    "amazon",
-    "shopping",
-    "e-commerce"
+   "amazon": [
+    "amazon.com"
    ]
   },
   "domains": [
@@ -9152,35 +9661,46 @@
   "exclude": [],
   "time": {
    "basis": "accessed",
-   "op": "within",
+   "op": "older_than",
    "value": "2_days"
   },
   "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 1,
+  "_coverage": 0.5,
   "_needsReparse": false,
-  "isSelectAll": false
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon"
+  },
+  "rank": {
+   "by": "position",
+   "order": "desc",
+   "from": "end",
+   "n": 2
+  }
  },
  "close the ten most recently used tabs": {
   "intent": "close_tabs",
-  "concepts": [
-   "tabs"
-  ],
+  "concepts": [],
   "combine": "union",
-  "expansions": {
-   "tabs": [
-    "pages",
-    "webpages",
-    "documents"
-   ]
-  },
+  "expansions": {},
   "domains": [],
   "selectAll": false,
   "exclude": [],
   "time": {
    "basis": "accessed",
-   "op": "within",
+   "op": "older_than",
    "value": "10_days"
   },
   "state": [],
@@ -9188,7 +9708,12 @@
   "source": "llm",
   "_coverage": 0,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "rank": {
+   "by": "accessed",
+   "order": "desc",
+   "n": 10
+  }
  },
  "close leetcode tabs that are not about binary": {
   "intent": "close_tabs",
@@ -9198,9 +9723,7 @@
   "combine": "union",
   "expansions": {
    "leetcode": [
-    "leetcode.com",
-    "codeforces",
-    "hacker rank"
+    "leetcode.com"
    ]
   },
   "domains": [
@@ -9216,7 +9739,11 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "leetcode"
+  },
+  "carveout": true
  },
  "close github tabs about llm or rag": {
   "intent": "close_tabs",
@@ -9252,7 +9779,10 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "github"
+  }
  },
  "close youtube tabs but keep shorts": {
   "intent": "close_tabs",
@@ -9308,7 +9838,10 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "leetcode"
+  }
  },
  "close amazon tabs that are not shopping pages": {
   "intent": "close_tabs",
@@ -9349,9 +9882,9 @@
   "combine": "union",
   "expansions": {
    "machine learning": [
-    "ai",
     "deep learning",
-    "neural networks"
+    "neural networks",
+    "artificial intelligence"
    ]
   },
   "domains": [],
@@ -9363,7 +9896,10 @@
   "source": "llm",
   "_coverage": 0.6666666666666666,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "section": "watch"
+  }
  },
  "close interview tabs except amazon ones": {
   "intent": "close_tabs",
@@ -9475,7 +10011,11 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "reddit"
+  },
+  "carveout": true
  },
  "close all tabs except those in the dev group": {
   "intent": "close_tabs",
@@ -9530,15 +10070,14 @@
  "close tabs similar to the amazon sde interview experience post": {
   "intent": "close_tabs",
   "concepts": [
-   "amazon sde interview experience"
+   "amazon sde interview experience post"
   ],
   "combine": "union",
   "expansions": {
-   "amazon sde interview experience": [
-    "amazon",
-    "software engineering",
-    "interview",
-    "technical questions"
+   "amazon sde interview experience post": [
+    "amazon sde interview",
+    "amazon sde interview questions",
+    "amazon sde interview preparation"
    ]
   },
   "domains": [],
@@ -9546,11 +10085,27 @@
   "exclude": [],
   "time": null,
   "state": [],
-  "confidence": 0.9,
+  "confidence": 0.85,
   "source": "llm",
   "_coverage": 0.75,
   "_needsReparse": false,
-  "isSelectAll": false
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon"
+  },
+  "anchor": {
+   "phrase": "amazon sde interview experience post"
+  }
  },
  "group tabs similar to my rag gemini chat": {
   "intent": "group_tabs",
@@ -9810,13 +10365,14 @@
  "close the youtube watch pages spare the channel": {
   "intent": "close_tabs",
   "concepts": [
-   "youtube"
+   "watch"
   ],
   "combine": "union",
   "expansions": {
-   "youtube": [
-    "youtube.com",
-    "youtube"
+   "watch": [
+    "videos",
+    "streaming",
+    "live"
    ]
   },
   "domains": [
@@ -9831,9 +10387,13 @@
   "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 0.5,
+  "_coverage": 0.75,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "youtube",
+   "section": "channel"
+  }
  },
  "the chessvibes channel page should be closed": {
   "intent": "close_tabs",
@@ -9844,8 +10404,8 @@
   "expansions": {
    "chessvibes": [
     "chess",
-    "chess channel",
-    "chess videos"
+    "board games",
+    "online gaming"
    ]
   },
   "domains": [
@@ -9857,9 +10417,12 @@
   "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 1,
+  "_coverage": 0.5,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "section": "channel"
+  }
  },
  "close the recipe card 404s": {
   "intent": "close_tabs",
@@ -9893,9 +10456,9 @@
   "combine": "union",
   "expansions": {
    "amazon product pages": [
-    "amazon shopping",
-    "amazon products",
-    "amazon listings"
+    "amazon product",
+    "amazon product listing",
+    "amazon product detail"
    ]
   },
   "domains": [
@@ -9914,7 +10477,22 @@
   "source": "llm",
   "_coverage": 0.75,
   "_needsReparse": false,
-  "isSelectAll": false
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon",
+   "section": "product"
+  },
+  "carveout": true
  },
  "close google docs documents keep the garden spreadsheet": {
   "intent": "close_tabs",
@@ -9922,15 +10500,13 @@
    "google docs",
    "garden spreadsheet"
   ],
-  "combine": "union",
+  "combine": "intersection",
   "expansions": {
    "google docs": [
-    "docs",
-    "google document"
+    "docs.google.com"
    ],
    "garden spreadsheet": [
-    "spreadsheet",
-    "garden sheet"
+    "spreadsheet"
    ]
   },
   "domains": [
@@ -9944,9 +10520,13 @@
   "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 0.8,
+  "_coverage": 0.6,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "google-docs"
+  },
+  "carveout": true
  },
  "close the lichess studies page": {
   "intent": "close_tabs",
@@ -10804,7 +11384,7 @@
    "streaming video service": [
     "video streaming",
     "streaming services",
-    "online video"
+    "video services"
    ]
   },
   "domains": [],
@@ -10816,7 +11396,10 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "section": "watch"
+  }
  },
  "round up the fermentation reading": {
   "intent": "group_tabs",
@@ -10952,15 +11535,16 @@
   "combine": "union",
   "expansions": {
    "sourdough": [
-    "leavening",
+    "bread",
     "starter",
-    "bread"
+    "leavening",
+    "starter culture"
    ]
   },
   "domains": [],
   "selectAll": false,
   "exclude": [
-   "video"
+   "videos"
   ],
   "time": null,
   "state": [],
@@ -10968,7 +11552,11 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "section": "watch"
+  },
+  "carveout": true
  },
  "close chess content except the puzzle trainer": {
   "intent": "close_tabs",
@@ -11189,17 +11777,12 @@
  "close the amazon compost search": {
   "intent": "close_tabs",
   "concepts": [
-   "amazon",
-   "compost"
+   "amazon"
   ],
   "combine": "union",
   "expansions": {
    "amazon": [
     "amazon.com"
-   ],
-   "compost": [
-    "composting",
-    "organic waste"
    ]
   },
   "domains": [
@@ -11214,21 +11797,35 @@
   "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 1,
+  "_coverage": 0.5,
   "_needsReparse": false,
-  "isSelectAll": false
+  "senses": [
+   {
+    "label": "amazon — the company",
+    "concept": "amazon company shopping ecommerce"
+   },
+   {
+    "label": "amazon — the river",
+    "concept": "amazon river rainforest"
+   }
+  ],
+  "isSelectAll": false,
+  "urlShape": {
+   "site": "amazon",
+   "section": "search"
+  }
  },
  "close the r chess endgame discussion": {
   "intent": "close_tabs",
   "concepts": [
-   "r/chess"
+   "r chess endgame discussion"
   ],
   "combine": "union",
   "expansions": {
-   "r/chess": [
-    "chess",
-    "endgame",
-    "strategy"
+   "r chess endgame discussion": [
+    "chess endgame",
+    "r chess",
+    "endgame discussion"
    ]
   },
   "domains": [],
@@ -11238,9 +11835,12 @@
   "state": [],
   "confidence": 0.9,
   "source": "llm",
-  "_coverage": 0.6666666666666666,
+  "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "section": "discuss"
+  }
  },
  "park the unread longreads together in a reading group": {
   "intent": "group_tabs",
@@ -11810,7 +12410,13 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "rank": {
+   "by": "position",
+   "order": "desc",
+   "from": "end",
+   "n": 3
+  }
  },
  "close the oldest tab": {
   "intent": "close_tabs",
@@ -11872,16 +12478,21 @@
   "selectAll": false,
   "exclude": [],
   "time": {
-   "basis": "accessed",
-   "op": "within",
-   "value": "today"
+   "basis": "opened",
+   "op": "older_than",
+   "value": "1_days"
   },
   "state": [],
   "confidence": 0.9,
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "rank": {
+   "by": "opened",
+   "order": "desc",
+   "n": 2
+  }
  },
  "pin the freshest baking guide": {
   "intent": "pin_tabs",
@@ -12006,8 +12617,8 @@
   "expansions": {
    "sourdough": [
     "bread",
-    "leavening",
-    "starter"
+    "starter",
+    "recipe"
    ]
   },
   "domains": [],
@@ -12022,7 +12633,11 @@
   "source": "llm",
   "_coverage": 1,
   "_needsReparse": false,
-  "isSelectAll": false
+  "isSelectAll": false,
+  "urlShape": {
+   "section": "watch"
+  },
+  "carveout": true
  },
  "close the german pages and the pdf documents": {
   "intent": "close_tabs",
