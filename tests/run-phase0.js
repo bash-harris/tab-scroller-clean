@@ -22,7 +22,8 @@ const SUITES = [
   ['resilience',   'R5  MV3 resilience: plan persist+hydrate, URL-hash revalidation, undo hydrate, confirm:false, sender decoupling'],
   ['progress',     'NLI progress estimation threshold + UI progress clamping'],
   ['uxhonesty',    'R6  UX+honesty: group color sanitize, folder fallback, provider health, risk-calibrated preview, cloud-content gate'],
-  ['perffresh',    'R7  perf+freshness: hash-join batch lookup, index budget, SPA stale cards, round-2 veto']
+  ['perffresh',    'R7  perf+freshness: hash-join batch lookup, index budget, SPA stale cards, round-2 veto'],
+  ['abstain',      'GA-1 abstain over-fire: signal census + requires cues + zero-signal refusal']
 ];
 
 let failed = [];

@@ -455,6 +455,94 @@ Examples:
     return out;
   }
 
+  // ---- REQUIRES: pool-dimension claims (gauntlet GA-1, abstain over-fire) ----
+  //
+  // A command can name a FILTER or RANK dimension the candidate pool cannot
+  // ground ("visited only once" -> visitCount, "opened from google" -> opener,
+  // "containing an email address" -> mainText). When the selection layer is
+  // about to answer such a command from SEMANTIC SCORING alone -- the fallback
+  // that turns absence of data into confident guesses -- the honest answer is
+  // refusal. This cue layer only NAMES the dimension claims; nli-select.js
+  // census-checks them against the actual pool (zero signal + semantic
+  // fallback -> abstain 'unanswerable_no_signal'). Deterministic structures
+  // (slot interpreter, literal gates, fast paths) answer from real signal and
+  // are never vetoed by it.
+  //
+  // Regex over raw command text lives HERE (parser layer) by design; the
+  // selector consumes only the structured claim.
+  const REQUIRES_DIMS = new Set(['timestamps', 'visitCount', 'opener', 'mainText',
+    'scroll', 'price', 'userTag', 'bookmarks', 'groups']);
+
+  // Ordered: the more specific count-shaped claim wins before the generic
+  // recency one ("visited only once" -> visitCount, not timestamps).
+  const REQUIRES_CUES = [
+    [/\bvisited\s+(?:only\s+)?(?:once|twice|\d+\s+times?)\b/i, { dim: 'visitCount', claim: 'filter' }],
+    [/\bmost\s+(?:frequently\s+)?visited\b/i, { dim: 'visitCount', claim: 'rank' }],
+    [/\bfrequently\s+visited\b/i, { dim: 'visitCount', claim: 'rank' }],
+    [/\bvisit(?:ed)?\s+counts?\b|\bvisit(?:ed)?\s+history\b/i, { dim: 'visitCount', claim: 'filter' }],
+    [/\bopened\s+(?:from|by)\b/i, { dim: 'opener', claim: 'filter' }],
+    [/\bauto(?:matic(?:ally)?)?[-\s]?opened\b/i, { dim: 'opener', claim: 'filter' }],
+    [/\bopened\s+automatically\b/i, { dim: 'opener', claim: 'filter' }],
+    [/\bopened\s+in\s+(?:the\s+)?(?:last|past)\b/i, { dim: 'timestamps', claim: 'filter' }],
+    [/\bopened\s+(?:this|last|past)\s+(?:hour|day|week|month|year)\b/i, { dim: 'timestamps', claim: 'filter' }],
+    [/\bthe\s+oldest\b/i, { dim: 'timestamps', claim: 'rank' }],
+    [/\b(?:most|least)\s+recently\s+used\b/i, { dim: 'timestamps', claim: 'rank' }],
+    [/\b(?:recently|last)\s+used\b/i, { dim: 'timestamps', claim: 'filter' }],
+    [/\bfinished\s+reading\b|\balready\s+read\b|\bnever\s+finished\b/i, { dim: 'scroll', claim: 'filter' }],
+    [/\bunread\b|\bnot\s+yet\s+read\b|\bhavent\s+read\b|\bhave\s+not\s+read\b/i, { dim: 'scroll', claim: 'filter' }],
+    [/\bscroll(?:ed)?\s+(?:to|down|up|through)\b|\breading\s+progress\b/i, { dim: 'scroll', claim: 'filter' }],
+    [/\bpriced?\s+(?:in|at|under|over|above|below)\b/i, { dim: 'price', claim: 'filter' }],
+    [/\b(?:under|over|above|below)\s+(?:\d+|rs\.?|rupees?|dollars?)\b/i, { dim: 'price', claim: 'filter' }],
+    [/\b(?:rupees?|inr)\b/i, { dim: 'price', claim: 'filter' }],
+    [/\b(?:costs?|priced?)\b/i, { dim: 'price', claim: 'filter' }],
+    [/\btagged?\b/i, { dim: 'userTag', claim: 'filter' }],
+    [/\bbookmarked?\b/i, { dim: 'bookmarks', claim: 'filter' }],
+    [/\bbookmark\s+folder\b/i, { dim: 'bookmarks', claim: 'filter' }],
+    // Page-TYPE and similarity claims are content judgments: typing a page as
+    // documentation, or ranking tabs by similarity to a reference tab's
+    // content, is not derivable when the pool carries no extracted text.
+    [/\bdocumentation\b|\bdocs?\s+pages?\b/i, { dim: 'mainText', claim: 'filter' }],
+    [/\bsimilar\s+to\b/i, { dim: 'mainText', claim: 'rank' }],
+    [/\bone\s+representative\b/i, { dim: 'mainText', claim: 'rank' }],
+    // Content-claims: "pages containing X" / "mentioning X" ask about page
+    // BODY. Title-only pools cannot ground a body predicate; the content
+    // conjunct gate answers these only when bodies exist, so the claim cue
+    // must name the dimension for the census to see. A title-scoped clause
+    // ("containing 404 in the title") is a lexical title test with real
+    // signal -- excluded below.
+    [/\bpages?\s+containing\b|\btabs?\s+containing\b/i, { dim: 'mainText', claim: 'filter' }],
+    [/\bpages?\s+(?:that\s+|which\s+)?mentions?\b|\bmentioning\b|\bmentions\b/i, { dim: 'mainText', claim: 'filter' }]
+  ];
+
+  function requiresFromCommand(cmd) {
+    const s = String(cmd || '');
+    if (!s.trim()) return [];
+    // Title/url-scoped containing clauses bind identity fields that always
+    // exist -- never a mainText claim.
+    const titleScoped = /\bin\s+(?:the\s+|their\s+|its\s+)?titles?\b/i.test(s) ||
+      /\b(?:titles?|urls?)\s+(?:contains?|starts?|includes?)\b/i.test(s);
+    const out = [];
+    for (const [re, req] of REQUIRES_CUES) {
+      if (titleScoped && req.dim === 'mainText') continue;
+      if (re.test(s) && !out.some(r => r.dim === req.dim)) out.push({ ...req });
+    }
+    return out;
+  }
+
+  // Closed-enum validation for model/cue-emitted requires[]: an unknown dim
+  // dies alone; claim defaults to 'filter'.
+  function validateRequires(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    for (const r of raw) {
+      if (!r || typeof r !== 'object') continue;
+      if (!REQUIRES_DIMS.has(r.dim)) continue;
+      out.push({ dim: r.dim, claim: r.claim === 'rank' ? 'rank' : 'filter' });
+      if (out.length >= 4) break;
+    }
+    return out;
+  }
+
   // Deterministic slot cues over the raw command text -- the rescue half of
   // the contract, mirroring how qualifier cues are parsed beside the model
   // downstream: when the command's own vocabulary names a slot shape
@@ -1530,6 +1618,12 @@ Examples:
         if (validated) parsed.steps = validated;
       }
     }
+    // Pool-dimension claims (GA-1): cue emission for parses that lack them.
+    // The selector census-checks these against the candidate pool before
+    // trusting a semantic-fallback result; deterministic paths are unaffected.
+    if (parsed.requires === undefined) {
+      parsed.requires = validateRequires(requiresFromCommand(cmd));
+    }
     return parsed;
   }
 
@@ -1629,7 +1723,7 @@ Examples:
     }
   }
 
-  const LlmQuery = { parse, decode, reconcile, validate, normalizeCommand, SYSTEM, literalDomains, coverage, JSON_SCHEMA, slotsFromCommand, validateSlots, stepsFromCommand, validateStepsRaw, POLYSEMY_LEXICON, generateInterpretations };
+  const LlmQuery = { parse, decode, reconcile, validate, normalizeCommand, SYSTEM, literalDomains, coverage, JSON_SCHEMA, slotsFromCommand, validateSlots, stepsFromCommand, validateStepsRaw, requiresFromCommand, validateRequires, POLYSEMY_LEXICON, generateInterpretations };
   if (typeof module !== 'undefined' && module.exports) module.exports = LlmQuery;
   if (typeof self !== 'undefined') self.LlmQuery = LlmQuery;
 })();

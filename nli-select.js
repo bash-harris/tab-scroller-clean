@@ -381,6 +381,41 @@
     return Date.parse(v);
   }
 
+  // ---- SIGNAL CENSUS (GA-1, pool-aware answerability) ----------------------
+  //
+  // Per-dimension availability over the candidate pool, computed once per
+  // select() call. A dimension with ZERO candidates carrying it means the
+  // pool cannot ground any claim on that dimension: the data was never
+  // gathered (no visit history, no page text, no opener chain, ...). The
+  // abstain rule below uses this to refuse commands whose PRIMARY filter
+  // dimension has no signal at all, instead of letting the semantic
+  // fallback guess from titles alone. ANY candidate carrying the dimension
+  // is signal ("3 of 565 tabs have mainText" = the dimension exists).
+  function signalCensus(candidates) {
+    const has = {
+      timestamps: false, visitCount: false, opener: false, mainText: false,
+      scroll: false, price: false, userTag: false, bookmarks: false, groups: false
+    };
+    for (const c of candidates) {
+      if (!has.timestamps &&
+          (Number.isFinite(tsOf(c.openedAt)) || Number.isFinite(tsOf(c.lastAccessed)))) has.timestamps = true;
+      if (!has.visitCount && Number.isFinite(c.visitCount)) has.visitCount = true;
+      if (!has.opener && c.opener != null) has.opener = true;
+      if (!has.mainText && String(c.mainText || '').trim() !== '') has.mainText = true;
+      if (!has.scroll &&
+          (Number.isFinite(Number(c.scrollPct)) || Number.isFinite(Number(c.watchPct)))) has.scroll = true;
+      if (!has.price &&
+          ((c.price != null && Number.isFinite(Number(c.price))) || c.currency != null)) has.price = true;
+      if (!has.userTag && c.userTag != null && String(c.userTag).trim() !== '') has.userTag = true;
+      if (!has.bookmarks && (c.bookmarked === true || c.bookmarkFolder != null)) has.bookmarks = true;
+      if (!has.groups &&
+          (c.groupId != null || c.groupName != null || c.groupColor != null)) has.groups = true;
+    }
+    return has;
+  }
+  const REQUIRES_DIMS = ['timestamps', 'visitCount', 'opener', 'mainText',
+    'scroll', 'price', 'userTag', 'bookmarks', 'groups'];
+
   // Registrable-domain approximation: last two labels, with common second-level
   // suffixes treated as one unit. A registrable comparison defeats lookalike
   // hosts ("docs.google.com.attacker-spoof.org" registers to attacker-spoof.org,
@@ -4119,6 +4154,47 @@
 
     const elapsed = Date.now() - t0;
 
+    // ---- POOL-AWARE ANSWERABILITY (GA-1, abstain over-fire) ----------------
+    //
+    // This point is reached ONLY by the semantic-scoring fallback: every
+    // structural path (slot interpreter, literal gates, category/host
+    // operators, complements, qualifier matches) returned above. A command
+    // whose primary filter dimension has ZERO signal in the candidate pool
+    // is honestly unanswerable here -- scored entailment over titles would
+    // be guessing, and guessing on a dimension the pool never measured is
+    // exactly the failure mode this rule removes. requires[] names the
+    // dimension claims (cue layer in llm-query.js: 'visited once' ->
+    // visitCount, 'opened from' -> opener, 'containing' -> mainText, ...);
+    // the census says whether the pool carries ANY of that dimension. Zero
+    // signal + semantic fallback -> empty abstain; a pool that HAS the
+    // dimension anywhere (one tab with mainText counts) scores as before.
+    let requires = Array.isArray(q.requires) ? q.requires : [];
+    if (!requires.length) {
+      const LQ = (typeof self !== 'undefined' && self.LlmQuery) ||
+        (typeof require !== 'undefined' ? require('./llm-query.js') : null);
+      if (LQ && typeof LQ.requiresFromCommand === 'function') {
+        try { requires = LQ.validateRequires(LQ.requiresFromCommand(cmdStr)); } catch { requires = []; }
+      }
+    }
+    if (requires.length) {
+      const census = signalCensus(candidates);
+      const dead = requires.filter(r => REQUIRES_DIMS.includes(r.dim) && !census[r.dim]);
+      if (dead.length) {
+        console.log(`[NLI] unanswerable_no_signal: dim [${dead.map(d => d.dim).join(',')}] has zero pool signal; semantic fallback refused`);
+        return {
+          decision: 'final', mode: 'unanswerable_no_signal', needDetails: [],
+          concepts,
+          matches: [],
+          unanswerableDims: dead.map(d => d.dim),
+          stats: {
+            passes, cached, embedCalls, ms: elapsed, msPerPass: 0,
+            scanned: candidates.length, available: candidates.length,
+            nliTabs: nliTabIds.size, cosineTabs: candidates.length - nliTabIds.size
+          }
+        };
+      }
+    }
+
     // Zero-corroboration abstain: nothing cleared any admission path. Say so
     // explicitly -- downstream telemetry distinguishes "scored, nothing matched"
     // from "never scored".
@@ -4807,6 +4883,9 @@
     // Test seam: the sense-gated facet ontology lookup, so tests can assert
     // suppression directly without running a scoring pass.
     __facetPredicateForTest(text, cmd) { return facetPredicateFor(text, cmd); },
+    // GA-1 test seam: per-dimension availability census over a candidate
+    // list, so tests assert pool signal detection without a scoring pass.
+    signalCensus,
     // Tier 1.3 telemetry: how many commands hit the listwise cascade and how
     // many verdicts actually rebuilt the match set.
     listwiseStats() { return { ...listwiseStats }; }
