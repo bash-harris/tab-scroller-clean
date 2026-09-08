@@ -37,7 +37,12 @@ Session context was hitting API body limits — fresh session, continue gauntlet
 
 ### After GA-4 v2 (now) — final eval round
 
-Final eval round: dispatch a FRESH agent (never in dev loop) to run heldout-v1 sealed (--suite=heldout-v1) + all open suites FRESH (new PROMPT_HASH keys make stale parses unreachable — runs will be all-live, ~30min total) + report the 4-suite scorecard vs FRESH baselines above (heldout vs 35/107 baseline). Zero regressions vs fresh baselines required; category table; honest transfer verdict.
+## FINAL EVAL (sealed, fresh agent, HEAD bef2adc)
+
+- Scorecard: suite-v3 **165/181 viol 1** · ceiling **92/157 viol 12** · floor **106/157 viol 6** · v2 **95/112 viol 2** — all EXACT vs fresh baselines, zero regressions. Heldout **45/107 viol 10** vs 34/107 viol 13 baseline (**+11, 32%→42%**). npm 17/17, validate PASS.
+- Parse audit: 316/316 parses byte-identical to GA-4 fresh runs — exact matches are determinism; heldout gain is GA-1/2/3 code transferring, not parse noise. Heldout ran first on an emptied cache — zero contamination.
+- Transfer verdict (honest): structural slots transfer (url-shape +4, meta bookmarks/price/language +5, entities +2, dedupe +2). Soft spots survive gauntlet intact: abstain 1/5 on its bucket, ranking-limit flat (pool-shape overfit), compound-boolean/user-defined untouched. 4 categories slipped on identical parses (title −2, time −1, error-health −1) — code-side GA side effects; quality-authority moved DANGEROUSLY (mustNotSelect 1→3: "keep official chess sites, close fan copies" grabs 13 where gold wants 1). Next-round targets: abstain veto on exception-scoped close, quality-authority mustNotSelect, title/time slips.
+- Logs: bench/.final-eval-*.txt. Note: heldout baseline file says 34/107 (not 35 as earlier recorded); 34 is authoritative.
 
 ## Key files
 - Gold (read-only for builders): bench/suite-v3.commands.jsonl, bench/real-v1.commands.jsonl
