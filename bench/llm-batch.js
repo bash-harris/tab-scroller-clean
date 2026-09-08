@@ -39,6 +39,9 @@ const LlmQuery = require(path.join(__dirname, '..', 'llm-query.js'));
 
 const BATCH = parseInt(process.argv[2] || '15', 10);
 const MODEL = process.env.SELECT_MODEL || 'qwen2.5:latest';
+// Parse-cache reader key: parses in .llm-query-cache.json were produced by the
+// QUERY model (see llm-nli-integration.js), never the selection model.
+const QUERY_MODEL = process.env.QUERY_MODEL || 'qwen2.5:latest';
 
 const qcache = JSON.parse(fs.readFileSync(path.join(__dirname, '.llm-query-cache.json'), 'utf8'));
 const recs = fs.readFileSync(path.join(__dirname, 'commands-v2.jsonl'), 'utf8')
@@ -98,7 +101,9 @@ function tabLine(c, i) {
   const failures = [];
 
   for (const c of CMDS) {
-    const q = qcache[LlmQuery.normalizeCommand(c.command)] || {};
+    // PROMPT_HASH stamp: reads only parses made under the current prompt.
+    // Legacy tagless entries stay in the file as history -- unreachable.
+    const q = qcache[`${QUERY_MODEL}|${LlmQuery.PROMPT_HASH}|${LlmQuery.normalizeCommand(c.command)}`] || {};
     const det = self.ConceptCore.parseCommand(c.command);
     const concepts = q.concepts?.length ? q.concepts : (det.concept ? [det.concept] : []);
 

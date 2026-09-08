@@ -1,0 +1,110 @@
+﻿
+SUITE-V3 -- LLM parser + NLI | all commands | all categories
+181 commands, 117-tab pool, 7 groups, 3 windows
+==============================================================================
+[NLI] 117 tabs: 55 by cosine (free), 62 by NLI -> 57 passes (+5 cached, 1 embeds) in 9264ms = 163ms/pass  [simd=?]
+[NLI] 117 tabs: 95 by cosine (free), 22 by NLI -> 20 passes (+2 cached, 1 embeds) in 3199ms = 160ms/pass  [simd=?]
+[NLI] 117 tabs: 113 by cosine (free), 4 by NLI -> 4 passes (+0 cached, 1 embeds) in 495ms = 124ms/pass  [simd=?]
+[NLI] 117 tabs: 107 by cosine (free), 10 by NLI -> 10 passes (+0 cached, 1 embeds) in 1862ms = 186ms/pass  [simd=?]
+[NLI] 117 tabs: 111 by cosine (free), 6 by NLI -> 5 passes (+1 cached, 1 embeds) in 1194ms = 239ms/pass  [simd=?]
+[NLI] 117 tabs: 106 by cosine (free), 11 by NLI -> 11 passes (+0 cached, 1 embeds) in 2932ms = 267ms/pass  [simd=?]
+[NLI] 117 tabs: 111 by cosine (free), 6 by NLI -> 6 passes (+0 cached, 1 embeds) in 920ms = 153ms/pass  [simd=?]
+[NLI] 117 tabs: 74 by cosine (free), 43 by NLI -> 38 passes (+5 cached, 1 embeds) in 4895ms = 129ms/pass  [simd=?]
+[NLI] 117 tabs: 104 by cosine (free), 13 by NLI -> 13 passes (+0 cached, 1 embeds) in 4232ms = 326ms/pass  [simd=?]
+[NLI] 117 tabs: 107 by cosine (free), 10 by NLI -> 10 passes (+0 cached, 1 embeds) in 1586ms = 159ms/pass  [simd=?]
+[NLI] 117 tabs: 105 by cosine (free), 12 by NLI -> 12 passes (+0 cached, 1 embeds) in 2494ms = 208ms/pass  [simd=?]
+[NLI] 117 tabs: 79 by cosine (free), 38 by NLI -> 35 passes (+3 cached, 1 embeds) in 4343ms = 124ms/pass  [simd=?]
+[NLI] 117 tabs: 114 by cosine (free), 3 by NLI -> 3 passes (+0 cached, 1 embeds) in 692ms = 231ms/pass  [simd=?]
+[NLI] 117 tabs: 99 by cosine (free), 18 by NLI -> 18 passes (+0 cached, 1 embeds) in 3592ms = 200ms/pass  [simd=?]
+[NLI] 117 tabs: 106 by cosine (free), 11 by NLI -> 11 passes (+0 cached, 1 embeds) in 2091ms = 190ms/pass  [simd=?]
+[NLI] 117 tabs: 103 by cosine (free), 14 by NLI -> 16 passes (+12 cached, 1 embeds) in 3276ms = 205ms/pass  [simd=?]
+[NLI] 117 tabs: 110 by cosine (free), 7 by NLI -> 7 passes (+0 cached, 1 embeds) in 1319ms = 188ms/pass  [simd=?]
+[NLI] 117 tabs: 104 by cosine (free), 13 by NLI -> 12 passes (+1 cached, 1 embeds) in 1699ms = 142ms/pass  [simd=?]
+[NLI] 117 tabs: 93 by cosine (free), 24 by NLI -> 48 passes (+0 cached, 2 embeds) in 7451ms = 155ms/pass  [simd=?]
+[NLI] 117 tabs: 108 by cosine (free), 9 by NLI -> 9 passes (+0 cached, 1 embeds) in 1728ms = 192ms/pass  [simd=?]
+[NLI] 117 tabs: 80 by cosine (free), 37 by NLI -> 31 passes (+6 cached, 1 embeds) in 4716ms = 152ms/pass  [simd=?]
+[NLI] 117 tabs: 111 by cosine (free), 6 by NLI -> 6 passes (+0 cached, 1 embeds) in 952ms = 159ms/pass  [simd=?]
+[NLI] 117 tabs: 117 by cosine (free), 0 by NLI -> 0 passes (+0 cached, 1 embeds) in 158ms  [simd=?]
+[NLI] 117 tabs: 106 by cosine (free), 11 by NLI -> 0 passes (+11 cached, 0 embeds) in 72ms  [simd=?]
+[NLI] 117 tabs: 111 by cosine (free), 6 by NLI -> 0 passes (+6 cached, 0 embeds) in 99ms  [simd=?]
+[NLI] 117 tabs: 112 by cosine (free), 5 by NLI -> 0 passes (+5 cached, 0 embeds) in 26ms  [simd=?]
+[NLI] 117 tabs: 106 by cosine (free), 11 by NLI -> 0 passes (+11 cached, 0 embeds) in 74ms  [simd=?]
+[NLI] 117 tabs: 111 by cosine (free), 6 by NLI -> 0 passes (+6 cached, 0 embeds) in 97ms  [simd=?]
+[NLI] 117 tabs: 102 by cosine (free), 15 by NLI -> 15 passes (+0 cached, 1 embeds) in 2296ms = 153ms/pass  [simd=?]
+[NLI] 117 tabs: 110 by cosine (free), 7 by NLI -> 7 passes (+0 cached, 1 embeds) in 1311ms = 187ms/pass  [simd=?]
+[NLI] superlative (rank): oldest (opened) x8 topic=[] -> [40,111,39,45,44,114,113,86]
+[NLI] superlative (rank): oldest (opened) x3 topic=[shopping] -> [87,53,72]
+[NLI] 117 tabs: 107 by cosine (free), 10 by NLI -> 10 passes (+0 cached, 1 embeds) in 1083ms = 108ms/pass  [simd=?]
+
+-- by bucket --------------------------------------------------
+implemented  set-exact 77/83 (93%)        P 0.96 R 0.97 F1 0.96 violations 0
+gap          set-exact 77/86 (90%)        P 0.92 R 0.96 F1 0.93 violations 1
+abstain      set-exact 8/9 (89%)          P 0.89 R 0.89 F1 0.89 violations 0
+featureGap   set-exact 3/3 (100%)         P 1.00 R 1.00 F1 1.00 violations 0
+TOTAL        set-exact 165/181 (91%)      violations 1
+
+-- by spec category ------------------------------------------
+cat  1 url-domain             set-exact 25/28 (89%)        violations 0
+cat  2 structured-url         set-exact 7/9 (78%)          violations 0
+cat  3 title                  set-exact 7/8 (88%)          violations 0
+cat  4 time                   set-exact 13/13 (100%)       violations 0
+cat  5 tab-state              set-exact 10/10 (100%)       violations 0
+cat  6 window-group-position  set-exact 7/7 (100%)         violations 0
+cat  7 relationship-current   set-exact 3/4 (75%)          violations 0
+cat  8 duplicates             set-exact 3/4 (75%)          violations 0
+cat  9 page-content           set-exact 7/7 (100%)         violations 0
+cat 10 content-type           set-exact 6/6 (100%)         violations 0
+cat 11 topic-category         set-exact 13/15 (87%)        violations 0
+cat 12 entities               set-exact 5/5 (100%)         violations 0
+cat 13 nav-origin             set-exact 2/2 (100%)         violations 0
+cat 14 search-query           set-exact 3/3 (100%)         violations 0
+cat 15 reading-progress       set-exact 5/6 (83%)          violations 0
+cat 16 bookmarks              set-exact 3/3 (100%)         violations 0
+cat 17 history-frequency      set-exact 2/2 (100%)         violations 0
+cat 18 error-health           set-exact 2/3 (67%)          violations 0
+cat 19 language-geo           set-exact 2/3 (67%)          violations 1
+cat 20 price-availability     set-exact 5/5 (100%)         violations 0
+cat 21 task-project           set-exact 3/4 (75%)          violations 0
+cat 22 quality-authority      set-exact 3/3 (100%)         violations 0
+cat 23 cross-tab              set-exact 2/2 (100%)         violations 0
+cat 24 ranking-limit          set-exact 5/6 (83%)          violations 0
+cat 25 compound-boolean       set-exact 13/14 (93%)        violations 0
+cat 26 conversational         set-exact 3/3 (100%)         violations 0
+cat 27 user-defined           set-exact 6/6 (100%)         violations 0
+
+llm 2802343ms (0 cache hits, 362 fresh) | model local:qwen2.5:latest | nli 183139ms | result-cache undefined entries, code 60c82346143045fb
+clarify-fire 0/181 (0.0%) | correct-option-present 0/0
+
+-- failures (16) ---------------------------------------------
+[gap] cat1 "bookmark tabs whose URL starts with developer.chrome.com"
+   got [] exp [33]
+[implemented] cat1 "close chrome web store tabs"
+   got [33] exp []
+[implemented] cat1 "close all webinar tabs"
+   got [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117] exp []
+[gap] cat2 "group google docs documents but not sheets or slides"
+   got [18,19,28,44,96,98] exp [18,19]
+[gap] cat2 "close duplicate product pages even if their tracking parameters differ"
+   got [72,66,73,68,71] exp [72]
+[gap] cat3 "close tabs whose title is still loading"
+   got [] exp [93]
+[gap] cat7 "group tabs from the same browsing chain as the fastmcp search"
+   got [16,17,18,19,20,21,22,23,24,32,33,35,42,95,96,97,98,99,110,111] exp [95,96,97,98]
+[implemented] cat8 "close duplicated mdn tabs"
+   got [72,66,73,68,71] exp [71]
+[implemented] cat24 "close the three most recently used cricket tabs"
+   got [1,2,43,4,8] exp [4,43,1]
+[implemented] cat11 "group tabs strongly related to c++ concurrency"
+   got [99,30] exp [30,32,99]
+[gap] cat15 "close videos i have finished watching"
+   got [2,46,48,106] exp [106]
+[gap] cat18 "close tabs that failed to load"
+   got [50] exp [91,92]
+[gap] cat19 "group reference wiki tabs in german"
+   got [81,82] exp [81]  VIOLATIONS 1
+[gap] cat21 "group tabs related to my browser extension project"
+   got [63,61] exp [33,61,63]
+[implemented] cat25 "close the shopping tabs i opened in the last hour"
+   got [24,49,50,51,52,66,93,100] exp [49,50,51,52]
+[abstain] cat11 "group the tools tabs"
+   got [97] exp []

@@ -213,6 +213,20 @@ Examples:
 "group pages priced in inr" -> {"intent":"group_tabs","concepts":[],"combine":"union","expansions":{},"domains":[],"selectAll":false,"exclude":[],"time":null,"state":[],"meta":[{"field":"currency","op":"is","value":"INR"}],"confidence":0.9}
 "close laptop tabs above 80000 rupees" -> {"intent":"close_tabs","concepts":["laptop"],"combine":"union","expansions":{"laptop":["notebook","computer"]},"domains":[],"selectAll":false,"exclude":[],"time":null,"state":[],"meta":[{"field":"price","op":"gt","value":80000},{"field":"currency","op":"is","value":"INR"}],"confidence":0.9}`;
 
+  // PROMPT_HASH: sync, dependency-free djb2 over SYSTEM's code points. SW-safe
+  // (no node crypto, no async -- this file also runs in a service worker).
+  // Exported so bench parse caches key on the prompt: a prompt edit changes
+  // the hash and invalidates every cached parse instead of silently reusing one.
+  const PROMPT_HASH = (() => {
+    let h = 5381;
+    for (let i = 0; i < SYSTEM.length; ) {
+      const cp = SYSTEM.codePointAt(i);
+      h = ((h << 5) + h + cp) | 0;
+      i += cp > 0xffff ? 2 : 1;
+    }
+    return (h >>> 0).toString(16);
+  })();
+
   const INTENTS = new Set([
     'close_tabs', 'group_tabs', 'bookmark_tabs', 'pin_tabs', 'unpin_tabs',
     'mute_tabs', 'unmute_tabs', 'reload_tabs', 'sort_tabs', 'open_tabs',
@@ -2032,7 +2046,7 @@ Examples:
     }
   }
 
-  const LlmQuery = { parse, decode, reconcile, validate, normalizeCommand, SYSTEM, literalDomains, coverage, JSON_SCHEMA, slotsFromCommand, validateSlots, stepsFromCommand, validateStepsRaw, requiresFromCommand, validateRequires, POLYSEMY_LEXICON, generateInterpretations };
+  const LlmQuery = { parse, decode, reconcile, validate, normalizeCommand, SYSTEM, PROMPT_HASH, literalDomains, coverage, JSON_SCHEMA, slotsFromCommand, validateSlots, stepsFromCommand, validateStepsRaw, requiresFromCommand, validateRequires, POLYSEMY_LEXICON, generateInterpretations };
   if (typeof module !== 'undefined' && module.exports) module.exports = LlmQuery;
   if (typeof self !== 'undefined') self.LlmQuery = LlmQuery;
 })();

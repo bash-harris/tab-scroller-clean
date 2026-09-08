@@ -87,7 +87,9 @@ const candidates = POOL.map(t => ({
   for (const c of CMDS) {
     let query = null;
     if (!NO_LLM) {
-      const key = LlmQuery.normalizeCommand(c.command);
+      // PROMPT_HASH stamp: a prompt edit invalidates every cached parse.
+      // Legacy tagless entries stay in the file as history -- unreachable.
+      const key = `${MODEL}|${LlmQuery.PROMPT_HASH}|${LlmQuery.normalizeCommand(c.command)}`;
       if (qcache[key]) { query = qcache[key]; hits++; }
       else {
         const t0 = Date.now();

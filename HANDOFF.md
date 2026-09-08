@@ -26,23 +26,18 @@ Session context was hitting API body limits — fresh session, continue gauntlet
 - Bench harness: bench/suite-runner.js --suite=<name> (suite-v3|real-v1|heldout-v1), result/emb caches keyed codeHash+poolHash, parse cache bench/.llm-query-cache.json keyed MODEL_TAG|command (NO prompt hash yet)
 - heldout-v1 gold SEALED: bench/heldout-v1.commands.jsonl must NEVER be opened by dev-loop agents; final eval by fresh agent only
 
-## GA-4 v2 — what to do (the remaining round)
+### GA-4 v2 outcome (Critic ACCEPT, merged)
 
-Goal: paraphrase robustness via few-shot + hard negatives, done so it can actually pass measurement. Use the gauntlet loop (builder subagent + critic subagent), NOT inline.
+- Prompt edit (2-3 line few-shot): **DRIFT-REJECT — dead end twice confirmed.** Probe fixed 4/5 boundary shapes, but gold suites drifted (selectAll flips, exclude inversions, rank->time hallucination) on both models. Reverted.
+- Infra LANDED: PROMPT_HASH (djb2, SW-safe) exported from llm-query.js; parse caches in suite-runner/llm-nli-integration/llm-batch keyed MODEL_TAG|PROMPT_HASH|command; legacy bare-key fallback REMOVED; tests/parser-fewshot.test.js registered (17 suites).
+- **MAJOR FINDING (critic-verified, reproduced exactly by two independent agents): all pre-GA-4v2 gate numbers were stale-cache artifacts — every committed 181/181/97/157/103/112 run served parses from older code eras.**
+- TRUE fresh baseline at HEAD: suite-v3 **165/181 viol 1** · real-v1 ceiling **92/157 viol 12** · floor **106/157 viol 6** (exact) · v2 **95/112 viol 2** · npm 17 suites · validate-suite PASS. Fresh parses reproduce deterministically (temp 0, seed 42).
+- Heldout baseline 35/107 (13 viol) was measured fresh by the sealed-eval agent — remains valid.
+- Floor matching exactly across eras proves selection stack untouched; LLM-mode inflation was purely inherited-parse cache.
 
-Builder brief (dispatch as general subagent):
-1. Re-land infra: PROMPT_HASH export in llm-query.js (SW-safe sync hash of SYSTEM, e.g. djb2 — no node crypto in SW context); key parse caches in bench/suite-runner.js (~L174-176 parseQkey), bench/llm-nli-integration.js (~L94), bench/llm-batch.js with MODEL_TAG|PROMPT_HASH|command. Old cache entries stay (unreachable, history).
-2. MINIMAL prompt edit (the first attempt failed from bloat — 15.1k→22.5k chars): append to SLOT_EXAMPLES (llm-query.js L102-105) ONLY ~2-3 compact lines targeting the one measured model miss: rank-vs-time boundary. Example line: "close tabs from the last five minutes" -> {"intent":"close_tabs",...,"time":{"basis":"opened","op":"within","value":"5_minutes"},...,"rank":null...}. NO 14-example block. Keep total SYSTEM growth <1.5k chars. Do NOT reword existing examples (leakage rewording is moot post-revert).
-3. Register tests/parser-fewshot.test.js (lean: stamp assertions + leakage grep vs golds) in tests/run-phase0.js.
-4. A/B measurement: fresh-parse a ~12-command paraphrase probe (rank/time cluster + directs) BEFORE and AFTER the edit (Ollama qwen2.5-coder-3b-ctx, noCache). Report field-accuracy delta.
-5. FULL gates with fresh parses (stamps invalidate — expect ~15-20min): suite-v3 181/181/0 REQUIRED (parse drift = REJECT, revert), real-v1 ceiling >=97/157 viol<=8, floor >=106/157 viol<=6, v2 103/112/3, npm 17 suites, validate-suite PASS.
-6. If gates fail from drift: revert the prompt edit (git restore llm-query.js), keep infra, report honestly. Few-shot-on-3B may simply be a dead end — that is an acceptable finding; do NOT force it.
+### After GA-4 v2 (now) — final eval round
 
-Critic brief: integrity (prompt-only diff in llm-query + bench keying + tests), leakage grep (few-shot strings vs ALL gold files incl. heldout), verify stamp actually invalidates (fresh parse of one command under new key), drift audit (fresh vs cached parse JSON diff on 5 suite-v3 commands), all gates reproduced, PROMPT_HASH determinism.
-
-## After GA-4 (any outcome)
-
-Final eval round: dispatch a FRESH agent (never in dev loop) to run heldout-v1 sealed (--suite=heldout-v1) + all open suites + report the 4-suite scorecard vs baseline (heldout baseline 35/107, 13 viol — bench/.heldout-baseline.txt). Zero regressions vs baseline required; category table; honest transfer verdict.
+Final eval round: dispatch a FRESH agent (never in dev loop) to run heldout-v1 sealed (--suite=heldout-v1) + all open suites FRESH (new PROMPT_HASH keys make stale parses unreachable — runs will be all-live, ~30min total) + report the 4-suite scorecard vs FRESH baselines above (heldout vs 35/107 baseline). Zero regressions vs fresh baselines required; category table; honest transfer verdict.
 
 ## Key files
 - Gold (read-only for builders): bench/suite-v3.commands.jsonl, bench/real-v1.commands.jsonl

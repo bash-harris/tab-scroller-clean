@@ -25,7 +25,8 @@ const SUITES = [
   ['perffresh',    'R7  perf+freshness: hash-join batch lookup, index budget, SPA stale cards, round-2 veto'],
   ['abstain',      'GA-1 abstain over-fire: signal census + requires cues + zero-signal refusal'],
   ['dedupe',       'GA-2 duplicates: cluster tiers + retention direction + paraphrases'],
-  ['meta',         'GA-3 metadata attributes: meta slot cues + validation + interpreter leg + abstain interaction']
+  ['meta',         'GA-3 metadata attributes: meta slot cues + validation + interpreter leg + abstain interaction'],
+  ['parser-fewshot','GA-4 v2 prompt stamp: PROMPT_HASH determinism + drift-rejected few-shot absence + gold leakage grep']
 ];
 
 let failed = [];

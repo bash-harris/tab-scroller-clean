@@ -1,0 +1,178 @@
+{
+  "promptHash": "5bee41e5",
+  "systemLength": 15130,
+  "commands": {
+    "close tabs from the last five minutes": {
+      "intent": "close_tabs",
+      "concepts": [],
+      "domains": [],
+      "selectAll": false,
+      "exclude": [],
+      "time": {
+        "basis": "accessed",
+        "op": "older_than",
+        "value": "5_minutes"
+      },
+      "rank": null,
+      "state": [],
+      "confidence": 0.9
+    },
+    "close pages opened within the past 5 minutes": {
+      "intent": "close_tabs",
+      "concepts": [],
+      "domains": [],
+      "selectAll": false,
+      "exclude": [],
+      "time": {
+        "basis": "opened",
+        "op": "within",
+        "value": "5_minutes"
+      },
+      "rank": null,
+      "state": [],
+      "confidence": 0.9
+    },
+    "shut every tab from the past quarter hour": {
+      "intent": "close_tabs",
+      "concepts": [],
+      "domains": [],
+      "selectAll": false,
+      "exclude": [],
+      "time": null,
+      "rank": null,
+      "state": [],
+      "confidence": 0.9
+    },
+    "close everything from the last 10 minutes": {
+      "intent": "close_tabs",
+      "concepts": [],
+      "domains": [],
+      "selectAll": false,
+      "exclude": [],
+      "time": {
+        "basis": "opened",
+        "op": "older_than",
+        "value": "10_minutes"
+      },
+      "rank": null,
+      "state": [],
+      "confidence": 0.9
+    },
+    "close tabs from the past half hour": {
+      "intent": "close_tabs",
+      "concepts": [],
+      "domains": [],
+      "selectAll": false,
+      "exclude": [],
+      "time": {
+        "basis": "opened",
+        "op": "older_than",
+        "value": "30_minutes"
+      },
+      "rank": null,
+      "state": [],
+      "confidence": 0.9
+    },
+    "close the five oldest tabs": {
+      "intent": "close_tabs",
+      "concepts": [],
+      "domains": [],
+      "selectAll": false,
+      "exclude": [],
+      "time": {
+        "basis": "opened",
+        "op": "older_than",
+        "value": "5_days"
+      },
+      "rank": null,
+      "state": [],
+      "confidence": 0.9
+    },
+    "close the 7 newest tabs": {
+      "intent": "close_tabs",
+      "concepts": [],
+      "domains": [],
+      "selectAll": false,
+      "exclude": [],
+      "time": {
+        "basis": "opened",
+        "op": "older_than",
+        "value": "7_days"
+      },
+      "rank": null,
+      "state": [],
+      "confidence": 0.9
+    },
+    "close tabs opened more than three days ago": {
+      "intent": "close_tabs",
+      "concepts": [],
+      "domains": [],
+      "selectAll": false,
+      "exclude": [],
+      "time": {
+        "basis": "opened",
+        "op": "older_than",
+        "value": "3_days"
+      },
+      "rank": null,
+      "state": [],
+      "confidence": 0.9
+    },
+    "close my netflix tabs": {
+      "intent": "close_tabs",
+      "concepts": [
+        "netflix"
+      ],
+      "domains": [
+        "netflix.com"
+      ],
+      "selectAll": false,
+      "exclude": [],
+      "time": null,
+      "rank": null,
+      "state": [],
+      "confidence": 0.9
+    },
+    "group the climate change pages": {
+      "intent": "group_tabs",
+      "concepts": [
+        "climate change"
+      ],
+      "domains": [],
+      "selectAll": false,
+      "exclude": [],
+      "time": null,
+      "rank": null,
+      "state": [],
+      "confidence": 0.9
+    },
+    "bookmark recipes for later": {
+      "intent": "bookmark_tabs",
+      "concepts": [
+        "recipes"
+      ],
+      "domains": [],
+      "selectAll": false,
+      "exclude": [],
+      "time": null,
+      "rank": null,
+      "state": [],
+      "confidence": 0.9
+    },
+    "close my twitter tabs": {
+      "intent": "close_tabs",
+      "concepts": [
+        "twitter"
+      ],
+      "domains": [
+        "twitter.com"
+      ],
+      "selectAll": false,
+      "exclude": [],
+      "time": null,
+      "rank": null,
+      "state": [],
+      "confidence": 0.9
+    }
+  }
+}

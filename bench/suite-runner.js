@@ -173,11 +173,11 @@ const HOSTED_MODEL = HOSTED ? callHostedModel.loadApiEnv().model : null;
 const MODEL_TAG = NO_LLM ? null : HOSTED ? `hosted:${HOSTED_MODEL}` : `local:${process.env.QUERY_MODEL || 'qwen2.5:latest'}`;
 const parseQkey = cmd => {
   const norm = LlmQuery.normalizeCommand(cmd);
-  const tagged = `${MODEL_TAG}|${norm}`;
-  // Legacy entries carry no tag; a local run falls back to the bare key so a
-  // pre-tag cache stays warm. A hosted run NEVER reads legacy entries: a tag
-  // miss goes straight to the model, so local and hosted parses can't mix.
-  return HOSTED ? tagged : (qcache[tagged] !== undefined ? tagged : (qcache[norm] !== undefined ? norm : tagged));
+  const tagged = `${MODEL_TAG}|${LlmQuery.PROMPT_HASH}|${norm}`;
+  // PROMPT_HASH stamp: a prompt edit invalidates every cached parse. Legacy
+  // tagless/untagged entries stay in the file as history -- unreachable now,
+  // since reading a parse made under an older prompt would defeat the stamp.
+  return tagged;
 };
 
 const bucketOf = c => {
